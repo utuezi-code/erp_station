@@ -1,0 +1,60 @@
+import { requireAuth } from "@/lib/rbac";
+import { db } from "@/lib/db";
+import { IndexClientPage } from "./index-client";
+
+export default async function IndexPage({ searchParams }: { searchParams: { date?: string; stationId?: string } }) {
+  const session = await requireAuth();
+  const user = session.user as any;
+
+  const today = new Date().toISOString().split("T")[0];
+  const selectedDate = searchParams.date || today;
+  const selectedStation = searchParams.stationId || user.stationId;
+
+  if (!selectedStation) {
+    return (
+      <div>
+        <h1 className="text-2xl font-bold mb-4">Saisie des index</h1>
+        <p className="text-gray-500">Aucune station assignée. Contactez l'administrateur.</p>
+      </div>
+    );
+  }
+
+  const [station, pumps, indexes] = await Promise.all([
+    db.station.findUnique({ where: { id: selectedStation }, select: { id: true, name: true } }),
+    db.pump.findMany({
+      where: { stationId: selectedStation, active: true },
+      include: {
+        nozzles: {
+          where: { active: true },
+          include: { fuel: { select: { id: true, name: true, salePrice: true } } },
+          orderBy: { number: "asc" },
+        },
+      },
+      orderBy: { number: "asc" },
+    }),
+    db.dailyIndex.findMany({
+      where: {
+        stationId: selectedStation,
+        date: new Date(selectedDate),
+      },
+    }),
+  ]);
+
+  const indexMap = Object.fromEntries(indexes.map((i) => [i.nozzleId, i]));
+
+  return (
+    <div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Saisie des index pompes</h1>
+        <p className="text-gray-500 mt-1">{station?.name} — {new Date(selectedDate).toLocaleDateString("fr-CI", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
+      </div>
+      <IndexClientPage
+        stationId={selectedStation}
+        selectedDate={selectedDate}
+        pumps={pumps as any}
+        indexMap={indexMap as any}
+        userRole={user.role}
+      />
+    </div>
+  );
+}

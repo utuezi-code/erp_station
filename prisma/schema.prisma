@@ -1,0 +1,562 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── ENUMS ───────────────────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  GERANT
+  DIRECTION_COMMERCIALE
+  DIRECTION_FINANCIERE
+  DIRECTION_GENERALE
+  RESPONSABLE_SERVICE
+}
+
+enum StationStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum AlertLevel {
+  INFO
+  ORANGE
+  RED
+}
+
+enum AlertType {
+  VERSEMENT_NON_EFFECTUE
+  ECART_STOCK
+  STOCK_FAIBLE
+  OBJECTIF_NON_ATTEINT
+  RETARD_SAISIE
+  CONNEXION_SUSPECTE
+}
+
+enum VersementStatus {
+  EN_ATTENTE
+  VALIDE
+  REJETE
+}
+
+enum OrderStatus {
+  BROUILLON
+  EN_ATTENTE_VALIDATION
+  VALIDE
+  ENVOYE_FOURNISSEUR
+  EN_PREPARATION
+  EXPEDIE
+  LIVRE_PARTIELLEMENT
+  LIVRE_TOTALEMENT
+  CLOTURE
+  ANNULE
+}
+
+enum PurchaseRequestStatus {
+  EN_ATTENTE
+  VALIDE
+  REJETE
+  ANNULE
+}
+
+enum Priority {
+  URGENT
+  NORMAL
+  FAIBLE
+}
+
+enum EncaissementType {
+  ESPECES
+  MOBILE_MONEY
+  CARTE_BANCAIRE
+  BON_CARBURANT
+  CREDIT_CLIENT
+}
+
+// ─── UTILISATEURS & AUTH ──────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  emailVerified DateTime?
+  password      String?
+  role          Role      @default(GERANT)
+  stationId     String?
+  station       Station?  @relation(fields: [stationId], references: [id])
+  active        Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sessions      Session[]
+  accounts      Account[]
+  auditLogs     AuditLog[]
+  versements    Versement[]
+  purchaseRequests PurchaseRequest[]
+  orderValidations OrderValidation[]
+
+  @@index([email])
+  @@index([stationId])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── STATIONS ────────────────────────────────────────────────────────────────
+
+model Region {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  stations Station[]
+}
+
+model Station {
+  id        String        @id @default(cuid())
+  name      String
+  code      String        @unique
+  address   String?
+  city      String?
+  regionId  String?
+  region    Region?       @relation(fields: [regionId], references: [id])
+  status    StationStatus @default(ACTIVE)
+  latitude  Decimal?      @db.Decimal(10, 7)
+  longitude Decimal?      @db.Decimal(10, 7)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  users           User[]
+  pumps           Pump[]
+  tanks           Tank[]
+  bankAccounts    BankAccount[]
+  versements      Versement[]
+  deliveries      FuelDelivery[]
+  exploitationAccounts ExploitationAccount[]
+  alerts          Alert[]
+  dailyIndexes    DailyIndex[]
+  tankMovements   TankMovement[]
+  purchaseRequests PurchaseRequest[]
+  receipts        GoodsReceipt[]
+
+  @@index([regionId])
+}
+
+model BankAccount {
+  id          String  @id @default(cuid())
+  stationId   String
+  station     Station @relation(fields: [stationId], references: [id])
+  bankName    String
+  accountNumber String
+  rib         String?
+  versements  Versement[]
+}
+
+// ─── CARBURANTS ───────────────────────────────────────────────────────────────
+
+model Fuel {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  code         String   @unique
+  salePrice    Decimal  @db.Decimal(10, 2)
+  purchasePrice Decimal @db.Decimal(10, 2)
+  tva          Decimal  @db.Decimal(5, 2) @default(18)
+  margin       Decimal  @db.Decimal(10, 2)
+  unit         String   @default("litre")
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  nozzles      Nozzle[]
+  tanks        Tank[]
+  deliveries   FuelDelivery[]
+  tankMovements TankMovement[]
+}
+
+// ─── POMPES & PISTOLETS ───────────────────────────────────────────────────────
+
+model Pump {
+  id        String   @id @default(cuid())
+  stationId String
+  station   Station  @relation(fields: [stationId], references: [id])
+  name      String
+  number    Int
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  nozzles   Nozzle[]
+
+  @@unique([stationId, number])
+}
+
+model Nozzle {
+  id       String  @id @default(cuid())
+  pumpId   String
+  pump     Pump    @relation(fields: [pumpId], references: [id])
+  fuelId   String
+  fuel     Fuel    @relation(fields: [fuelId], references: [id])
+  number   Int
+  active   Boolean @default(true)
+
+  dailyIndexes DailyIndex[]
+
+  @@unique([pumpId, number])
+}
+
+model DailyIndex {
+  id           String   @id @default(cuid())
+  nozzleId     String
+  nozzle       Nozzle   @relation(fields: [nozzleId], references: [id])
+  stationId    String
+  station      Station  @relation(fields: [stationId], references: [id])
+  date         DateTime @db.Date
+  indexStart   Decimal  @db.Decimal(12, 2)
+  indexEnd     Decimal? @db.Decimal(12, 2)
+  volumeSold   Decimal? @db.Decimal(12, 3)
+  revenue      Decimal? @db.Decimal(14, 2)
+  validated    Boolean  @default(false)
+  validatedAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([nozzleId, date])
+  @@index([stationId, date])
+}
+
+// ─── CUVES ────────────────────────────────────────────────────────────────────
+
+model Tank {
+  id           String   @id @default(cuid())
+  stationId    String
+  station      Station  @relation(fields: [stationId], references: [id])
+  fuelId       String
+  fuel         Fuel     @relation(fields: [fuelId], references: [id])
+  name         String
+  capacity     Decimal  @db.Decimal(12, 3)
+  alertLevel   Decimal  @db.Decimal(12, 3) @default(2000)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  movements    TankMovement[]
+}
+
+model TankMovement {
+  id              String   @id @default(cuid())
+  tankId          String
+  tank            Tank     @relation(fields: [tankId], references: [id])
+  stationId       String
+  station         Station  @relation(fields: [stationId], references: [id])
+  fuelId          String
+  fuel            Fuel     @relation(fields: [fuelId], references: [id])
+  date            DateTime @db.Date
+  openingStock    Decimal  @db.Decimal(12, 3)
+  delivery        Decimal  @db.Decimal(12, 3) @default(0)
+  transfer        Decimal  @db.Decimal(12, 3) @default(0)
+  theoreticalStock Decimal @db.Decimal(12, 3)
+  physicalStock   Decimal? @db.Decimal(12, 3)
+  gap             Decimal? @db.Decimal(12, 3)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([tankId, date])
+  @@index([stationId, date])
+}
+
+// ─── ENCAISSEMENTS ────────────────────────────────────────────────────────────
+
+model CashCollection {
+  id           String           @id @default(cuid())
+  stationId    String
+  date         DateTime         @db.Date
+  type         EncaissementType
+  amount       Decimal          @db.Decimal(14, 2)
+  reference    String?
+  note         String?
+  createdAt    DateTime         @default(now())
+
+  @@index([stationId, date])
+}
+
+// ─── VERSEMENTS ───────────────────────────────────────────────────────────────
+
+model Versement {
+  id              String          @id @default(cuid())
+  stationId       String
+  station         Station         @relation(fields: [stationId], references: [id])
+  userId          String
+  user            User            @relation(fields: [userId], references: [id])
+  bankAccountId   String?
+  bankAccount     BankAccount?    @relation(fields: [bankAccountId], references: [id])
+  date            DateTime        @db.Date
+  amount          Decimal         @db.Decimal(14, 2)
+  slipNumber      String?
+  slipPhotoUrl    String?
+  status          VersementStatus @default(EN_ATTENTE)
+  validatedBy     String?
+  validatedAt     DateTime?
+  note            String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([stationId, date])
+}
+
+// ─── LIVRAISONS ───────────────────────────────────────────────────────────────
+
+model FuelDelivery {
+  id          String   @id @default(cuid())
+  stationId   String
+  station     Station  @relation(fields: [stationId], references: [id])
+  fuelId      String
+  fuel        Fuel     @relation(fields: [fuelId], references: [id])
+  date        DateTime @db.Date
+  truckNumber String?
+  depot       String?
+  quantity    Decimal  @db.Decimal(12, 3)
+  blNumber    String?
+  blPhotoUrl  String?
+  note        String?
+  createdAt   DateTime @default(now())
+
+  @@index([stationId, date])
+}
+
+// ─── COMPTE D'EXPLOITATION ────────────────────────────────────────────────────
+
+model ExploitationAccount {
+  id          String   @id @default(cuid())
+  stationId   String
+  station     Station  @relation(fields: [stationId], references: [id])
+  period      String   // "2025-01" format YYYY-MM
+  fuelRevenue Decimal  @db.Decimal(14, 2) @default(0)
+  shopRevenue Decimal  @db.Decimal(14, 2) @default(0)
+  otherRevenue Decimal @db.Decimal(14, 2) @default(0)
+  salaries    Decimal  @db.Decimal(14, 2) @default(0)
+  water       Decimal  @db.Decimal(14, 2) @default(0)
+  electricity Decimal  @db.Decimal(14, 2) @default(0)
+  security    Decimal  @db.Decimal(14, 2) @default(0)
+  maintenance Decimal  @db.Decimal(14, 2) @default(0)
+  commissions Decimal  @db.Decimal(14, 2) @default(0)
+  transport   Decimal  @db.Decimal(14, 2) @default(0)
+  taxes       Decimal  @db.Decimal(14, 2) @default(0)
+  otherCharges Decimal @db.Decimal(14, 2) @default(0)
+  grossResult Decimal  @db.Decimal(14, 2) @default(0)
+  netResult   Decimal  @db.Decimal(14, 2) @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([stationId, period])
+}
+
+// ─── ALERTES ─────────────────────────────────────────────────────────────────
+
+model Alert {
+  id        String     @id @default(cuid())
+  stationId String?
+  station   Station?   @relation(fields: [stationId], references: [id])
+  type      AlertType
+  level     AlertLevel
+  message   String
+  read      Boolean    @default(false)
+  readAt    DateTime?
+  createdAt DateTime   @default(now())
+
+  @@index([stationId, read])
+}
+
+// ─── AUDIT LOG ────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  entity     String
+  entityId   String
+  action     String
+  before     Json?
+  after      Json?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([userId])
+}
+
+// ─── MODULE 15 : ACHATS ───────────────────────────────────────────────────────
+
+model Supplier {
+  id              String  @id @default(cuid())
+  name            String
+  code            String  @unique
+  category        String
+  contactName     String?
+  phone           String?
+  email           String?
+  address         String?
+  paymentTerms    String?
+  bankName        String?
+  bankAccount     String?
+  active          Boolean @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  purchaseOrders  PurchaseOrder[]
+  invoices        SupplierInvoice[]
+}
+
+model PurchaseRequest {
+  id           String                @id @default(cuid())
+  number       String                @unique
+  userId       String
+  user         User                  @relation(fields: [userId], references: [id])
+  stationId    String
+  station      Station               @relation(fields: [stationId], references: [id])
+  service      String
+  priority     Priority              @default(NORMAL)
+  justification String?
+  status       PurchaseRequestStatus @default(EN_ATTENTE)
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  items        PurchaseRequestItem[]
+  orders       PurchaseOrder[]
+}
+
+model PurchaseRequestItem {
+  id          String          @id @default(cuid())
+  requestId   String
+  request     PurchaseRequest @relation(fields: [requestId], references: [id])
+  description String
+  quantity    Decimal         @db.Decimal(10, 3)
+  unit        String
+  estimatedCost Decimal?      @db.Decimal(14, 2)
+}
+
+model PurchaseOrder {
+  id              String        @id @default(cuid())
+  number          String        @unique
+  requestId       String?
+  request         PurchaseRequest? @relation(fields: [requestId], references: [id])
+  supplierId      String
+  supplier        Supplier      @relation(fields: [supplierId], references: [id])
+  orderDate       DateTime      @db.Date
+  expectedDelivery DateTime?    @db.Date
+  status          OrderStatus   @default(BROUILLON)
+  paymentTerms    String?
+  deliveryMode    String?
+  note            String?
+  totalHT         Decimal       @db.Decimal(14, 2) @default(0)
+  totalTVA        Decimal       @db.Decimal(14, 2) @default(0)
+  totalTTC        Decimal       @db.Decimal(14, 2) @default(0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  items           PurchaseOrderItem[]
+  validations     OrderValidation[]
+  receipts        GoodsReceipt[]
+  invoices        SupplierInvoice[]
+}
+
+model PurchaseOrderItem {
+  id          String        @id @default(cuid())
+  orderId     String
+  order       PurchaseOrder @relation(fields: [orderId], references: [id])
+  description String
+  quantity    Decimal       @db.Decimal(10, 3)
+  unit        String
+  unitPrice   Decimal       @db.Decimal(14, 2)
+  discount    Decimal       @db.Decimal(5, 2) @default(0)
+  tva         Decimal       @db.Decimal(5, 2) @default(18)
+  totalHT     Decimal       @db.Decimal(14, 2)
+  totalTTC    Decimal       @db.Decimal(14, 2)
+}
+
+model OrderValidation {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     PurchaseOrder @relation(fields: [orderId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  action    String   // APPROVED, REJECTED
+  comment   String?
+  createdAt DateTime @default(now())
+}
+
+model GoodsReceipt {
+  id           String        @id @default(cuid())
+  orderId      String
+  order        PurchaseOrder @relation(fields: [orderId], references: [id])
+  stationId    String
+  station      Station       @relation(fields: [stationId], references: [id])
+  receiptDate  DateTime      @db.Date
+  blNumber     String?
+  blPhotoUrl   String?
+  observations String?
+  createdAt    DateTime      @default(now())
+
+  items        GoodsReceiptItem[]
+}
+
+model GoodsReceiptItem {
+  id            String       @id @default(cuid())
+  receiptId     String
+  receipt       GoodsReceipt @relation(fields: [receiptId], references: [id])
+  description   String
+  quantityOrdered Decimal    @db.Decimal(10, 3)
+  quantityReceived Decimal   @db.Decimal(10, 3)
+  quantityRejected Decimal   @db.Decimal(10, 3) @default(0)
+  unit          String
+}
+
+model SupplierInvoice {
+  id           String        @id @default(cuid())
+  orderId      String?
+  order        PurchaseOrder? @relation(fields: [orderId], references: [id])
+  supplierId   String
+  supplier     Supplier      @relation(fields: [supplierId], references: [id])
+  invoiceNumber String
+  invoiceDate  DateTime      @db.Date
+  dueDate      DateTime?     @db.Date
+  amountHT     Decimal       @db.Decimal(14, 2)
+  amountTVA    Decimal       @db.Decimal(14, 2)
+  amountTTC    Decimal       @db.Decimal(14, 2)
+  paid         Boolean       @default(false)
+  paidAt       DateTime?
+  note         String?
+  createdAt    DateTime      @default(now())
+}
