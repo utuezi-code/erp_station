@@ -8,7 +8,10 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const isPublic = publicPaths.some((p) => pathname.startsWith(p));
 
-  const token = await getToken({ req, secret: process.env.AUTH_SECRET });
+  // NextAuth v5 uses "authjs.session-token" in dev, "__Secure-authjs.session-token" in prod (HTTPS)
+  const token =
+    (await getToken({ req, secret: process.env.AUTH_SECRET, cookieName: "__Secure-authjs.session-token" })) ||
+    (await getToken({ req, secret: process.env.AUTH_SECRET, cookieName: "authjs.session-token" }));
 
   if (!token && !isPublic) {
     return NextResponse.redirect(new URL("/login", req.url));
