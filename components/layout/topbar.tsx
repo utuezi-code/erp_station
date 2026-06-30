@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Bell, Search } from "lucide-react";
+import { Bell, Menu } from "lucide-react";
 
 const PAGE_TITLES: Record<string, string> = {
   "/dashboard": "Tableau de bord",
@@ -17,15 +17,26 @@ const PAGE_TITLES: Record<string, string> = {
   "/dashboard/exploitation": "Compte d'exploitation",
   "/dashboard/alertes": "Alertes",
   "/dashboard/rapports": "Rapports & exports",
-  "/dashboard/achats": "Achats & approvisionnement",
-  "/dashboard/admin/stations": "Gestion des stations",
-  "/dashboard/admin/fuels": "Gestion des carburants",
+  "/dashboard/achats": "Achats",
+  "/dashboard/achats/factures": "Factures fournisseurs",
+  "/dashboard/achats/commandes": "Bons de commande",
+  "/dashboard/achats/demandes": "Demandes d'achat",
+  "/dashboard/achats/receptions": "Réceptions",
+  "/dashboard/achats/fournisseurs": "Fournisseurs",
+  "/dashboard/admin/stations": "Stations",
+  "/dashboard/admin/fuels": "Carburants",
   "/dashboard/admin/pumps": "Pompes & cuves",
+  "/dashboard/admin/banques": "Comptes bancaires",
   "/dashboard/admin/users": "Utilisateurs",
+  "/dashboard/admin/audit": "Journal d'audit",
   "/dashboard/admin/settings": "Paramètres",
 };
 
-export function Topbar() {
+interface TopbarProps {
+  onMenuClick: () => void;
+}
+
+export function Topbar({ onMenuClick }: TopbarProps) {
   const pathname = usePathname();
 
   const title = Object.entries(PAGE_TITLES)
@@ -40,10 +51,18 @@ export function Topbar() {
   });
 
   return (
-    <header className="sticky top-0 z-10 flex items-center justify-between h-14 px-6 bg-white border-b border-gray-100 shadow-sm">
-      <div>
-        <h1 className="text-base font-semibold text-gray-900">{title}</h1>
-        <p className="text-xs text-gray-400 capitalize">{today}</p>
+    <header className="sticky top-0 z-10 flex items-center justify-between h-14 px-4 bg-white border-b border-gray-100 shadow-sm">
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onMenuClick}
+          className="lg:hidden p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+        <div>
+          <h1 className="text-base font-semibold text-gray-900 leading-tight">{title}</h1>
+          <p className="text-xs text-gray-400 capitalize hidden sm:block">{today}</p>
+        </div>
       </div>
       <div className="flex items-center gap-2">
         <button className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
