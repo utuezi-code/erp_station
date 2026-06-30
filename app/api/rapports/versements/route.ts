@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import ExcelJS from "exceljs";
+import { generatePDF } from "@/lib/pdf-utils";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -16,6 +17,8 @@ export async function GET(req: NextRequest) {
   const start = new Date(year, month - 1, 1);
   const end = new Date(year, month, 0);
 
+  const format = searchParams.get("format") || "excel";
+
   const where: any = { date: { gte: start, lte: end } };
   if (stationId) where.stationId = stationId;
 
@@ -27,6 +30,36 @@ export async function GET(req: NextRequest) {
     },
     orderBy: [{ date: "asc" }],
   });
+
+  const STATUS_LABELS_PDF: Record<string, string> = {
+    EN_ATTENTE: "En attente",
+    VALIDE: "Validé",
+    REJETE: "Rejeté",
+  };
+
+  if (format === "pdf") {
+    const headers = ["Date", "Station", "Montant (FCFA)", "Référence", "Statut", "Saisi par"];
+    const rows = versements.map((v) => [
+      new Date(v.date).toLocaleDateString("fr-CI"),
+      v.station.name,
+      Number(v.amount),
+      v.slipNumber || "",
+      STATUS_LABELS_PDF[v.status] || v.status,
+      v.user?.name || "",
+    ]);
+    const buf = await generatePDF(
+      `Rapport des versements — ${period}`,
+      stationId ? "Station filtrée" : "Toutes les stations",
+      headers,
+      rows
+    );
+    return new NextResponse(new Uint8Array(buf), {
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="versements-${period}.pdf"`,
+      },
+    });
+  }
 
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "IVORY ENERGIES ERP";
@@ -46,11 +79,7 @@ export async function GET(req: NextRequest) {
   ws.getRow(1).font = { bold: true };
   ws.getRow(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFA500" } };
 
-  const STATUS_LABELS: Record<string, string> = {
-    EN_ATTENTE: "En attente",
-    VALIDE: "Validé",
-    REJETE: "Rejeté",
-  };
+  const STATUS_LABELS = STATUS_LABELS_PDF;
 
   for (const v of versements) {
     ws.addRow({

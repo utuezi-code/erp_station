@@ -22,6 +22,16 @@ export default function LoginPage() {
 
     if (result?.error) {
       setError("Email ou mot de passe incorrect.");
+      // Notify server of failed login attempt for suspicious activity detection
+      try {
+        await fetch("/api/auth/failed-login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+      } catch {
+        // Silently ignore errors in security logging
+      }
     } else {
       router.push("/dashboard");
       router.refresh();

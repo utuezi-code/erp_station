@@ -2,6 +2,7 @@ import { requireRole } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { ClassementClient } from "./classement-client";
 import { PeriodSelect } from "./period-select";
+import { ComparisonChart } from "./comparison-chart";
 import { Trophy } from "lucide-react";
 
 
@@ -102,6 +103,12 @@ export default async function ClassementPage({
       )}
 
       <ClassementClient byCA={byCA} byMarge={byMarge} period={currentPeriodValue} />
+
+      {/* Comparison chart */}
+      <div className="mt-6 bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <h2 className="text-lg font-bold text-gray-900 mb-4">Comparaison CA &amp; Versements</h2>
+        <ComparisonChart data={rows} />
+      </div>
     </div>
   );
 }

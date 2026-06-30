@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import ExcelJS from "exceljs";
+import { generatePDF } from "@/lib/pdf-utils";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -28,6 +29,30 @@ export async function GET(req: NextRequest) {
     },
     orderBy: [{ date: "asc" }, { stationId: "asc" }],
   });
+
+  if (format === "pdf") {
+    const headers = ["Date", "Station", "Pompe", "Carburant", "Volume (L)", "CA (FCFA)"];
+    const rows = data.map((row) => [
+      new Date(row.date).toLocaleDateString("fr-CI"),
+      row.station.name,
+      row.nozzle.pump.name,
+      row.nozzle.fuel.name,
+      Number(row.volumeSold),
+      Number(row.revenue),
+    ]);
+    const buf = await generatePDF(
+      `Rapport des ventes — ${period}`,
+      stationId ? `Station filtrée` : "Toutes les stations",
+      headers,
+      rows
+    );
+    return new NextResponse(new Uint8Array(buf), {
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="ventes-${period}.pdf"`,
+      },
+    });
+  }
 
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "IVORY ENERGIES ERP";
