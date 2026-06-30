@@ -53,31 +53,13 @@ export default function LoginPage() {
         {/* Center content */}
         <div className="relative space-y-6">
           <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 rounded-full px-4 py-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
-              <span className="text-orange-400 text-xs font-medium">Système de gestion intégré</span>
-            </div>
             <h1 className="text-4xl font-bold text-white leading-tight">
               Gérez vos stations<br />
               <span className="text-orange-400">en toute simplicité</span>
             </h1>
             <p className="text-slate-400 text-sm leading-relaxed max-w-sm">
-              Suivi en temps réel des ventes, stocks, versements et performances de vos 18 stations-service à travers la Côte d'Ivoire.
+              Suivi en temps réel des ventes, stocks, versements et performances de vos stations-service à travers la Côte d'Ivoire.
             </p>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-4">
-            {[
-              { value: "18", label: "Stations" },
-              { value: "6", label: "Rôles" },
-              { value: "24/7", label: "Monitoring" },
-            ].map((stat) => (
-              <div key={stat.label} className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
-                <p className="text-2xl font-bold text-orange-400">{stat.value}</p>
-                <p className="text-xs text-slate-400 mt-0.5">{stat.label}</p>
-              </div>
-            ))}
           </div>
         </div>
 
