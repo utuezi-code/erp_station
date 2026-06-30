@@ -22,7 +22,6 @@ function fmt(n: number) {
   return n.toLocaleString("fr-CI", { maximumFractionDigits: 0 });
 }
 
-const MEDALS = ["🥇", "🥈", "🥉"];
 
 function RankTable({ data, metric }: { data: StationRank[]; metric: "ca" | "marge" }) {
   return (
@@ -45,9 +44,7 @@ function RankTable({ data, metric }: { data: StationRank[]; metric: "ca" | "marg
               key={row.stationId}
               className={`border-b border-gray-50 transition-colors ${idx < 3 ? "bg-orange-50/40" : "hover:bg-gray-50"}`}
             >
-              <td className="py-3 px-4 font-bold text-gray-700">
-                {idx < 3 ? MEDALS[idx] : <span className="text-gray-400">#{idx + 1}</span>}
-              </td>
+              <td className="py-3 px-4 font-bold text-gray-400">#{idx + 1}</td>
               <td className="py-3 px-4 font-semibold text-gray-900">{row.stationName}</td>
               <td className="py-3 px-4 text-right font-mono text-gray-700">{fmt(row.ca)}</td>
               <td className="py-3 px-4 text-right font-mono text-gray-500">{fmt(row.volume)}</td>

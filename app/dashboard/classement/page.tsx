@@ -92,7 +92,6 @@ export default async function ClassementPage({
             const colors = ["bg-yellow-50 border-yellow-200", "bg-gray-50 border-gray-200", "bg-orange-50 border-orange-200"];
             return (
               <div key={row.stationId} className={`rounded-2xl border shadow-sm p-5 ${colors[idx]}`}>
-                <p className="text-2xl mb-1">{medals[idx]}</p>
                 <p className="font-bold text-gray-900">{row.stationName}</p>
                 <p className="text-lg font-bold text-orange-600 mt-1">{fmt(row.ca)} FCFA</p>
                 <p className="text-xs text-gray-500">{fmt(row.volume)} L vendus</p>
