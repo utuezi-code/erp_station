@@ -65,7 +65,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <div className="relative">
-          <p className="text-slate-600 text-xs">© 2024 IVORY ENERGIES CI. Tous droits réservés.</p>
+          <p className="text-slate-600 text-xs">© 2026 IVORY ENERGIES CI. Tous droits réservés.</p>
         </div>
       </div>
 
