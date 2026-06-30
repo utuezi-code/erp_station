@@ -1,9 +1,9 @@
-import { requireAuth } from "@/lib/rbac";
+import { requireRole } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { NewFactureClient } from "./new-facture-client";
 
 export default async function NewFacturePage() {
-  await requireAuth();
+  await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
 
   const [suppliers, orders] = await Promise.all([
     db.supplier.findMany({

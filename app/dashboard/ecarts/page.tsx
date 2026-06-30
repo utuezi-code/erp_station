@@ -1,4 +1,4 @@
-import { requireAuth } from "@/lib/rbac";
+import { requireRole } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { EcartsClient } from "./ecarts-client";
 
@@ -7,7 +7,7 @@ export default async function EcartsPage({
 }: {
   searchParams: { stationId?: string; from?: string; to?: string };
 }) {
-  const session = await requireAuth();
+  const session = await requireRole(["ADMIN", "GERANT", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
   const user = session.user as any;
 
   const isGerant = user.role === "GERANT";

@@ -1,9 +1,9 @@
-import { requireAuth } from "@/lib/rbac";
+import { requireRole } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { LivraisonsClient } from "./livraisons-client";
 
 export default async function LivraisonsPage() {
-  const session = await requireAuth();
+  const session = await requireRole(["ADMIN", "GERANT"]);
   const user = session.user as any;
   const stationId = user.stationId;
 

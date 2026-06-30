@@ -1,4 +1,4 @@
-import { requireAuth } from "@/lib/rbac";
+import { requireRole } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { AlertesClient } from "./alertes-client";
 
@@ -7,7 +7,7 @@ export default async function AlertesPage({
 }: {
   searchParams: { level?: string; type?: string; stationId?: string; unreadOnly?: string };
 }) {
-  const session = await requireAuth();
+  const session = await requireRole(["ADMIN", "GERANT", "DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE", "RESPONSABLE_SERVICE"]);
   const user = session.user as any;
   const isAdmin = user.role === "ADMIN";
 

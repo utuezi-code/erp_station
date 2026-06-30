@@ -1,11 +1,11 @@
-import { requireAuth } from "@/lib/rbac";
+import { requireRole } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import Link from "next/link";
 import { Plus, FileText, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { FacturesClient } from "./factures-client";
 
 export default async function FacturesPage() {
-  await requireAuth();
+  await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
 
   const [invoices, suppliers] = await Promise.all([
     db.supplierInvoice.findMany({
