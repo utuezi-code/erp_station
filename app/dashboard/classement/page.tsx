@@ -1,8 +1,9 @@
 import { requireRole } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { ClassementClient } from "./classement-client";
-import Link from "next/link";
+import { PeriodSelect } from "./period-select";
 import { Trophy } from "lucide-react";
+
 
 function fmt(n: number) {
   return n.toLocaleString("fr-CI", { maximumFractionDigits: 0 });
@@ -80,18 +81,7 @@ export default async function ClassementPage({
             <p className="text-gray-500 mt-0.5">Performance inter-stations — {periodLabel}</p>
           </div>
         </div>
-        <form method="GET">
-          <select
-            name="period"
-            defaultValue={currentPeriodValue}
-            onChange={(e) => (e.currentTarget.form as HTMLFormElement).submit()}
-            className="rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-400 bg-white"
-          >
-            {periods.map((p) => (
-              <option key={p.value} value={p.value}>{p.label}</option>
-            ))}
-          </select>
-        </form>
+        <PeriodSelect periods={periods} current={currentPeriodValue} />
       </div>
 
       {/* Top 3 summary */}
