@@ -25,6 +25,8 @@ import {
   GitCompare,
   Calculator,
   ChevronRight,
+  Landmark,
+  Shield,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 
@@ -83,7 +85,9 @@ const navGroups: NavGroup[] = [
       { label: "Stations", href: "/dashboard/admin/stations", icon: Building2, roles: ["ADMIN"] },
       { label: "Carburants", href: "/dashboard/admin/fuels", icon: Fuel, roles: ["ADMIN"] },
       { label: "Pompes & cuves", href: "/dashboard/admin/pumps", icon: Gauge, roles: ["ADMIN"] },
+      { label: "Comptes bancaires", href: "/dashboard/admin/banques", icon: Landmark, roles: ["ADMIN", "DIRECTION_FINANCIERE"] },
       { label: "Utilisateurs", href: "/dashboard/admin/users", icon: Users, roles: ["ADMIN"] },
+      { label: "Journal d'audit", href: "/dashboard/admin/audit", icon: Shield, roles: ["ADMIN"] },
       { label: "Paramètres", href: "/dashboard/admin/settings", icon: Settings, roles: ["ADMIN"] },
     ],
   },
