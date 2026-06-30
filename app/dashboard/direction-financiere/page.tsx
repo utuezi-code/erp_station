@@ -3,8 +3,9 @@ import { db } from "@/lib/db";
 import Link from "next/link";
 import { CheckCircle, Clock, XCircle, TrendingUp, ArrowRight } from "lucide-react";
 
-function fmt(n: number | null | undefined) {
-  return Number(n || 0).toLocaleString("fr-CI", { maximumFractionDigits: 0 });
+function fmt(n: { toNumber?: () => number } | number | null | undefined) {
+  const num = n == null ? 0 : typeof n === "object" && typeof n.toNumber === "function" ? n.toNumber() : Number(n);
+  return num.toLocaleString("fr-CI", { maximumFractionDigits: 0 });
 }
 
 export default async function DirectionFinancierePage() {
