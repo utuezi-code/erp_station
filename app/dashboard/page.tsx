@@ -26,13 +26,28 @@ async function getDashboardStats(role: Role, stationId?: string) {
   return { stations, users, fuels, alerts, versements, recentAlerts };
 }
 
+const QUICK_ACTIONS: { label: string; href: string; icon: string; desc: string; roles: Role[] }[] = [
+  { label: "Saisir index", href: "/dashboard/gerant/index", icon: "⛽", desc: "Relevé pompes du jour", roles: ["ADMIN", "GERANT"] },
+  { label: "Nouveau versement", href: "/dashboard/gerant/versements", icon: "💰", desc: "Enregistrer un versement", roles: ["ADMIN", "GERANT", "DIRECTION_FINANCIERE"] },
+  { label: "Stock cuves", href: "/dashboard/gerant/stocks", icon: "🛢️", desc: "Mouvements de stocks", roles: ["ADMIN", "GERANT"] },
+  { label: "Rapports", href: "/dashboard/rapports", icon: "📊", desc: "Exporter les données", roles: ["ADMIN", "GERANT", "DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"] },
+  { label: "Suivi ventes", href: "/dashboard/direction-commerciale", icon: "📈", desc: "CA et volumes", roles: ["ADMIN", "DIRECTION_COMMERCIALE"] },
+  { label: "Suivi financier", href: "/dashboard/direction-financiere/versements", icon: "🏦", desc: "Versements et écarts", roles: ["ADMIN", "DIRECTION_FINANCIERE"] },
+  { label: "Classement", href: "/dashboard/classement", icon: "🏆", desc: "Performance stations", roles: ["ADMIN", "DIRECTION_COMMERCIALE", "DIRECTION_GENERALE"] },
+  { label: "Achats", href: "/dashboard/achats", icon: "🛒", desc: "Commandes et factures", roles: ["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"] },
+];
+
 export default async function DashboardPage() {
   const session = await requireAuth();
   const user = session.user as any;
-  const stats = await getDashboardStats(user.role, user.stationId);
+  const role: Role = user.role;
+  const stats = await getDashboardStats(role, user.stationId);
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
+
+  const isAdmin = role === "ADMIN";
+  const isGerant = role === "GERANT";
 
   return (
     <div className="space-y-6">
@@ -40,7 +55,7 @@ export default async function DashboardPage() {
       <div className="bg-gradient-to-r from-slate-900 to-slate-800 rounded-2xl p-6 text-white shadow-lg">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-slate-400 text-sm mb-1">{greeting} 👋</p>
+            <p className="text-slate-400 text-sm mb-1">{greeting}</p>
             <h2 className="text-2xl font-bold">{session.user?.name || session.user?.email}</h2>
             <p className="text-slate-400 text-sm mt-1">
               {new Date().toLocaleDateString("fr-CI", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
@@ -52,17 +67,20 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* KPI Grid */}
+      {/* KPI Grid — role-filtered */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        {/* Stations: all roles */}
         <KpiCard
           title="Stations actives"
           value={stats.stations}
           icon={Building2}
           color="blue"
-          href="/dashboard/admin/stations"
+          href={isAdmin ? "/dashboard/admin/stations" : undefined}
           suffix="stations"
         />
-        {stats.users !== null && (
+
+        {/* Users: ADMIN only */}
+        {isAdmin && stats.users !== null && (
           <KpiCard
             title="Utilisateurs"
             value={stats.users}
@@ -72,14 +90,20 @@ export default async function DashboardPage() {
             suffix="comptes"
           />
         )}
-        <KpiCard
-          title="Carburants"
-          value={stats.fuels}
-          icon={Fuel}
-          color="orange"
-          href="/dashboard/admin/fuels"
-          suffix="produits"
-        />
+
+        {/* Carburants: ADMIN only clickable */}
+        {isAdmin && (
+          <KpiCard
+            title="Carburants"
+            value={stats.fuels}
+            icon={Fuel}
+            color="orange"
+            href="/dashboard/admin/fuels"
+            suffix="produits"
+          />
+        )}
+
+        {/* Alertes: all roles */}
         <KpiCard
           title="Alertes non lues"
           value={stats.alerts}
@@ -88,14 +112,20 @@ export default async function DashboardPage() {
           href="/dashboard/alertes"
           suffix="alertes"
         />
-        <KpiCard
-          title="Versements en attente"
-          value={stats.versements}
-          icon={Wallet}
-          color={stats.versements > 0 ? "amber" : "green"}
-          href="/dashboard/gerant/versements"
-          suffix="en attente"
-        />
+
+        {/* Versements en attente: roles who can see versements */}
+        {(isAdmin || isGerant || role === "DIRECTION_FINANCIERE") && (
+          <KpiCard
+            title="Versements en attente"
+            value={stats.versements}
+            icon={Wallet}
+            color={stats.versements > 0 ? "amber" : "green"}
+            href={isAdmin || role === "DIRECTION_FINANCIERE"
+              ? "/dashboard/direction-financiere/versements"
+              : "/dashboard/gerant/versements"}
+            suffix="en attente"
+          />
+        )}
       </div>
 
       {/* Bottom grid */}
@@ -139,19 +169,14 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Quick actions */}
+        {/* Quick actions — role-filtered */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-50">
             <TrendingUp className="w-4 h-4 text-orange-500" />
             <h3 className="font-semibold text-gray-900 text-sm">Accès rapide</h3>
           </div>
           <div className="p-4 grid grid-cols-2 gap-3">
-            {[
-              { label: "Saisir index", href: "/dashboard/gerant/index", icon: "⛽", desc: "Relevé pompes du jour" },
-              { label: "Nouveau versement", href: "/dashboard/gerant/versements", icon: "💰", desc: "Enregistrer un versement" },
-              { label: "Stock cuves", href: "/dashboard/gerant/stocks", icon: "🛢️", desc: "Mouvements de stocks" },
-              { label: "Rapports", href: "/dashboard/rapports", icon: "📊", desc: "Exporter les données" },
-            ].map((action) => (
+            {QUICK_ACTIONS.filter((a) => a.roles.includes(role)).slice(0, 4).map((action) => (
               <Link
                 key={action.href}
                 href={action.href}
@@ -172,20 +197,20 @@ export default async function DashboardPage() {
 function KpiCard({
   title, value, icon: Icon, color, href, suffix,
 }: {
-  title: string; value: number; icon: React.ElementType; color: string; href: string; suffix: string;
+  title: string; value: number; icon: React.ElementType; color: string; href?: string; suffix: string;
 }) {
-  const styles: Record<string, { bg: string; icon: string; text: string }> = {
-    blue:   { bg: "bg-blue-50",   icon: "text-blue-500",   text: "text-blue-600" },
-    violet: { bg: "bg-violet-50", icon: "text-violet-500", text: "text-violet-600" },
-    orange: { bg: "bg-orange-50", icon: "text-orange-500", text: "text-orange-600" },
-    amber:  { bg: "bg-amber-50",  icon: "text-amber-500",  text: "text-amber-600" },
-    red:    { bg: "bg-red-50",    icon: "text-red-500",    text: "text-red-600" },
-    green:  { bg: "bg-green-50",  icon: "text-green-500",  text: "text-green-600" },
+  const styles: Record<string, { bg: string; icon: string }> = {
+    blue:   { bg: "bg-blue-50",   icon: "text-blue-500" },
+    violet: { bg: "bg-violet-50", icon: "text-violet-500" },
+    orange: { bg: "bg-orange-50", icon: "text-orange-500" },
+    amber:  { bg: "bg-amber-50",  icon: "text-amber-500" },
+    red:    { bg: "bg-red-50",    icon: "text-red-500" },
+    green:  { bg: "bg-green-50",  icon: "text-green-500" },
   };
   const s = styles[color] || styles.blue;
 
-  return (
-    <Link href={href} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md hover:border-gray-200 transition-all group">
+  const content = (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md hover:border-gray-200 transition-all group">
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">{title}</p>
@@ -196,9 +221,13 @@ function KpiCard({
           <Icon className={`w-5 h-5 ${s.icon}`} />
         </div>
       </div>
-      <div className="mt-3 flex items-center gap-1 text-xs font-medium text-gray-400 group-hover:text-orange-500 transition-colors">
-        Voir détail <ArrowUpRight className="w-3 h-3" />
-      </div>
-    </Link>
+      {href && (
+        <div className="mt-3 flex items-center gap-1 text-xs font-medium text-gray-400 group-hover:text-orange-500 transition-colors">
+          Voir détail <ArrowUpRight className="w-3 h-3" />
+        </div>
+      )}
+    </div>
   );
+
+  return href ? <Link href={href}>{content}</Link> : <div>{content}</div>;
 }
