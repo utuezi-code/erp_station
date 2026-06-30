@@ -99,7 +99,7 @@ export default async function DirectionFinancierePage() {
             <Clock className="w-4 h-4 text-amber-500" />
             <p className="text-xs font-medium text-gray-500">En attente de validation</p>
           </div>
-          <p className="text-2xl font-bold text-amber-600">{fmt(versementsPending._sum.amount)}</p>
+          <p className="text-2xl font-bold text-amber-600">{fmt(Number(versementsPending._sum.amount || 0))}</p>
           <p className="text-xs text-gray-400 mt-1">FCFA — {versementsPending._count} versement(s)</p>
         </div>
 
@@ -108,7 +108,7 @@ export default async function DirectionFinancierePage() {
             <CheckCircle className="w-4 h-4 text-green-500" />
             <p className="text-xs font-medium text-gray-500">Versements validés (mois)</p>
           </div>
-          <p className="text-2xl font-bold text-green-600">{fmt(versementsValidated._sum.amount)}</p>
+          <p className="text-2xl font-bold text-green-600">{fmt(Number(versementsValidated._sum.amount || 0))}</p>
           <p className="text-xs text-gray-400 mt-1">FCFA — {versementsValidated._count} versement(s)</p>
         </div>
 

@@ -27,6 +27,8 @@ import {
   ChevronRight,
   Landmark,
   Shield,
+  UserCircle,
+  Trophy,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 
@@ -49,6 +51,7 @@ const navGroups: NavGroup[] = [
     items: [
       { label: "Tableau de bord", href: "/dashboard", icon: LayoutDashboard, roles: ["ADMIN", "GERANT", "DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE", "RESPONSABLE_SERVICE"] },
       { label: "Alertes", href: "/dashboard/alertes", icon: Bell, roles: ["ADMIN", "DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"] },
+      { label: "Mon profil", href: "/dashboard/profil", icon: UserCircle, roles: ["ADMIN", "GERANT", "DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE", "RESPONSABLE_SERVICE"] },
     ],
   },
   {
@@ -65,6 +68,8 @@ const navGroups: NavGroup[] = [
     label: "Direction",
     items: [
       { label: "Ventes", href: "/dashboard/direction-commerciale", icon: TrendingUp, roles: ["ADMIN", "DIRECTION_COMMERCIALE"] },
+      { label: "Classement stations", href: "/dashboard/classement", icon: Trophy, roles: ["ADMIN", "DIRECTION_COMMERCIALE", "DIRECTION_GENERALE"] },
+      { label: "Tableau de bord financier", href: "/dashboard/direction-financiere", icon: BarChart3, roles: ["ADMIN", "DIRECTION_FINANCIERE"] },
       { label: "Suivi financier", href: "/dashboard/direction-financiere/versements", icon: BarChart3, roles: ["ADMIN", "DIRECTION_FINANCIERE"] },
       { label: "Direction Générale", href: "/dashboard/direction-generale", icon: LayoutDashboard, roles: ["ADMIN", "DIRECTION_GENERALE"] },
       { label: "Écarts", href: "/dashboard/ecarts", icon: GitCompare, roles: ["ADMIN", "GERANT", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"] },
