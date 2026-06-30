@@ -116,7 +116,7 @@ export function Sidebar({ userRole, userName }: SidebarProps) {
   const pathname = usePathname();
 
   return (
-    <aside className="flex flex-col w-64 bg-slate-900 text-white min-h-screen border-r border-slate-800 flex-shrink-0">
+    <aside className="flex flex-col w-64 bg-slate-900 text-white h-screen border-r border-slate-800 flex-shrink-0">
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 py-5 border-b border-slate-800">
         <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 flex-shrink-0 shadow-lg shadow-orange-500/25">
