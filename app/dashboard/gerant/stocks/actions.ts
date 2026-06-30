@@ -17,7 +17,9 @@ const movementSchema = z.object({
 });
 
 export async function saveTankMovement(formData: FormData) {
-  await requireRole(["ADMIN", "GERANT"]);
+  const session = await requireRole(["ADMIN", "GERANT"]);
+  const userRole = (session.user as any).role as string;
+  const userStationId = (session.user as any).stationId as string | null;
 
   const data = movementSchema.parse({
     tankId: formData.get("tankId"),
@@ -29,6 +31,11 @@ export async function saveTankMovement(formData: FormData) {
     transfer: formData.get("transfer") || 0,
     physicalStock: formData.get("physicalStock") || undefined,
   });
+
+  // IDOR guard: GERANT can only save movements for their own station
+  if (userRole === "GERANT" && data.stationId !== userStationId) {
+    throw new Error("Accès refusé : vous ne pouvez saisir des mouvements que pour votre propre station.");
+  }
 
   const date = new Date(data.date);
 

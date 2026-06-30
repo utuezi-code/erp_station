@@ -1,12 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { auth } from "@/lib/auth";
+import { requireRole } from "@/lib/rbac";
 import { db } from "@/lib/db";
 
 export async function createInvoice(formData: FormData) {
-  const session = await auth();
-  if (!session) throw new Error("Non autorisé");
+  await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE"]);
 
   const supplierId = formData.get("supplierId") as string;
   const orderId = (formData.get("orderId") as string) || null;
@@ -36,8 +35,7 @@ export async function createInvoice(formData: FormData) {
 }
 
 export async function markInvoicePaid(invoiceId: string) {
-  const session = await auth();
-  if (!session) throw new Error("Non autorisé");
+  await requireRole(["ADMIN", "DIRECTION_FINANCIERE"]);
 
   await db.supplierInvoice.update({
     where: { id: invoiceId },
@@ -48,8 +46,7 @@ export async function markInvoicePaid(invoiceId: string) {
 }
 
 export async function deleteInvoice(invoiceId: string) {
-  const session = await auth();
-  if (!session) throw new Error("Non autorisé");
+  await requireRole(["ADMIN", "DIRECTION_FINANCIERE"]);
 
   await db.supplierInvoice.delete({ where: { id: invoiceId } });
   revalidatePath("/dashboard/achats/factures");

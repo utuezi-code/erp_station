@@ -17,6 +17,11 @@ export async function createPurchaseRequest(formData: FormData) {
   const user = session.user as any;
 
   const stationId = formData.get("stationId") as string;
+
+  // IDOR guard: GERANT can only create purchase requests for their own station
+  if (user.role === "GERANT" && stationId !== user.stationId) {
+    throw new Error("Accès refusé : vous ne pouvez créer des demandes que pour votre propre station.");
+  }
   const service = formData.get("service") as string;
   const justification = formData.get("justification") as string;
   const priority = (formData.get("priority") as string) || "NORMAL";

@@ -18,6 +18,8 @@ const versementSchema = z.object({
 export async function createVersement(formData: FormData) {
   const session = await requireRole(["ADMIN", "GERANT"]);
   const userId = (session.user as any).id;
+  const userRole = (session.user as any).role as string;
+  const userStationId = (session.user as any).stationId as string | null;
 
   const data = versementSchema.parse({
     stationId: formData.get("stationId"),
@@ -27,6 +29,11 @@ export async function createVersement(formData: FormData) {
     slipNumber: formData.get("slipNumber") || undefined,
     note: formData.get("note") || undefined,
   });
+
+  // IDOR guard: GERANT can only create versements for their own station
+  if (userRole === "GERANT" && data.stationId !== userStationId) {
+    throw new Error("Accès refusé : vous ne pouvez saisir des versements que pour votre propre station.");
+  }
 
   const date = new Date(data.date);
 

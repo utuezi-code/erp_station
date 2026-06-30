@@ -1,12 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { auth } from "@/lib/auth";
+import { requireRole } from "@/lib/rbac";
 import { db } from "@/lib/db";
 
 export async function createBankAccount(formData: FormData) {
-  const session = await auth();
-  if (!session) throw new Error("Non autorisé");
+  await requireRole(["ADMIN"]);
 
   await db.bankAccount.create({
     data: {
@@ -21,8 +20,7 @@ export async function createBankAccount(formData: FormData) {
 }
 
 export async function updateBankAccount(id: string, formData: FormData) {
-  const session = await auth();
-  if (!session) throw new Error("Non autorisé");
+  await requireRole(["ADMIN"]);
 
   await db.bankAccount.update({
     where: { id },
@@ -38,8 +36,7 @@ export async function updateBankAccount(id: string, formData: FormData) {
 }
 
 export async function deleteBankAccount(id: string) {
-  const session = await auth();
-  if (!session) throw new Error("Non autorisé");
+  await requireRole(["ADMIN"]);
 
   await db.bankAccount.delete({ where: { id } });
   revalidatePath("/dashboard/admin/banques");

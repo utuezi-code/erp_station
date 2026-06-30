@@ -15,6 +15,8 @@ const indexSchema = z.object({
 
 export async function saveIndex(formData: FormData) {
   const session = await requireRole(["ADMIN", "GERANT"]);
+  const userRole = (session.user as any).role as string;
+  const userStationId = (session.user as any).stationId as string | null;
 
   const data = indexSchema.parse({
     nozzleId: formData.get("nozzleId"),
@@ -23,6 +25,11 @@ export async function saveIndex(formData: FormData) {
     indexStart: formData.get("indexStart"),
     indexEnd: formData.get("indexEnd") || undefined,
   });
+
+  // IDOR guard: GERANT can only save indexes for their own station
+  if (userRole === "GERANT" && data.stationId !== userStationId) {
+    throw new Error("Accès refusé : vous ne pouvez saisir des index que pour votre propre station.");
+  }
 
   if (data.indexEnd !== undefined && data.indexEnd < data.indexStart) {
     throw new Error("L'index de fin doit être supérieur à l'index de début.");

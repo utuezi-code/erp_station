@@ -16,7 +16,9 @@ const schema = z.object({
 });
 
 export async function saveLivraison(formData: FormData) {
-  await requireRole(["ADMIN", "GERANT"]);
+  const session = await requireRole(["ADMIN", "GERANT"]);
+  const userRole = (session.user as any).role as string;
+  const userStationId = (session.user as any).stationId as string | null;
 
   const data = schema.parse({
     stationId: formData.get("stationId"),
@@ -27,6 +29,11 @@ export async function saveLivraison(formData: FormData) {
     truckNumber: formData.get("truckNumber") || undefined,
     depot: formData.get("depot") || undefined,
   });
+
+  // IDOR guard: GERANT can only save livraisons for their own station
+  if (userRole === "GERANT" && data.stationId !== userStationId) {
+    throw new Error("Accès refusé : vous ne pouvez saisir des livraisons que pour votre propre station.");
+  }
 
   await db.fuelDelivery.create({
     data: { ...data, date: new Date(data.date) },
