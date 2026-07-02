@@ -98,6 +98,12 @@ interface SidebarProps {
 export function Sidebar({ userRole, userName, collapsed, onCollapse }: SidebarProps) {
   const pathname = usePathname();
 
+  // Find the single best-matching nav href (longest prefix wins)
+  const allHrefs = navGroups.flatMap((g) => g.items.map((i) => i.href));
+  const activeHref = allHrefs
+    .filter((h) => pathname === h || (h !== "/dashboard" && pathname.startsWith(h + "/")))
+    .sort((a, b) => b.length - a.length)[0] ?? (pathname === "/dashboard" ? "/dashboard" : "");
+
   return (
     <aside
       className={cn(
@@ -151,9 +157,7 @@ export function Sidebar({ userRole, userName, collapsed, onCollapse }: SidebarPr
               <div className="space-y-0.5">
                 {visibleItems.map((item) => {
                   const Icon = item.icon;
-                  const active =
-                    pathname === item.href ||
-                    (item.href !== "/dashboard" && pathname.startsWith(item.href));
+                  const active = item.href === activeHref;
                   return (
                     <Link
                       key={item.href}
