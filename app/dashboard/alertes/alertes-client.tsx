@@ -118,7 +118,9 @@ export function AlertesClient({
         <div className="space-y-1">
           <Label className="text-xs">Station</Label>
           <Select value={filters.stationId || "all"} onValueChange={(v) => updateFilter("stationId", v === "all" ? "" : (v ?? ""))}>
-            <SelectTrigger className="w-48"><SelectValue placeholder="Toutes" /></SelectTrigger>
+            <SelectTrigger className="w-48">
+              <span className="truncate">{filters.stationId ? (stations.find((s) => s.id === filters.stationId)?.name ?? filters.stationId) : "Toutes"}</span>
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Toutes</SelectItem>
               {stations.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}

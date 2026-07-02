@@ -119,7 +119,9 @@ export function RapportsClient({
         <div className="space-y-1">
           <Label className="text-xs">Station (optionnel)</Label>
           <Select value={selectedStation || "all"} onValueChange={(v) => updateParams("stationId", v === "all" ? "" : (v ?? ""))}>
-            <SelectTrigger className="w-52"><SelectValue placeholder="Toutes les stations" /></SelectTrigger>
+            <SelectTrigger className="w-52">
+              <span className="truncate">{selectedStation ? (stations.find((s) => s.id === selectedStation)?.name ?? selectedStation) : "Toutes les stations"}</span>
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Toutes les stations</SelectItem>
               {stations.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
