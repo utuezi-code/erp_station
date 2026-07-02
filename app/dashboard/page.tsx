@@ -2,9 +2,9 @@ import { requireAuth } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { Role } from "@prisma/client";
 import {
-  Building2, Fuel, Users, AlertTriangle, Wallet, TrendingUp,
+  Building2, Users, AlertTriangle, Wallet, TrendingUp,
   ArrowUpRight, Clock, Gauge, ArrowUpCircle, FileText, ShoppingCart,
-  Trophy, BarChart3, GitCompare,
+  Trophy, BarChart3, GitCompare, Fuel,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -62,8 +62,6 @@ export default async function DashboardPage() {
   const role: Role = user.role;
   const stats = await getDashboardStats(role, user.stationId);
 
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
   const isAdmin = role === "ADMIN";
   const isGerant = role === "GERANT";
 
@@ -79,16 +77,9 @@ export default async function DashboardPage() {
         <div className="absolute -bottom-6 right-24 w-32 h-32 bg-orange-400/10 rounded-full blur-xl" />
         <div className="relative flex items-center justify-between gap-4">
           <div>
-            <p className="text-slate-400 text-sm mb-0.5">{greeting} 👋</p>
-            <h2 className="text-xl sm:text-2xl font-bold text-white">
-              {session.user?.name || session.user?.email}
-            </h2>
-            <p className="text-slate-400 text-sm mt-1 capitalize">
+            <p className="text-slate-400 text-sm capitalize">
               {new Date().toLocaleDateString("fr-CI", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
             </p>
-          </div>
-          <div className="hidden sm:flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-400/20 to-orange-500/20 border border-orange-400/20 flex-shrink-0">
-            <Fuel className="w-8 h-8 text-orange-400" />
           </div>
         </div>
       </div>
