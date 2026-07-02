@@ -31,6 +31,14 @@ export async function saveIndex(formData: FormData) {
     throw new Error("Accès refusé : vous ne pouvez saisir des index que pour votre propre station.");
   }
 
+  // Date guard: GERANT can only edit today's indexes
+  if (userRole === "GERANT") {
+    const today = new Date().toISOString().split("T")[0];
+    if (data.date !== today) {
+      throw new Error("Vous ne pouvez modifier les index que pour la date du jour.");
+    }
+  }
+
   if (data.indexEnd !== undefined && data.indexEnd < data.indexStart) {
     throw new Error("L'index de fin doit être supérieur à l'index de début.");
   }

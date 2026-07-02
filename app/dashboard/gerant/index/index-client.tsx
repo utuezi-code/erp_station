@@ -14,7 +14,7 @@ function fmt(n: any) {
   return n !== null && n !== undefined ? Number(n).toLocaleString("fr-CI") : "—";
 }
 
-export function IndexClientPage({ stationId, selectedDate, pumps, indexMap, userRole }: any) {
+export function IndexClientPage({ stationId, selectedDate, pumps, indexMap, userRole, isToday }: any) {
   const router = useRouter();
   const [loading, setLoading] = useState<Record<string, boolean>>({});
   const [validating, setValidating] = useState(false);
@@ -52,6 +52,9 @@ export function IndexClientPage({ stationId, selectedDate, pumps, indexMap, user
     }
   }
 
+  const isGerant = userRole === "GERANT";
+  // GERANT can only edit today's indexes; past days are read-only
+  const canEdit = !isGerant || isToday;
   const canValidate = ["ADMIN", "DIRECTION_COMMERCIALE"].includes(userRole);
   const allValidated = pumps.every((p: any) =>
     p.nozzles.every((n: any) => indexMap[n.id]?.validated)
@@ -81,7 +84,12 @@ export function IndexClientPage({ stationId, selectedDate, pumps, indexMap, user
           className="w-auto"
         />
         <Button variant="outline" size="sm" onClick={() => changeDate(1)}><ChevronRight className="w-4 h-4" /></Button>
-        {canValidate && !allValidated && (
+        {!canEdit && (
+        <div className="ml-auto flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 text-gray-500 text-xs font-medium">
+          Consultation uniquement — modification impossible sur les jours passés
+        </div>
+      )}
+      {canValidate && !allValidated && (
           <Button onClick={handleValidate} disabled={validating} variant="outline" className="ml-auto border-green-500 text-green-600 hover:bg-green-50">
             <CheckCircle className="w-4 h-4 mr-2" /> Valider la journée
           </Button>
@@ -117,6 +125,7 @@ export function IndexClientPage({ stationId, selectedDate, pumps, indexMap, user
                 {pump.nozzles.map((nozzle: any) => {
                   const idx = indexMap[nozzle.id];
                   const validated = idx?.validated;
+                  const readOnly = !canEdit || validated;
                   return (
                     <form key={nozzle.id} onSubmit={(e) => handleSave(e, nozzle.id)} className="bg-gray-50 rounded-lg p-3">
                       <input type="hidden" name="nozzleId" value={nozzle.id} />
@@ -136,7 +145,7 @@ export function IndexClientPage({ stationId, selectedDate, pumps, indexMap, user
                             type="number"
                             step="0.01"
                             defaultValue={idx ? Number(idx.indexStart) : ""}
-                            disabled={validated}
+                            disabled={readOnly}
                             required
                           />
                         </div>
@@ -147,7 +156,7 @@ export function IndexClientPage({ stationId, selectedDate, pumps, indexMap, user
                             type="number"
                             step="0.01"
                             defaultValue={idx?.indexEnd ? Number(idx.indexEnd) : ""}
-                            disabled={validated}
+                            disabled={readOnly}
                           />
                         </div>
                         <div>
@@ -159,7 +168,7 @@ export function IndexClientPage({ stationId, selectedDate, pumps, indexMap, user
                           <Input value={idx?.revenue ? fmt(idx.revenue) : "—"} disabled className="bg-white" />
                         </div>
                       </div>
-                      {!validated && (
+                      {!readOnly && (
                         <div className="mt-2 flex justify-end">
                           <Button type="submit" size="sm" disabled={loading[nozzle.id]} className="bg-orange-500 hover:bg-orange-600">
                             <Save className="w-3 h-3 mr-1" />

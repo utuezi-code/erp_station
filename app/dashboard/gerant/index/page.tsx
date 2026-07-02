@@ -8,6 +8,7 @@ export default async function IndexPage({ searchParams }: { searchParams: { date
 
   const today = new Date().toISOString().split("T")[0];
   const selectedDate = searchParams.date || today;
+  const isToday = selectedDate === today;
   const selectedStation = searchParams.stationId || user.stationId;
 
   if (!selectedStation) {
@@ -54,6 +55,7 @@ export default async function IndexPage({ searchParams }: { searchParams: { date
         pumps={pumps as any}
         indexMap={indexMap as any}
         userRole={user.role}
+        isToday={isToday}
       />
     </div>
   );
