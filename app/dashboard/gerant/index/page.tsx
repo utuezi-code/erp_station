@@ -6,7 +6,8 @@ export default async function IndexPage({ searchParams }: { searchParams: { date
   const session = await requireRole(["ADMIN", "GERANT"]);
   const user = session.user as any;
 
-  const today = new Date().toISOString().split("T")[0];
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   const selectedDate = searchParams.date || today;
   const isToday = selectedDate === today;
   const selectedStation = searchParams.stationId || user.stationId;
@@ -36,7 +37,10 @@ export default async function IndexPage({ searchParams }: { searchParams: { date
     db.dailyIndex.findMany({
       where: {
         stationId: selectedStation,
-        date: new Date(selectedDate),
+        date: {
+          gte: new Date(selectedDate + "T00:00:00.000Z"),
+          lte: new Date(selectedDate + "T23:59:59.999Z"),
+        },
       },
     }),
   ]);

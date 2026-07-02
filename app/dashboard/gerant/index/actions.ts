@@ -33,7 +33,8 @@ export async function saveIndex(formData: FormData) {
 
   // Date guard: GERANT can only edit today's indexes
   if (userRole === "GERANT") {
-    const today = new Date().toISOString().split("T")[0];
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
     if (data.date !== today) {
       throw new Error("Vous ne pouvez modifier les index que pour la date du jour.");
     }

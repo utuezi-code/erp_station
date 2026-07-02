@@ -20,9 +20,16 @@ export function IndexClientPage({ stationId, selectedDate, pumps, indexMap, user
   const [validating, setValidating] = useState(false);
 
   function changeDate(delta: number) {
-    const d = new Date(selectedDate);
-    d.setDate(d.getDate() + delta);
-    router.push(`?date=${d.toISOString().split("T")[0]}&stationId=${stationId}`);
+    // Parse date parts manually to avoid UTC/local timezone offset issues
+    const [y, m, d] = selectedDate.split("-").map(Number);
+    const date = new Date(y, m - 1, d);
+    date.setDate(date.getDate() + delta);
+    const newDate = [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, "0"),
+      String(date.getDate()).padStart(2, "0"),
+    ].join("-");
+    router.push(`?date=${newDate}&stationId=${stationId}`);
   }
 
   async function handleSave(e: React.FormEvent<HTMLFormElement>, nozzleId: string) {
