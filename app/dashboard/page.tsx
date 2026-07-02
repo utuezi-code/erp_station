@@ -70,20 +70,6 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
 
-      {/* Hero banner */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl p-6 text-white shadow-xl">
-        {/* Decorative circles */}
-        <div className="absolute -top-8 -right-8 w-48 h-48 bg-orange-500/10 rounded-full blur-2xl" />
-        <div className="absolute -bottom-6 right-24 w-32 h-32 bg-orange-400/10 rounded-full blur-xl" />
-        <div className="relative flex items-center justify-between gap-4">
-          <div>
-            <p className="text-slate-400 text-sm capitalize">
-              {new Date().toLocaleDateString("fr-CI", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* KPI Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <KpiCard
