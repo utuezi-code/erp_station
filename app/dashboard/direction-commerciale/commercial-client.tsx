@@ -88,10 +88,10 @@ export function CommercialClient({
         </div>
         <div className="space-y-1">
           <Label className="text-xs">Station</Label>
-          <Select value={selectedStation} onValueChange={(v) => updateParams("stationId", v || "")}>
+          <Select value={selectedStation || "all"} onValueChange={(v) => updateParams("stationId", v === "all" ? "" : v)}>
             <SelectTrigger className="w-48"><SelectValue placeholder="Toutes les stations" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Toutes les stations</SelectItem>
+              <SelectItem value="all">Toutes les stations</SelectItem>
               {stations.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
             </SelectContent>
           </Select>

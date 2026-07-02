@@ -93,10 +93,10 @@ export function AlertesClient({
       <div className="flex flex-wrap gap-4 mb-6 bg-white border rounded-xl p-4">
         <div className="space-y-1">
           <Label className="text-xs">Niveau</Label>
-          <Select value={filters.level} onValueChange={(v) => updateFilter("level", v || "")}>
+          <Select value={filters.level || "all"} onValueChange={(v) => updateFilter("level", v === "all" ? "" : v)}>
             <SelectTrigger className="w-36"><SelectValue placeholder="Tous niveaux" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Tous niveaux</SelectItem>
+              <SelectItem value="all">Tous niveaux</SelectItem>
               <SelectItem value="RED">Critique</SelectItem>
               <SelectItem value="ORANGE">Alerte</SelectItem>
               <SelectItem value="INFO">Info</SelectItem>
@@ -105,10 +105,10 @@ export function AlertesClient({
         </div>
         <div className="space-y-1">
           <Label className="text-xs">Type</Label>
-          <Select value={filters.type} onValueChange={(v) => updateFilter("type", v || "")}>
+          <Select value={filters.type || "all"} onValueChange={(v) => updateFilter("type", v === "all" ? "" : v)}>
             <SelectTrigger className="w-52"><SelectValue placeholder="Tous types" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Tous types</SelectItem>
+              <SelectItem value="all">Tous types</SelectItem>
               {Object.entries(ALERT_TYPE_LABELS).map(([k, v]) => (
                 <SelectItem key={k} value={k}>{v}</SelectItem>
               ))}
@@ -117,10 +117,10 @@ export function AlertesClient({
         </div>
         <div className="space-y-1">
           <Label className="text-xs">Station</Label>
-          <Select value={filters.stationId} onValueChange={(v) => updateFilter("stationId", v || "")}>
+          <Select value={filters.stationId || "all"} onValueChange={(v) => updateFilter("stationId", v === "all" ? "" : v)}>
             <SelectTrigger className="w-48"><SelectValue placeholder="Toutes" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Toutes</SelectItem>
+              <SelectItem value="all">Toutes</SelectItem>
               {stations.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
             </SelectContent>
           </Select>
