@@ -100,7 +100,7 @@ export function EcartsClient({
         {!isGerant && (
           <div className="space-y-1">
             <Label className="text-xs">Station</Label>
-            <Select value={selectedStation || "all"} onValueChange={(v) => updateParams("stationId", v === "all" ? "" : v)}>
+            <Select value={selectedStation || "all"} onValueChange={(v) => updateParams("stationId", v === "all" ? "" : (v ?? ""))}>
               <SelectTrigger className="w-48"><SelectValue placeholder="Toutes les stations" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Toutes les stations</SelectItem>

@@ -118,7 +118,7 @@ export function RapportsClient({
         </div>
         <div className="space-y-1">
           <Label className="text-xs">Station (optionnel)</Label>
-          <Select value={selectedStation || "all"} onValueChange={(v) => updateParams("stationId", v === "all" ? "" : v)}>
+          <Select value={selectedStation || "all"} onValueChange={(v) => updateParams("stationId", v === "all" ? "" : (v ?? ""))}>
             <SelectTrigger className="w-52"><SelectValue placeholder="Toutes les stations" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Toutes les stations</SelectItem>

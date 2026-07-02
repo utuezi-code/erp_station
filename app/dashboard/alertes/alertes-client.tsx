@@ -93,7 +93,7 @@ export function AlertesClient({
       <div className="flex flex-wrap gap-4 mb-6 bg-white border rounded-xl p-4">
         <div className="space-y-1">
           <Label className="text-xs">Niveau</Label>
-          <Select value={filters.level || "all"} onValueChange={(v) => updateFilter("level", v === "all" ? "" : v)}>
+          <Select value={filters.level || "all"} onValueChange={(v) => updateFilter("level", v === "all" ? "" : (v ?? ""))}>
             <SelectTrigger className="w-36"><SelectValue placeholder="Tous niveaux" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tous niveaux</SelectItem>
@@ -105,7 +105,7 @@ export function AlertesClient({
         </div>
         <div className="space-y-1">
           <Label className="text-xs">Type</Label>
-          <Select value={filters.type || "all"} onValueChange={(v) => updateFilter("type", v === "all" ? "" : v)}>
+          <Select value={filters.type || "all"} onValueChange={(v) => updateFilter("type", v === "all" ? "" : (v ?? ""))}>
             <SelectTrigger className="w-52"><SelectValue placeholder="Tous types" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tous types</SelectItem>
@@ -117,7 +117,7 @@ export function AlertesClient({
         </div>
         <div className="space-y-1">
           <Label className="text-xs">Station</Label>
-          <Select value={filters.stationId || "all"} onValueChange={(v) => updateFilter("stationId", v === "all" ? "" : v)}>
+          <Select value={filters.stationId || "all"} onValueChange={(v) => updateFilter("stationId", v === "all" ? "" : (v ?? ""))}>
             <SelectTrigger className="w-48"><SelectValue placeholder="Toutes" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Toutes</SelectItem>
