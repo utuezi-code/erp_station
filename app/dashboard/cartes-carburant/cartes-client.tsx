@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -97,10 +97,8 @@ export function CartesClient({
       {/* Header actions */}
       <div className="flex justify-end">
         <Dialog open={openClient} onOpenChange={setOpenClient}>
-          <DialogTrigger asChild>
-            <Button className="bg-orange-500 hover:bg-orange-600 text-white">
-              <Plus className="w-4 h-4 mr-1" /> Nouveau client
-            </Button>
+          <DialogTrigger className="inline-flex items-center justify-center rounded-md bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium px-4 py-2 transition-colors">
+            <Plus className="w-4 h-4 mr-1" /> Nouveau client
           </DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>Nouveau compte client</DialogTitle></DialogHeader>
@@ -161,10 +159,8 @@ export function CartesClient({
               <div className="flex items-center justify-between">
                 <h2 className="text-base font-semibold text-slate-800">{selectedClient.name}</h2>
                 <Dialog open={openCarte === selectedClient.id} onOpenChange={(v) => setOpenCarte(v ? selectedClient.id : null)}>
-                  <DialogTrigger asChild>
-                    <Button size="sm" variant="outline">
-                      <CreditCard className="w-4 h-4 mr-1" /> Créer une carte
-                    </Button>
+                  <DialogTrigger className="inline-flex items-center justify-center rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-medium px-3 py-1.5 transition-colors">
+                    <CreditCard className="w-4 h-4 mr-1" /> Créer une carte
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader><DialogTitle>Nouvelle carte — {selectedClient.name}</DialogTitle></DialogHeader>
@@ -199,10 +195,8 @@ export function CartesClient({
                               {carte.active ? "Active" : "Inactive"}
                             </Badge>
                             <Dialog open={openTx === carte.id} onOpenChange={(v) => setOpenTx(v ? carte.id : null)}>
-                              <DialogTrigger asChild>
-                                <Button size="sm" className="bg-orange-500 hover:bg-orange-600 text-white text-xs">
-                                  <Fuel className="w-3 h-3 mr-1" /> Transaction
-                                </Button>
+                              <DialogTrigger className="inline-flex items-center justify-center rounded-md bg-orange-500 hover:bg-orange-600 text-white text-xs font-medium px-2.5 py-1.5 transition-colors">
+                                <Fuel className="w-3 h-3 mr-1" /> Transaction
                               </DialogTrigger>
                               <DialogContent>
                                 <DialogHeader><DialogTitle>Transaction — {carte.holderName}</DialogTitle></DialogHeader>

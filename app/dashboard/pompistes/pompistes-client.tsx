@@ -129,10 +129,8 @@ export function PompistesClient({
         {selectedStation && (
           <div className="ml-auto flex items-end">
             <Dialog open={openPompiste} onOpenChange={setOpenPompiste}>
-              <DialogTrigger asChild>
-                <Button size="sm" className="bg-orange-500 hover:bg-orange-600 text-white">
-                  <UserPlus className="w-4 h-4 mr-1" /> Ajouter pompiste
-                </Button>
+              <DialogTrigger className="inline-flex items-center justify-center rounded-md bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium px-3 py-1.5 transition-colors">
+                <UserPlus className="w-4 h-4 mr-1" /> Ajouter pompiste
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader><DialogTitle>Nouveau pompiste</DialogTitle></DialogHeader>
@@ -236,10 +234,8 @@ export function PompistesClient({
                   {/* Actions */}
                   <div className="flex gap-2 pt-1">
                     <Dialog open={openShift === pompiste.id} onOpenChange={(v) => setOpenShift(v ? pompiste.id : null)}>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="flex-1 text-xs">
-                          <TrendingUp className="w-3 h-3 mr-1" /> Saisir shift
-                        </Button>
+                      <DialogTrigger className="inline-flex items-center justify-center rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium flex-1 px-2 py-1.5 transition-colors">
+                        <TrendingUp className="w-3 h-3 mr-1" /> Saisir shift
                       </DialogTrigger>
                       <DialogContent>
                         <DialogHeader><DialogTitle>Shift — {pompiste.name}</DialogTitle></DialogHeader>
