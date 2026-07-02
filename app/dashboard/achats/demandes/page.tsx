@@ -52,7 +52,7 @@ export default async function DemandesPage({
           <p className="text-gray-500 mt-1">{requests.length} demande(s)</p>
         </div>
         <Link href="/dashboard/achats/demandes/new">
-          <Button className="bg-orange-500 hover:bg-orange-600">
+          <Button className="bg-orange-400 hover:bg-orange-500">
             <Plus className="w-4 h-4 mr-2" /> Nouvelle DA
           </Button>
         </Link>
@@ -61,7 +61,7 @@ export default async function DemandesPage({
       <div className="flex gap-2 mb-4">
         {(["", "EN_ATTENTE", "VALIDE", "REJETE", "ANNULE"] as const).map((s) => (
           <Link key={s} href={s ? `?status=${s}` : "?"}>
-            <button className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${(params.status || "") === s ? "bg-orange-500 text-white border-orange-500" : "bg-white text-gray-600 border-gray-200 hover:border-orange-300"}`}>
+            <button className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${(params.status || "") === s ? "bg-orange-400 text-white border-orange-400" : "bg-white text-gray-600 border-gray-200 hover:border-orange-300"}`}>
               {s ? STATUS[s]?.label : "Tous"}
             </button>
           </Link>

@@ -42,20 +42,18 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left panel */}
-      <div className="hidden lg:flex flex-col justify-between w-1/2 bg-slate-900 p-12 relative overflow-hidden">
+      <div className="hidden lg:flex flex-col justify-between w-1/2 bg-orange-50 p-12 relative overflow-hidden border-r border-orange-100">
         {/* Background decoration */}
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900" />
-        <div className="absolute -top-32 -right-32 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-orange-500/5 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-orange-500/5 rounded-full blur-2xl" />
+        <div className="absolute -top-32 -right-32 w-96 h-96 bg-orange-200/40 rounded-full blur-3xl" />
+        <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-amber-200/30 rounded-full blur-3xl" />
 
         {/* Logo */}
         <div className="relative flex items-center gap-3">
-          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-orange-500 shadow-lg shadow-orange-500/30">
+          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-orange-400">
             <Fuel className="w-5 h-5 text-white" />
           </div>
           <div>
-            <p className="text-white font-bold text-lg tracking-wide">IVORY ENERGIES CI</p>
+            <p className="text-slate-800 font-bold text-lg tracking-wide">IVORY ENERGIES CI</p>
             <p className="text-slate-400 text-xs">Plateforme ERP</p>
           </div>
         </div>
@@ -63,11 +61,11 @@ export default function LoginPage() {
         {/* Center content */}
         <div className="relative space-y-6">
           <div className="space-y-3">
-            <h1 className="text-4xl font-bold text-white leading-tight">
+            <h1 className="text-4xl font-bold text-slate-800 leading-tight">
               Gérez vos stations<br />
-              <span className="text-orange-400">en toute simplicité</span>
+              <span className="text-orange-500">en toute simplicité</span>
             </h1>
-            <p className="text-slate-400 text-sm leading-relaxed max-w-sm">
+            <p className="text-slate-500 text-sm leading-relaxed max-w-sm">
               Suivi en temps réel des ventes, stocks, versements et performances de vos stations-service à travers la Côte d'Ivoire.
             </p>
           </div>
@@ -75,16 +73,16 @@ export default function LoginPage() {
 
         {/* Footer */}
         <div className="relative">
-          <p className="text-slate-600 text-xs">© 2026 IVORY ENERGIES CI. Tous droits réservés.</p>
+          <p className="text-slate-400 text-xs">© 2026 IVORY ENERGIES CI. Tous droits réservés.</p>
         </div>
       </div>
 
       {/* Right panel — Login form */}
-      <div className="flex-1 flex items-center justify-center p-6 bg-gray-50">
+      <div className="flex-1 flex items-center justify-center p-6 bg-white">
         <div className="w-full max-w-md">
           {/* Mobile logo */}
           <div className="flex lg:hidden items-center gap-3 mb-8">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-orange-500">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-orange-400">
               <Fuel className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -156,7 +154,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-orange-500 hover:bg-orange-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors shadow-lg shadow-orange-500/25 mt-2"
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-orange-400 hover:bg-orange-500 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors shadow-sm shadow-orange-300/30 mt-2"
               >
                 {loading ? (
                   <>

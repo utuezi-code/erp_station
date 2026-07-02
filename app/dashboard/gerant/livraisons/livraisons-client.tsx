@@ -35,7 +35,7 @@ export function LivraisonsClient({ stationId, deliveries, fuels }: any) {
   return (
     <>
       <div className="flex justify-end mb-4">
-        <Button onClick={() => setOpen(true)} className="bg-orange-500 hover:bg-orange-600">
+        <Button onClick={() => setOpen(true)} className="bg-orange-400 hover:bg-orange-500">
           <Plus className="w-4 h-4 mr-2" /> Nouvelle livraison
         </Button>
       </div>
@@ -98,7 +98,7 @@ export function LivraisonsClient({ stationId, deliveries, fuels }: any) {
             <div className="space-y-2"><Label>Dépôt</Label><Input name="depot" /></div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-              <Button type="submit" disabled={loading} className="bg-orange-500 hover:bg-orange-600">
+              <Button type="submit" disabled={loading} className="bg-orange-400 hover:bg-orange-500">
                 {loading ? "..." : "Enregistrer"}
               </Button>
             </DialogFooter>

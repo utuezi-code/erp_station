@@ -151,7 +151,7 @@ export function NewCommandeClient({
               <div className="flex justify-between text-gray-500"><span>Total HT</span><span>{fmt(totalHT)} FCFA</span></div>
               <div className="flex justify-between text-gray-500"><span>TVA</span><span>{fmt(totalTVA)} FCFA</span></div>
               <div className="flex justify-between font-bold text-lg border-t pt-2"><span>Total TTC</span><span>{fmt(totalTTC)} FCFA</span></div>
-              <Button type="submit" disabled={loading} className="w-full mt-4 bg-orange-500 hover:bg-orange-600">
+              <Button type="submit" disabled={loading} className="w-full mt-4 bg-orange-400 hover:bg-orange-500">
                 <Send className="w-4 h-4 mr-2" /> Créer le BC
               </Button>
             </CardContent>

@@ -118,7 +118,7 @@ export default async function DashboardPage() {
               </span>
               <h3 className="font-semibold text-slate-800 text-sm">Alertes récentes</h3>
             </div>
-            <Link href="/dashboard/alertes" className="text-xs text-orange-500 hover:text-orange-600 font-medium flex items-center gap-0.5 transition-colors">
+            <Link href="/dashboard/alertes" className="text-xs text-orange-400 hover:text-orange-500 font-medium flex items-center gap-0.5 transition-colors">
               Voir tout <ArrowUpRight className="w-3 h-3" />
             </Link>
           </div>
@@ -215,7 +215,7 @@ function KpiCard({
         </div>
       </div>
       {href && (
-        <div className="mt-3 flex items-center gap-1 text-[11px] font-medium text-slate-400 group-hover:text-orange-500 transition-colors">
+        <div className="mt-3 flex items-center gap-1 text-[11px] font-medium text-slate-400 group-hover:text-orange-400 transition-colors">
           Voir détail <ArrowUpRight className="w-3 h-3" />
         </div>
       )}

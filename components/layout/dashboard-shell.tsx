@@ -22,11 +22,11 @@ export function DashboardShell({ userRole, userName, children }: Props) {
   }, [pathname]);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50">
+    <div className="flex h-screen overflow-hidden bg-slate-50/80">
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-20 bg-black/60 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-20 bg-slate-900/30 backdrop-blur-sm lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}

@@ -69,7 +69,7 @@ export function BanquesClient({ accounts, stations }: Props) {
       <div className="flex justify-end">
         <button
           onClick={openCreate}
-          className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm shadow-orange-500/20"
+          className="flex items-center gap-2 px-4 py-2 bg-orange-400 hover:bg-orange-500 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm shadow-orange-400/20"
         >
           <Plus className="w-4 h-4" /> Nouveau compte
         </button>
@@ -172,7 +172,7 @@ export function BanquesClient({ accounts, stations }: Props) {
                   Annuler
                 </button>
                 <button type="submit" disabled={loading}
-                  className="flex items-center gap-2 px-5 py-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors">
+                  className="flex items-center gap-2 px-5 py-2 bg-orange-400 hover:bg-orange-500 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors">
                   {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                   {editing ? "Mettre à jour" : "Créer"}
                 </button>

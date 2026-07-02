@@ -148,7 +148,7 @@ export function NewDemandeClient({
               <p className="text-sm text-gray-500">Coût total estimé</p>
               <p className="text-3xl font-bold">{fmt(total)}</p>
               <p className="text-xs text-gray-400 mb-4">FCFA</p>
-              <Button type="submit" disabled={loading} className="w-full bg-orange-500 hover:bg-orange-600">
+              <Button type="submit" disabled={loading} className="w-full bg-orange-400 hover:bg-orange-500">
                 <Send className="w-4 h-4 mr-2" /> Soumettre la demande
               </Button>
             </CardContent>

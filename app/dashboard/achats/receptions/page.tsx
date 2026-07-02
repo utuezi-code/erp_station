@@ -29,7 +29,7 @@ export default async function ReceptionsPage() {
           <p className="text-gray-500 mt-1">{receipts.length} réception(s)</p>
         </div>
         <Link href="/dashboard/achats/receptions/new">
-          <Button className="bg-orange-500 hover:bg-orange-600">
+          <Button className="bg-orange-400 hover:bg-orange-500">
             <Plus className="w-4 h-4 mr-2" /> Nouvelle réception
           </Button>
         </Link>

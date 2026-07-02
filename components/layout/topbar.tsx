@@ -109,26 +109,26 @@ export function Topbar({ onMenuClick, userRole, userName }: TopbarProps) {
   }, []);
 
   function levelColor(level: string) {
-    if (level === "RED") return "bg-red-500";
-    if (level === "ORANGE") return "bg-orange-400";
-    return "bg-blue-400";
+    if (level === "RED") return "bg-red-400";
+    if (level === "ORANGE") return "bg-orange-300";
+    return "bg-blue-300";
   }
 
   return (
-    <header className="sticky top-0 z-10 flex items-center justify-between h-14 px-4 bg-white/80 backdrop-blur-md border-b border-slate-200/60 shadow-sm flex-shrink-0">
+    <header className="sticky top-0 z-10 flex items-center justify-between h-14 px-4 bg-white border-b border-slate-100 shadow-sm flex-shrink-0">
       {/* Left */}
       <div className="flex items-center gap-3 min-w-0">
         <button
           onClick={onMenuClick}
-          className="lg:hidden flex items-center justify-center w-8 h-8 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+          className="lg:hidden flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
           aria-label="Menu"
         >
           <Menu className="w-5 h-5" />
         </button>
         {/* Mobile logo */}
         <div className="flex lg:hidden items-center gap-2">
-          <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-gradient-to-br from-orange-400 to-orange-600">
-            <Fuel className="w-3.5 h-3.5 text-white" />
+          <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-orange-100">
+            <Fuel className="w-3.5 h-3.5 text-orange-500" />
           </div>
         </div>
         <div className="hidden sm:block min-w-0">
@@ -149,7 +149,7 @@ export function Topbar({ onMenuClick, userRole, userName }: TopbarProps) {
           >
             <Bell className="w-4 h-4" />
             {unread > 0 && (
-              <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
+              <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-red-400 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
                 {unread > 9 ? "9+" : unread}
               </span>
             )}
@@ -228,9 +228,9 @@ export function Topbar({ onMenuClick, userRole, userName }: TopbarProps) {
         </div>
 
         {/* User avatar */}
-        <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center flex-shrink-0 shadow-sm">
-            <span className="text-[11px] font-bold text-white">{userName.charAt(0).toUpperCase()}</span>
+        <div className="flex items-center gap-2 pl-2 border-l border-slate-100">
+          <div className="w-7 h-7 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
+            <span className="text-[11px] font-bold text-orange-600">{userName.charAt(0).toUpperCase()}</span>
           </div>
           <p className="hidden md:block text-[13px] font-medium text-slate-700 max-w-[120px] truncate">{userName}</p>
         </div>

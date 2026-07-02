@@ -177,7 +177,7 @@ export function IndexClientPage({ stationId, selectedDate, pumps, indexMap, user
                       </div>
                       {!readOnly && (
                         <div className="mt-2 flex justify-end">
-                          <Button type="submit" size="sm" disabled={loading[nozzle.id]} className="bg-orange-500 hover:bg-orange-600">
+                          <Button type="submit" size="sm" disabled={loading[nozzle.id]} className="bg-orange-400 hover:bg-orange-500">
                             <Save className="w-3 h-3 mr-1" />
                             {loading[nozzle.id] ? "..." : "Enregistrer"}
                           </Button>

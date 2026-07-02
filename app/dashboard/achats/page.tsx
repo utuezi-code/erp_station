@@ -107,7 +107,7 @@ export default async function AchatsPage() {
           <p className="text-gray-500 mt-1">Demandes, bons de commande, livraisons et factures</p>
         </div>
         <Link href="/dashboard/achats/demandes/new">
-          <button className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium px-4 py-2 rounded-xl flex items-center gap-2 transition-colors">
+          <button className="bg-orange-400 hover:bg-orange-500 text-white text-sm font-medium px-4 py-2 rounded-xl flex items-center gap-2 transition-colors">
             <FileText className="w-4 h-4" /> Nouvelle demande
           </button>
         </Link>

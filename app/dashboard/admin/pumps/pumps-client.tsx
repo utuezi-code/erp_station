@@ -48,7 +48,7 @@ export function PumpsClientPage({ stations, fuels, pumps, tanks }: Props) {
       <TabsContent value="pumps">
         <div className="flex gap-2 justify-end mb-4">
           <Button variant="outline" onClick={() => setNozzleOpen(true)}><Plus className="w-4 h-4 mr-1" />Pistolet</Button>
-          <Button className="bg-orange-500 hover:bg-orange-600" onClick={() => setPumpOpen(true)}><Plus className="w-4 h-4 mr-1" />Pompe</Button>
+          <Button className="bg-orange-400 hover:bg-orange-500" onClick={() => setPumpOpen(true)}><Plus className="w-4 h-4 mr-1" />Pompe</Button>
         </div>
         <div className="bg-white rounded-xl border">
           <Table>
@@ -82,7 +82,7 @@ export function PumpsClientPage({ stations, fuels, pumps, tanks }: Props) {
 
       <TabsContent value="tanks">
         <div className="flex justify-end mb-4">
-          <Button className="bg-orange-500 hover:bg-orange-600" onClick={() => setTankOpen(true)}><Plus className="w-4 h-4 mr-1" />Nouvelle cuve</Button>
+          <Button className="bg-orange-400 hover:bg-orange-500" onClick={() => setTankOpen(true)}><Plus className="w-4 h-4 mr-1" />Nouvelle cuve</Button>
         </div>
         <div className="bg-white rounded-xl border">
           <Table>
@@ -128,7 +128,7 @@ export function PumpsClientPage({ stations, fuels, pumps, tanks }: Props) {
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setPumpOpen(false)}>Annuler</Button>
-              <Button type="submit" disabled={loading} className="bg-orange-500 hover:bg-orange-600">Créer</Button>
+              <Button type="submit" disabled={loading} className="bg-orange-400 hover:bg-orange-500">Créer</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -156,7 +156,7 @@ export function PumpsClientPage({ stations, fuels, pumps, tanks }: Props) {
             <div className="space-y-2"><Label>N° pistolet</Label><Input name="number" type="number" min="1" required /></div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setNozzleOpen(false)}>Annuler</Button>
-              <Button type="submit" disabled={loading} className="bg-orange-500 hover:bg-orange-600">Créer</Button>
+              <Button type="submit" disabled={loading} className="bg-orange-400 hover:bg-orange-500">Créer</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -188,7 +188,7 @@ export function PumpsClientPage({ stations, fuels, pumps, tanks }: Props) {
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setTankOpen(false)}>Annuler</Button>
-              <Button type="submit" disabled={loading} className="bg-orange-500 hover:bg-orange-600">Créer</Button>
+              <Button type="submit" disabled={loading} className="bg-orange-400 hover:bg-orange-500">Créer</Button>
             </DialogFooter>
           </form>
         </DialogContent>

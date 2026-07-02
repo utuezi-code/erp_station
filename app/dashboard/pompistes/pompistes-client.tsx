@@ -129,7 +129,7 @@ export function PompistesClient({
         {selectedStation && (
           <div className="ml-auto flex items-end">
             <Dialog open={openPompiste} onOpenChange={setOpenPompiste}>
-              <DialogTrigger className="inline-flex items-center justify-center rounded-md bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium px-3 py-1.5 transition-colors">
+              <DialogTrigger className="inline-flex items-center justify-center rounded-md bg-orange-400 hover:bg-orange-500 text-white text-sm font-medium px-3 py-1.5 transition-colors">
                 <UserPlus className="w-4 h-4 mr-1" /> Ajouter pompiste
               </DialogTrigger>
               <DialogContent>
@@ -139,7 +139,7 @@ export function PompistesClient({
                   <div><Label>Nom complet *</Label><Input name="name" required className="mt-1" /></div>
                   <div><Label>Téléphone</Label><Input name="phone" className="mt-1" /></div>
                   <div><Label>Matricule</Label><Input name="matricule" className="mt-1" /></div>
-                  <Button type="submit" disabled={loading} className="w-full bg-orange-500 hover:bg-orange-600 text-white">Enregistrer</Button>
+                  <Button type="submit" disabled={loading} className="w-full bg-orange-400 hover:bg-orange-500 text-white">Enregistrer</Button>
                 </form>
               </DialogContent>
             </Dialog>
@@ -259,7 +259,7 @@ export function PompistesClient({
                             <div><Label>CA (FCFA)</Label><Input name="revenue" type="number" step="1" min="0" className="mt-1" /></div>
                           </div>
                           <div><Label>Note</Label><Input name="note" className="mt-1" /></div>
-                          <Button type="submit" disabled={loading} className="w-full bg-orange-500 hover:bg-orange-600 text-white">Enregistrer</Button>
+                          <Button type="submit" disabled={loading} className="w-full bg-orange-400 hover:bg-orange-500 text-white">Enregistrer</Button>
                         </form>
                       </DialogContent>
                     </Dialog>

@@ -38,7 +38,7 @@ const TRANSITIONS: Record<string, { next: string; label: string; variant: string
 };
 
 const COLORS: Record<string, string> = {
-  orange: "bg-orange-500 hover:bg-orange-600 text-white",
+  orange: "bg-orange-400 hover:bg-orange-500 text-white",
   blue: "bg-blue-500 hover:bg-blue-600 text-white",
   green: "bg-green-600 hover:bg-green-700 text-white",
   purple: "bg-purple-600 hover:bg-purple-700 text-white",

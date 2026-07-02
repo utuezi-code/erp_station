@@ -80,7 +80,7 @@ export function UsersClientPage({ users, stations }: { users: User[]; stations: 
   return (
     <>
       <div className="flex justify-end mb-4">
-        <Button onClick={openCreate} className="bg-orange-500 hover:bg-orange-600">
+        <Button onClick={openCreate} className="bg-orange-400 hover:bg-orange-500">
           <Plus className="w-4 h-4 mr-2" /> Nouvel utilisateur
         </Button>
       </div>
@@ -179,7 +179,7 @@ export function UsersClientPage({ users, stations }: { users: User[]; stations: 
             )}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-              <Button type="submit" disabled={loading} className="bg-orange-500 hover:bg-orange-600">
+              <Button type="submit" disabled={loading} className="bg-orange-400 hover:bg-orange-500">
                 {loading ? "Enregistrement..." : "Enregistrer"}
               </Button>
             </DialogFooter>

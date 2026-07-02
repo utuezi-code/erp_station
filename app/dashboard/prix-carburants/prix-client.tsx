@@ -122,7 +122,7 @@ export function PrixClient({ fuels }: { fuels: Fuel[] }) {
                   Annuler
                 </button>
                 <button type="submit" disabled={loading}
-                  className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors">
+                  className="flex items-center gap-2 px-4 py-2 bg-orange-400 hover:bg-orange-500 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors">
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                   Enregistrer
                 </button>
