@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,8 +36,10 @@ interface AlertItem {
   createdAt: string;
 }
 
+const POLL_INTERVAL = 30_000;
+
 export function AlertesClient({
-  alerts,
+  alerts: initialAlerts,
   stations,
   isAdmin,
   filters,
@@ -49,6 +51,38 @@ export function AlertesClient({
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [alerts, setAlerts] = useState<AlertItem[]>(initialAlerts);
+  const [unreadCount, setUnreadCount] = useState(initialAlerts.filter((a) => !a.read).length);
+  const filtersRef = useRef(filters);
+  filtersRef.current = filters;
+
+  const fetchAlerts = useCallback(async () => {
+    const f = filtersRef.current;
+    const params = new URLSearchParams();
+    if (f.level) params.set("level", f.level);
+    if (f.type) params.set("type", f.type);
+    if (f.stationId) params.set("stationId", f.stationId);
+    if (f.unreadOnly) params.set("unreadOnly", "1");
+    try {
+      const res = await fetch(`/api/alertes?${params.toString()}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setAlerts(data.alerts);
+      setUnreadCount(data.unreadCount);
+    } catch {
+      // silently ignore network errors during polling
+    }
+  }, []);
+
+  useEffect(() => {
+    setAlerts(initialAlerts);
+    setUnreadCount(initialAlerts.filter((a) => !a.read).length);
+  }, [initialAlerts]);
+
+  useEffect(() => {
+    const id = setInterval(fetchAlerts, POLL_INTERVAL);
+    return () => clearInterval(id);
+  }, [fetchAlerts]);
 
   function updateFilter(key: string, value: string) {
     const params = new URLSearchParams({
@@ -63,12 +97,16 @@ export function AlertesClient({
 
   async function handleMarkRead(id: string) {
     await markAlertRead(id);
+    setAlerts((prev) => prev.map((a) => a.id === id ? { ...a, read: true } : a));
+    setUnreadCount((n) => Math.max(0, n - 1));
   }
 
   async function handleMarkAllRead() {
     setLoading(true);
     try {
       await markAllRead();
+      setAlerts((prev) => prev.map((a) => ({ ...a, read: true })));
+      setUnreadCount(0);
       toast.success("Toutes les alertes marquées comme lues.");
     } finally {
       setLoading(false);
@@ -80,6 +118,7 @@ export function AlertesClient({
     try {
       const result = await generateAlerts();
       toast.success(`${result.created.length} nouvelle(s) alerte(s) générée(s).`);
+      await fetchAlerts();
     } catch (err: any) {
       toast.error(err.message);
     } finally {
@@ -150,6 +189,11 @@ export function AlertesClient({
           )}
         </div>
       </div>
+
+      {/* Unread summary */}
+      {unreadCount > 0 && (
+        <p className="text-sm text-orange-600 font-medium mb-3">{unreadCount} alerte(s) non lue(s) — mise à jour toutes les 30s</p>
+      )}
 
       {/* Alert list */}
       <div className="space-y-3">
