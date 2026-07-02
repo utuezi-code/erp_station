@@ -9,7 +9,7 @@ import {
   TrendingUp, Wallet, ArrowUpCircle, AlertTriangle, Package,
   BarChart3, Bell, FileText, ShoppingCart, Settings, LogOut,
   GitCompare, Calculator, ChevronLeft, ChevronRight, Landmark,
-  Shield, UserCircle, Trophy,
+  Shield, UserCircle, Trophy, HardHat, CreditCard, FlaskConical,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 
@@ -42,6 +42,7 @@ const navGroups: NavGroup[] = [
       { label: "Encaissements", href: "/dashboard/gerant/encaissements", icon: Wallet, roles: ["GERANT"] },
       { label: "Versements", href: "/dashboard/gerant/versements", icon: ArrowUpCircle, roles: ["GERANT", "DIRECTION_FINANCIERE"] },
       { label: "Livraisons", href: "/dashboard/gerant/livraisons", icon: Package, roles: ["GERANT"] },
+      { label: "Pompistes", href: "/dashboard/pompistes", icon: HardHat, roles: ["ADMIN", "GERANT"] },
     ],
   },
   {
@@ -55,6 +56,8 @@ const navGroups: NavGroup[] = [
       { label: "Prix carburants", href: "/dashboard/prix-carburants", icon: Fuel, roles: ["ADMIN", "DIRECTION_GENERALE"] },
       { label: "Écarts", href: "/dashboard/ecarts", icon: GitCompare, roles: ["ADMIN", "GERANT", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"] },
       { label: "Exploitation", href: "/dashboard/exploitation", icon: Calculator, roles: ["ADMIN", "GERANT", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"] },
+      { label: "Réconciliation cuves", href: "/dashboard/reconciliation", icon: FlaskConical, roles: ["ADMIN", "GERANT", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"] },
+      { label: "Cartes carburant", href: "/dashboard/cartes-carburant", icon: CreditCard, roles: ["ADMIN", "GERANT", "DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"] },
     ],
   },
   {

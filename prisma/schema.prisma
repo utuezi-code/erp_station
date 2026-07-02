@@ -78,6 +78,12 @@ enum EncaissementType {
   CREDIT_CLIENT
 }
 
+enum ShiftType {
+  MATIN
+  APRES_MIDI
+  NUIT
+}
+
 // ─── UTILISATEURS & AUTH ──────────────────────────────────────────────────────
 
 model User {
@@ -173,6 +179,9 @@ model Station {
   tankMovements   TankMovement[]
   purchaseRequests PurchaseRequest[]
   receipts        GoodsReceipt[]
+  pompistes       Pompiste[]
+  pompisteShifts  PompisteShift[]
+  carteTransactions TransactionCarte[]
 
   @@index([regionId])
 }
@@ -206,6 +215,7 @@ model Fuel {
   tanks        Tank[]
   deliveries   FuelDelivery[]
   tankMovements TankMovement[]
+  carteTransactions TransactionCarte[]
 }
 
 // ─── POMPES & PISTOLETS ───────────────────────────────────────────────────────
@@ -541,6 +551,94 @@ model GoodsReceiptItem {
   quantityReceived Decimal   @db.Decimal(10, 3)
   quantityRejected Decimal   @db.Decimal(10, 3) @default(0)
   unit          String
+}
+
+// ─── POMPISTES ────────────────────────────────────────────────────────────────
+
+model Pompiste {
+  id        String   @id @default(cuid())
+  stationId String
+  station   Station  @relation(fields: [stationId], references: [id])
+  name      String
+  phone     String?
+  matricule String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  shifts    PompisteShift[]
+
+  @@index([stationId])
+}
+
+model PompisteShift {
+  id         String    @id @default(cuid())
+  pompisteId String
+  pompiste   Pompiste  @relation(fields: [pompisteId], references: [id])
+  stationId  String
+  station    Station   @relation(fields: [stationId], references: [id])
+  date       DateTime  @db.Date
+  shiftType  ShiftType @default(MATIN)
+  volumeSold Decimal?  @db.Decimal(12, 3)
+  revenue    Decimal?  @db.Decimal(14, 2)
+  note       String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@unique([pompisteId, date, shiftType])
+  @@index([stationId, date])
+}
+
+// ─── CARTES CARBURANT ─────────────────────────────────────────────────────────
+
+model ClientCompte {
+  id        String   @id @default(cuid())
+  name      String
+  code      String   @unique
+  phone     String?
+  email     String?
+  address   String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cartes    CarteCarburant[]
+}
+
+model CarteCarburant {
+  id          String       @id @default(cuid())
+  clientId    String
+  client      ClientCompte @relation(fields: [clientId], references: [id])
+  cardNumber  String       @unique
+  holderName  String
+  plafond     Decimal?     @db.Decimal(14, 2)
+  solde       Decimal      @db.Decimal(14, 2) @default(0)
+  active      Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  transactions TransactionCarte[]
+
+  @@index([clientId])
+}
+
+model TransactionCarte {
+  id        String         @id @default(cuid())
+  carteId   String
+  carte     CarteCarburant @relation(fields: [carteId], references: [id])
+  stationId String
+  station   Station        @relation(fields: [stationId], references: [id])
+  fuelId    String?
+  fuel      Fuel?          @relation(fields: [fuelId], references: [id])
+  date      DateTime       @db.Date
+  volume    Decimal        @db.Decimal(12, 3)
+  unitPrice Decimal        @db.Decimal(10, 2)
+  amount    Decimal        @db.Decimal(14, 2)
+  reference String?
+  createdAt DateTime       @default(now())
+
+  @@index([carteId])
+  @@index([stationId, date])
 }
 
 model SupplierInvoice {

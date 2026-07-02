@@ -36,6 +36,9 @@ const PAGE_TITLES: Record<string, string> = {
   "/dashboard/classement": "Classement des stations",
   "/dashboard/prix-carburants": "Prix des carburants",
   "/dashboard/profil": "Mon profil",
+  "/dashboard/pompistes": "Gestion des pompistes",
+  "/dashboard/cartes-carburant": "Cartes carburant",
+  "/dashboard/reconciliation": "Réconciliation des cuves",
 };
 
 interface Alert {
