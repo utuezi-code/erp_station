@@ -1,8 +1,9 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, Menu, AlertTriangle, CheckCircle, X } from "lucide-react";
+import { Bell, Menu, AlertTriangle, CheckCircle, X, Fuel } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
+import { Role } from "@prisma/client";
 
 const PAGE_TITLES: Record<string, string> = {
   "/dashboard": "Tableau de bord",
@@ -49,9 +50,11 @@ interface Alert {
 
 interface TopbarProps {
   onMenuClick: () => void;
+  userRole: Role;
+  userName: string;
 }
 
-export function Topbar({ onMenuClick }: TopbarProps) {
+export function Topbar({ onMenuClick, userRole, userName }: TopbarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -94,7 +97,6 @@ export function Topbar({ onMenuClick }: TopbarProps) {
     loadAlerts();
   }, [pathname]);
 
-  // Close on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
@@ -110,68 +112,98 @@ export function Topbar({ onMenuClick }: TopbarProps) {
   }
 
   return (
-    <header className="sticky top-0 z-10 flex items-center justify-between h-14 px-4 bg-white border-b border-gray-100 shadow-sm">
-      <div className="flex items-center gap-3">
+    <header className="sticky top-0 z-10 flex items-center justify-between h-14 px-4 bg-white/80 backdrop-blur-md border-b border-slate-200/60 shadow-sm flex-shrink-0">
+      {/* Left */}
+      <div className="flex items-center gap-3 min-w-0">
         <button
           onClick={onMenuClick}
-          className="lg:hidden p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+          className="lg:hidden flex items-center justify-center w-8 h-8 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+          aria-label="Menu"
         >
           <Menu className="w-5 h-5" />
         </button>
-        <div>
-          <h1 className="text-base font-semibold text-gray-900 leading-tight">{title}</h1>
-          <p className="text-xs text-gray-400 capitalize hidden sm:block">{today}</p>
+        {/* Mobile logo */}
+        <div className="flex lg:hidden items-center gap-2">
+          <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-gradient-to-br from-orange-400 to-orange-600">
+            <Fuel className="w-3.5 h-3.5 text-white" />
+          </div>
         </div>
+        <div className="hidden sm:block min-w-0">
+          <h1 className="text-sm font-semibold text-slate-800 truncate">{title}</h1>
+          <p className="text-[11px] text-slate-400 capitalize hidden md:block">{today}</p>
+        </div>
+        <h1 className="sm:hidden text-sm font-semibold text-slate-800 truncate">{title}</h1>
       </div>
 
-      <div className="flex items-center gap-2" ref={ref}>
+      {/* Right */}
+      <div className="flex items-center gap-2 flex-shrink-0" ref={ref}>
+        {/* Notification bell */}
         <div className="relative">
           <button
             onClick={() => { setOpen((v) => !v); if (!open) loadAlerts(); }}
-            className="relative p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            className="relative flex items-center justify-center w-8 h-8 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+            aria-label="Notifications"
           >
             <Bell className="w-4 h-4" />
             {unread > 0 && (
-              <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+              <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
                 {unread > 9 ? "9+" : unread}
               </span>
             )}
           </button>
 
           {open && (
-            <div className="absolute right-0 top-12 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-50">
-                <p className="text-sm font-semibold text-gray-900">Notifications</p>
+            <div className="absolute right-0 top-10 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-50">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-50 bg-slate-50/50">
                 <div className="flex items-center gap-2">
+                  <Bell className="w-3.5 h-3.5 text-slate-400" />
+                  <p className="text-sm font-semibold text-slate-800">Notifications</p>
                   {unread > 0 && (
-                    <button onClick={markAllRead} className="text-xs text-orange-500 hover:text-orange-600 font-medium">
-                      Tout marquer lu
+                    <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-orange-100 text-orange-600">{unread}</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1">
+                  {unread > 0 && (
+                    <button
+                      onClick={markAllRead}
+                      className="text-xs text-orange-500 hover:text-orange-600 font-medium px-2 py-1 rounded-lg hover:bg-orange-50 transition-colors"
+                    >
+                      Tout lire
                     </button>
                   )}
-                  <button onClick={() => setOpen(false)} className="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
+                  <button
+                    onClick={() => setOpen(false)}
+                    className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors"
+                  >
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
 
-              <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
+              <div className="max-h-72 overflow-y-auto divide-y divide-slate-50">
                 {loading ? (
-                  <div className="py-8 text-center text-sm text-gray-400">Chargement…</div>
+                  <div className="py-10 text-center">
+                    <div className="w-5 h-5 border-2 border-orange-300 border-t-orange-500 rounded-full animate-spin mx-auto" />
+                    <p className="text-xs text-slate-400 mt-2">Chargement…</p>
+                  </div>
                 ) : alerts.length === 0 ? (
-                  <div className="py-8 text-center">
+                  <div className="py-10 text-center">
                     <CheckCircle className="w-8 h-8 text-green-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-400">Aucune notification</p>
+                    <p className="text-sm text-slate-400">Aucune notification</p>
                   </div>
                 ) : (
                   alerts.map((a) => (
-                    <div key={a.id} className={`flex items-start gap-3 px-4 py-3 transition-colors ${!a.read ? "bg-orange-50/40" : ""}`}>
+                    <div
+                      key={a.id}
+                      className={`flex items-start gap-3 px-4 py-3 transition-colors ${!a.read ? "bg-orange-50/60" : "hover:bg-slate-50"}`}
+                    >
                       <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${levelColor(a.level)}`} />
                       <div className="min-w-0 flex-1">
-                        <p className={`text-sm leading-snug ${!a.read ? "font-medium text-gray-900" : "text-gray-600"}`}>
+                        <p className={`text-[13px] leading-snug ${!a.read ? "font-semibold text-slate-800" : "text-slate-600"}`}>
                           {a.message}
                         </p>
-                        {a.stationName && <p className="text-xs text-gray-400 mt-0.5">{a.stationName}</p>}
-                        <p className="text-[11px] text-gray-300 mt-0.5">
+                        {a.stationName && <p className="text-[11px] text-slate-400 mt-0.5">{a.stationName}</p>}
+                        <p className="text-[10px] text-slate-300 mt-0.5">
                           {new Date(a.createdAt).toLocaleDateString("fr-CI", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                         </p>
                       </div>
@@ -180,16 +212,24 @@ export function Topbar({ onMenuClick }: TopbarProps) {
                 )}
               </div>
 
-              <div className="px-4 py-3 border-t border-gray-50">
+              <div className="px-4 py-3 border-t border-slate-50 bg-slate-50/30">
                 <button
                   onClick={() => { setOpen(false); router.push("/dashboard/alertes"); }}
-                  className="w-full text-center text-xs text-orange-500 hover:text-orange-600 font-medium"
+                  className="w-full text-center text-xs text-orange-500 hover:text-orange-600 font-semibold py-1 rounded-lg hover:bg-orange-50 transition-colors"
                 >
                   Voir toutes les alertes →
                 </button>
               </div>
             </div>
           )}
+        </div>
+
+        {/* User avatar */}
+        <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center flex-shrink-0 shadow-sm">
+            <span className="text-[11px] font-bold text-white">{userName.charAt(0).toUpperCase()}</span>
+          </div>
+          <p className="hidden md:block text-[13px] font-medium text-slate-700 max-w-[120px] truncate">{userName}</p>
         </div>
       </div>
     </header>
