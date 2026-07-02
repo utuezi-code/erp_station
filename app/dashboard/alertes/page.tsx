@@ -5,17 +5,18 @@ import { AlertesClient } from "./alertes-client";
 export default async function AlertesPage({
   searchParams,
 }: {
-  searchParams: { level?: string; type?: string; stationId?: string; unreadOnly?: string };
+  searchParams: Promise<{ level?: string; type?: string; stationId?: string; unreadOnly?: string }>;
 }) {
   const session = await requireRole(["ADMIN", "GERANT", "DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE", "RESPONSABLE_SERVICE"]);
+  const params = await searchParams;
   const user = session.user as any;
   const isAdmin = user.role === "ADMIN";
 
   const where: any = {};
-  if (searchParams.unreadOnly === "1") where.read = false;
-  if (searchParams.level) where.level = searchParams.level;
-  if (searchParams.type) where.type = searchParams.type;
-  if (searchParams.stationId) where.stationId = searchParams.stationId;
+  if (params.unreadOnly === "1") where.read = false;
+  if (params.level) where.level = params.level;
+  if (params.type) where.type = params.type;
+  if (params.stationId) where.stationId = params.stationId;
 
   const [alerts, stations, unreadCount] = await Promise.all([
     db.alert.findMany({
@@ -43,10 +44,10 @@ export default async function AlertesPage({
         stations={stations}
         isAdmin={isAdmin}
         filters={{
-          level: searchParams.level || "",
-          type: searchParams.type || "",
-          stationId: searchParams.stationId || "",
-          unreadOnly: searchParams.unreadOnly === "1",
+          level: params.level || "",
+          type: params.type || "",
+          stationId: params.stationId || "",
+          unreadOnly: params.unreadOnly === "1",
         }}
       />
     </div>

@@ -2,15 +2,16 @@ import { requireRole } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { IndexClientPage } from "./index-client";
 
-export default async function IndexPage({ searchParams }: { searchParams: { date?: string; stationId?: string } }) {
+export default async function IndexPage({ searchParams }: { searchParams: Promise<{ date?: string; stationId?: string }> }) {
   const session = await requireRole(["ADMIN", "GERANT"]);
   const user = session.user as any;
+  const params = await searchParams;
 
   const now = new Date();
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-  const selectedDate = searchParams.date || today;
+  const selectedDate = params.date || today;
   const isToday = selectedDate === today;
-  const selectedStation = searchParams.stationId || user.stationId;
+  const selectedStation = params.stationId || user.stationId;
 
   if (!selectedStation) {
     return (

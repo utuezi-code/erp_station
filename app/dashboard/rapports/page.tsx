@@ -5,14 +5,15 @@ import { RapportsClient } from "./rapports-client";
 export default async function RapportsPage({
   searchParams,
 }: {
-  searchParams: { stationId?: string; period?: string };
+  searchParams: Promise<{ stationId?: string; period?: string }>;
 }) {
   await requireRole(["ADMIN", "GERANT", "DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
+  const params = await searchParams;
 
   const today = new Date();
   const defaultPeriod = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
-  const period = searchParams.period || defaultPeriod;
-  const stationId = searchParams.stationId || "";
+  const period = params.period || defaultPeriod;
+  const stationId = params.stationId || "";
 
   const stations = await db.station.findMany({
     where: { status: "ACTIVE" },

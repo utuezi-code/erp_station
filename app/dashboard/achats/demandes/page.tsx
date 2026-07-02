@@ -23,13 +23,14 @@ const PRIORITY: Record<string, string> = {
 export default async function DemandesPage({
   searchParams,
 }: {
-  searchParams: { status?: string };
+  searchParams: Promise<{ status?: string }>;
 }) {
   const session = await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "GERANT", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
+  const params = await searchParams;
   const user = session.user as any;
 
   const where: any = {};
-  if (searchParams.status) where.status = searchParams.status;
+  if (params.status) where.status = params.status;
   if (user.role === "GERANT") where.stationId = user.stationId;
 
   const requests = await db.purchaseRequest.findMany({
@@ -60,7 +61,7 @@ export default async function DemandesPage({
       <div className="flex gap-2 mb-4">
         {(["", "EN_ATTENTE", "VALIDE", "REJETE", "ANNULE"] as const).map((s) => (
           <Link key={s} href={s ? `?status=${s}` : "?"}>
-            <button className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${(searchParams.status || "") === s ? "bg-orange-500 text-white border-orange-500" : "bg-white text-gray-600 border-gray-200 hover:border-orange-300"}`}>
+            <button className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${(params.status || "") === s ? "bg-orange-500 text-white border-orange-500" : "bg-white text-gray-600 border-gray-200 hover:border-orange-300"}`}>
               {s ? STATUS[s]?.label : "Tous"}
             </button>
           </Link>

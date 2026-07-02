@@ -5,18 +5,19 @@ import { EcartsClient } from "./ecarts-client";
 export default async function EcartsPage({
   searchParams,
 }: {
-  searchParams: { stationId?: string; from?: string; to?: string };
+  searchParams: Promise<{ stationId?: string; from?: string; to?: string }>;
 }) {
   const session = await requireRole(["ADMIN", "GERANT", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
+  const params = await searchParams;
   const user = session.user as any;
 
   const isGerant = user.role === "GERANT";
-  const stationFilter = isGerant ? user.stationId : searchParams.stationId;
+  const stationFilter = isGerant ? user.stationId : params.stationId;
 
   const today = new Date();
   const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-  const from = searchParams.from || firstOfMonth.toISOString().split("T")[0];
-  const to = searchParams.to || today.toISOString().split("T")[0];
+  const from = params.from || firstOfMonth.toISOString().split("T")[0];
+  const to = params.to || today.toISOString().split("T")[0];
 
   const stations = isGerant
     ? []

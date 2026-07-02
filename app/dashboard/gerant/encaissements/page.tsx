@@ -2,12 +2,12 @@ import { requireRole } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { EncaissementsClient } from "./encaissements-client";
 
-export default async function EncaissementsPage({ searchParams }: { searchParams: { date?: string } }) {
+export default async function EncaissementsPage({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
   const session = await requireRole(["ADMIN", "GERANT"]);
   const user = session.user as any;
   const stationId = user.stationId;
   const today = new Date().toISOString().split("T")[0];
-  const selectedDate = searchParams.date || today;
+  const selectedDate = (await searchParams).date || today;
 
   if (!stationId) return <p className="text-gray-500">Aucune station assignée.</p>;
 

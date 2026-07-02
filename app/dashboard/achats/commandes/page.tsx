@@ -25,12 +25,13 @@ function fmt(n: any) { return Number(n || 0).toLocaleString("fr-CI", { maximumFr
 export default async function CommandesPage({
   searchParams,
 }: {
-  searchParams: { status?: string };
+  searchParams: Promise<{ status?: string }>;
 }) {
   await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
+  const params = await searchParams;
 
   const where: any = {};
-  if (searchParams.status) where.status = searchParams.status;
+  if (params.status) where.status = params.status;
 
   const orders = await db.purchaseOrder.findMany({
     where,
@@ -59,7 +60,7 @@ export default async function CommandesPage({
       <div className="flex gap-2 mb-4 flex-wrap">
         {(["", "BROUILLON", "ENVOYE_FOURNISSEUR", "LIVRE_PARTIELLEMENT", "LIVRE_TOTALEMENT", "ANNULE"] as const).map((s) => (
           <Link key={s} href={s ? `?status=${s}` : "?"}>
-            <button className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${(searchParams.status || "") === s ? "bg-orange-500 text-white border-orange-500" : "bg-white text-gray-600 border-gray-200 hover:border-orange-300"}`}>
+            <button className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${(params.status || "") === s ? "bg-orange-500 text-white border-orange-500" : "bg-white text-gray-600 border-gray-200 hover:border-orange-300"}`}>
               {s ? STATUS[s]?.label : "Tous"}
             </button>
           </Link>

@@ -5,15 +5,16 @@ import { CommercialClient } from "./commercial-client";
 export default async function DirectionCommercialePage({
   searchParams,
 }: {
-  searchParams: { from?: string; to?: string; stationId?: string };
+  searchParams: Promise<{ from?: string; to?: string; stationId?: string }>;
 }) {
   await requireRole(["ADMIN", "DIRECTION_COMMERCIALE"]);
+  const params = await searchParams;
 
   const today = new Date();
   const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-  const from = searchParams.from || firstOfMonth.toISOString().split("T")[0];
-  const to = searchParams.to || today.toISOString().split("T")[0];
-  const stationId = searchParams.stationId || "";
+  const from = params.from || firstOfMonth.toISOString().split("T")[0];
+  const to = params.to || today.toISOString().split("T")[0];
+  const stationId = params.stationId || "";
 
   const stations = await db.station.findMany({
     where: { status: "ACTIVE" },

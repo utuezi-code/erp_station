@@ -5,13 +5,14 @@ import { DGClient } from "./dg-client";
 export default async function DirectionGeneralePage({
   searchParams,
 }: {
-  searchParams: { period?: string };
+  searchParams: Promise<{ period?: string }>;
 }) {
   await requireRole(["ADMIN", "DIRECTION_GENERALE"]);
+  const params = await searchParams;
 
   const today = new Date();
   const defaultPeriod = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
-  const period = searchParams.period || defaultPeriod;
+  const period = params.period || defaultPeriod;
   const [year, month] = period.split("-").map(Number);
   const start = new Date(year, month - 1, 1);
   const end = new Date(year, month, 0);
