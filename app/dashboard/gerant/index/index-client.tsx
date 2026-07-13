@@ -17,6 +17,7 @@ function fmt(n: any) {
 export function IndexClientPage({ stationId, selectedDate, pumps, indexMap, userRole, isToday }: any) {
   const router = useRouter();
   const [loading, setLoading] = useState<Record<string, boolean>>({});
+  const [endErrors, setEndErrors] = useState<Record<string, boolean>>({});
   const [validating, setValidating] = useState(false);
 
   function changeDate(delta: number) {
@@ -34,8 +35,16 @@ export function IndexClientPage({ stationId, selectedDate, pumps, indexMap, user
 
   async function handleSave(e: React.FormEvent<HTMLFormElement>, nozzleId: string) {
     e.preventDefault();
-    setLoading((l) => ({ ...l, [nozzleId]: true }));
     const fd = new FormData(e.currentTarget);
+    const start = parseFloat(fd.get("indexStart") as string);
+    const end = parseFloat(fd.get("indexEnd") as string);
+    if (!isNaN(end) && end <= start) {
+      setEndErrors((e) => ({ ...e, [nozzleId]: true }));
+      toast.error("L'index de fin doit être supérieur à l'index de début.");
+      return;
+    }
+    setEndErrors((e) => ({ ...e, [nozzleId]: false }));
+    setLoading((l) => ({ ...l, [nozzleId]: true }));
     try {
       await saveIndex(fd);
       toast.success("Index enregistré.");
@@ -164,7 +173,12 @@ export function IndexClientPage({ stationId, selectedDate, pumps, indexMap, user
                             step="0.01"
                             defaultValue={idx?.indexEnd ? Number(idx.indexEnd) : ""}
                             disabled={readOnly}
+                            onChange={() => setEndErrors((e) => ({ ...e, [nozzle.id]: false }))}
+                            className={endErrors[nozzle.id] ? "border-red-400 focus-visible:ring-red-300" : ""}
                           />
+                          {endErrors[nozzle.id] && (
+                            <p className="text-[11px] text-red-500 mt-0.5">Doit être &gt; index début</p>
+                          )}
                         </div>
                         <div>
                           <label className="text-xs text-gray-500">Volume (L)</label>

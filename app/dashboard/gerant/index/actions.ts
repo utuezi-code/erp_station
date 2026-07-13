@@ -40,8 +40,8 @@ export async function saveIndex(formData: FormData) {
     }
   }
 
-  if (data.indexEnd !== undefined && data.indexEnd < data.indexStart) {
-    throw new Error("L'index de fin doit être supérieur à l'index de début.");
+  if (data.indexEnd !== undefined && data.indexEnd <= data.indexStart) {
+    throw new Error("L'index de fin doit être strictement supérieur à l'index de début.");
   }
 
   const date = new Date(data.date);
