@@ -51,7 +51,7 @@ export default async function CommandesPage({
           <p className="text-gray-500 mt-1">{orders.length} commande(s)</p>
         </div>
         <Link href="/dashboard/achats/commandes/new">
-          <Button className="bg-orange-400 hover:bg-orange-500">
+          <Button className="bg-[#0369A1] hover:bg-blue-700">
             <Plus className="w-4 h-4 mr-2" /> Nouveau BC
           </Button>
         </Link>

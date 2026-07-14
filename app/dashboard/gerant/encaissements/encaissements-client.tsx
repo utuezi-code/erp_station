@@ -79,7 +79,7 @@ export function EncaissementsClient({ stationId, selectedDate, collections }: an
       </div>
 
       <div className="flex justify-end mb-4">
-        <Button onClick={() => setOpen(true)} className="bg-orange-400 hover:bg-orange-500">
+        <Button onClick={() => setOpen(true)} className="bg-[#0369A1] hover:bg-blue-700">
           <Plus className="w-4 h-4 mr-2" /> Ajouter un encaissement
         </Button>
       </div>
@@ -135,7 +135,7 @@ export function EncaissementsClient({ stationId, selectedDate, collections }: an
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-              <Button type="submit" disabled={loading} className="bg-orange-400 hover:bg-orange-500">
+              <Button type="submit" disabled={loading} className="bg-[#0369A1] hover:bg-blue-700">
                 {loading ? "..." : "Ajouter"}
               </Button>
             </DialogFooter>

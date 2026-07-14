@@ -46,14 +46,14 @@ const QUICK_ACTIONS: {
 ];
 
 const ACTION_COLORS: Record<string, { bg: string; icon: string; ring: string }> = {
-  blue:    { bg: "bg-blue-50",    icon: "text-blue-500",    ring: "ring-blue-100" },
-  green:   { bg: "bg-emerald-50", icon: "text-emerald-500", ring: "ring-emerald-100" },
-  orange:  { bg: "bg-orange-50",  icon: "text-orange-500",  ring: "ring-orange-100" },
-  violet:  { bg: "bg-violet-50",  icon: "text-violet-500",  ring: "ring-violet-100" },
-  emerald: { bg: "bg-emerald-50", icon: "text-emerald-500", ring: "ring-emerald-100" },
-  amber:   { bg: "bg-amber-50",   icon: "text-amber-500",   ring: "ring-amber-100" },
-  rose:    { bg: "bg-rose-50",    icon: "text-rose-500",    ring: "ring-rose-100" },
-  red:     { bg: "bg-red-50",     icon: "text-red-500",     ring: "ring-red-100" },
+  blue:    { bg: "bg-blue-50",    icon: "text-blue-600",    ring: "ring-blue-100" },
+  green:   { bg: "bg-emerald-50", icon: "text-emerald-600", ring: "ring-emerald-100" },
+  orange:  { bg: "bg-amber-50",   icon: "text-amber-600",   ring: "ring-amber-100" },
+  violet:  { bg: "bg-violet-50",  icon: "text-violet-600",  ring: "ring-violet-100" },
+  emerald: { bg: "bg-emerald-50", icon: "text-emerald-600", ring: "ring-emerald-100" },
+  amber:   { bg: "bg-amber-50",   icon: "text-amber-600",   ring: "ring-amber-100" },
+  rose:    { bg: "bg-rose-50",    icon: "text-rose-600",    ring: "ring-rose-100" },
+  red:     { bg: "bg-red-50",     icon: "text-red-600",     ring: "ring-red-100" },
 };
 
 export default async function DashboardPage() {
@@ -111,14 +111,14 @@ export default async function DashboardPage() {
 
         {/* Recent alerts — 2/5 */}
         <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
-          <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-50">
-            <div className="flex items-center gap-2">
-              <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-orange-50">
-                <AlertTriangle className="w-3.5 h-3.5 text-orange-500" />
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-50">
+            <div className="flex items-center gap-2.5">
+              <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-red-50">
+                <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
               </span>
-              <h3 className="font-semibold text-slate-800 text-sm">Alertes récentes</h3>
+              <h3 className="font-bold text-[#0F172A] text-sm tracking-tight">Alertes récentes</h3>
             </div>
-            <Link href="/dashboard/alertes" className="text-xs text-orange-400 hover:text-orange-500 font-medium flex items-center gap-0.5 transition-colors">
+            <Link href="/dashboard/alertes" className="text-xs text-[#0369A1] hover:text-blue-700 font-semibold flex items-center gap-0.5 transition-colors">
               Voir tout <ArrowUpRight className="w-3 h-3" />
             </Link>
           </div>
@@ -152,11 +152,11 @@ export default async function DashboardPage() {
 
         {/* Quick actions — 3/5 */}
         <div className="lg:col-span-3 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-          <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-50">
-            <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-orange-50">
-              <TrendingUp className="w-3.5 h-3.5 text-orange-500" />
+          <div className="flex items-center gap-2.5 px-5 py-4 border-b border-slate-50">
+            <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-blue-50">
+              <TrendingUp className="w-3.5 h-3.5 text-blue-600" />
             </span>
-            <h3 className="font-semibold text-slate-800 text-sm">Accès rapide</h3>
+            <h3 className="font-bold text-[#0F172A] text-sm tracking-tight">Accès rapide</h3>
           </div>
           <div className="p-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
             {visibleActions.slice(0, 6).map((action) => {
@@ -192,31 +192,31 @@ function KpiCard({
   title: string; value: number; icon: React.ElementType;
   color: string; href?: string; suffix: string;
 }) {
-  const styles: Record<string, { bg: string; icon: string; border: string }> = {
-    blue:   { bg: "bg-blue-50",    icon: "text-blue-500",    border: "border-blue-100" },
-    violet: { bg: "bg-violet-50",  icon: "text-violet-500",  border: "border-violet-100" },
-    orange: { bg: "bg-orange-50",  icon: "text-orange-500",  border: "border-orange-100" },
-    amber:  { bg: "bg-amber-50",   icon: "text-amber-500",   border: "border-amber-100" },
-    red:    { bg: "bg-red-50",     icon: "text-red-500",     border: "border-red-100" },
-    green:  { bg: "bg-emerald-50", icon: "text-emerald-500", border: "border-emerald-100" },
+  const styles: Record<string, { bg: string; icon: string; border: string; accent: string }> = {
+    blue:   { bg: "bg-blue-50",    icon: "text-[#0369A1]",   border: "border-blue-100",    accent: "text-[#0369A1]" },
+    violet: { bg: "bg-violet-50",  icon: "text-violet-600",  border: "border-violet-100",  accent: "text-violet-600" },
+    orange: { bg: "bg-amber-50",   icon: "text-amber-600",   border: "border-amber-100",   accent: "text-amber-600" },
+    amber:  { bg: "bg-amber-50",   icon: "text-amber-600",   border: "border-amber-100",   accent: "text-amber-600" },
+    red:    { bg: "bg-red-50",     icon: "text-red-600",     border: "border-red-100",     accent: "text-red-600" },
+    green:  { bg: "bg-emerald-50", icon: "text-emerald-600", border: "border-emerald-100", accent: "text-emerald-600" },
   };
   const s = styles[color] || styles.blue;
 
   const content = (
-    <div className={`bg-white rounded-xl border shadow-sm p-4 transition-all hover:shadow-md group ${href ? "cursor-pointer hover:border-slate-200" : ""} border-slate-100`}>
+    <div className={`bg-white rounded-2xl border shadow-sm p-5 transition-all hover:shadow-md hover:-translate-y-0.5 group ${href ? "cursor-pointer" : ""} border-slate-100`}>
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wide truncate">{title}</p>
-          <p className="text-2xl sm:text-3xl font-bold text-slate-900 mt-1 leading-none">{value}</p>
-          <p className="text-[11px] text-slate-400 mt-1">{suffix}</p>
+          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-[0.08em] truncate">{title}</p>
+          <p className="text-3xl sm:text-4xl font-extrabold text-[#0F172A] mt-2 leading-none tabular-nums">{value}</p>
+          <p className="text-[11px] text-slate-400 mt-1.5 font-medium">{suffix}</p>
         </div>
-        <div className={`p-2 rounded-lg flex-shrink-0 ${s.bg}`}>
-          <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${s.icon}`} />
+        <div className={`p-2.5 rounded-xl flex-shrink-0 ${s.bg}`}>
+          <Icon className={`w-5 h-5 ${s.icon}`} />
         </div>
       </div>
       {href && (
-        <div className="mt-3 flex items-center gap-1 text-[11px] font-medium text-slate-400 group-hover:text-orange-400 transition-colors">
-          Voir détail <ArrowUpRight className="w-3 h-3" />
+        <div className={`mt-4 flex items-center gap-1 text-[11px] font-semibold ${s.accent} opacity-0 group-hover:opacity-100 transition-opacity`}>
+          Voir le détail <ArrowUpRight className="w-3 h-3" />
         </div>
       )}
     </div>

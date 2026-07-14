@@ -76,7 +76,7 @@ export function VersementsClientPage({ stationId, versements, bankAccounts, user
       </div>
 
       <div className="flex justify-end mb-4">
-        <Button onClick={() => setOpen(true)} className="bg-orange-400 hover:bg-orange-500">
+        <Button onClick={() => setOpen(true)} className="bg-[#0369A1] hover:bg-blue-700">
           <Plus className="w-4 h-4 mr-2" /> Déclarer un versement
         </Button>
       </div>
@@ -160,7 +160,7 @@ export function VersementsClientPage({ stationId, versements, bankAccounts, user
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-              <Button type="submit" disabled={loading} className="bg-orange-400 hover:bg-orange-500">
+              <Button type="submit" disabled={loading} className="bg-[#0369A1] hover:bg-blue-700">
                 {loading ? "Enregistrement..." : "Déclarer"}
               </Button>
             </DialogFooter>

@@ -39,7 +39,7 @@ export default async function FacturesPage() {
         </div>
         <Link
           href="/dashboard/achats/factures/new"
-          className="flex items-center gap-2 px-4 py-2 bg-orange-400 hover:bg-orange-500 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm shadow-orange-400/20"
+          className="flex items-center gap-2 px-4 py-2 bg-[#0369A1] hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm shadow-orange-400/20"
         >
           <Plus className="w-4 h-4" /> Nouvelle facture
         </Link>

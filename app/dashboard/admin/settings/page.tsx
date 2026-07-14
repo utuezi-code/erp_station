@@ -36,7 +36,7 @@ export default async function SettingsPage() {
           </ul>
           <form action={createRegion} className="flex gap-2">
             <Input name="name" placeholder="Nom de la région" required />
-            <Button type="submit" className="bg-orange-400 hover:bg-orange-500 whitespace-nowrap">Ajouter</Button>
+            <Button type="submit" className="bg-[#0369A1] hover:bg-blue-700 whitespace-nowrap">Ajouter</Button>
           </form>
         </CardContent>
       </Card>

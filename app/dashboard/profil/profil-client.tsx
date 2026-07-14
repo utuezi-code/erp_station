@@ -87,7 +87,7 @@ export function ProfilClient({ user }: ProfilClientProps) {
           <button
             type="submit"
             disabled={namePending}
-            className="flex items-center gap-2 bg-orange-400 hover:bg-orange-500 disabled:opacity-60 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-colors"
+            className="flex items-center gap-2 bg-[#0369A1] hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-colors"
           >
             <Save className="w-4 h-4" />
             {namePending ? "Enregistrement…" : "Enregistrer"}
@@ -134,7 +134,7 @@ export function ProfilClient({ user }: ProfilClientProps) {
           <button
             type="submit"
             disabled={pwdPending}
-            className="flex items-center gap-2 bg-orange-400 hover:bg-orange-500 disabled:opacity-60 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-colors"
+            className="flex items-center gap-2 bg-[#0369A1] hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-colors"
           >
             <Lock className="w-4 h-4" />
             {pwdPending ? "Modification…" : "Modifier le mot de passe"}

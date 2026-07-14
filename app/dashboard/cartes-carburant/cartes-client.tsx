@@ -97,7 +97,7 @@ export function CartesClient({
       {/* Header actions */}
       <div className="flex justify-end">
         <Dialog open={openClient} onOpenChange={setOpenClient}>
-          <DialogTrigger className="inline-flex items-center justify-center rounded-md bg-orange-400 hover:bg-orange-500 text-white text-sm font-medium px-4 py-2 transition-colors">
+          <DialogTrigger className="inline-flex items-center justify-center rounded-md bg-[#0369A1] hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 transition-colors">
             <Plus className="w-4 h-4 mr-1" /> Nouveau client
           </DialogTrigger>
           <DialogContent>
@@ -112,7 +112,7 @@ export function CartesClient({
                 <div><Label>Email</Label><Input name="email" type="email" className="mt-1" /></div>
               </div>
               <div><Label>Adresse</Label><Input name="address" className="mt-1" /></div>
-              <Button type="submit" disabled={loading} className="w-full bg-orange-400 hover:bg-orange-500 text-white">Créer</Button>
+              <Button type="submit" disabled={loading} className="w-full bg-[#0369A1] hover:bg-blue-700 text-white">Créer</Button>
             </form>
           </DialogContent>
         </Dialog>
@@ -169,7 +169,7 @@ export function CartesClient({
                       <div><Label>Numéro de carte *</Label><Input name="cardNumber" required className="mt-1" placeholder="CARTE-001" /></div>
                       <div><Label>Titulaire *</Label><Input name="holderName" required className="mt-1" /></div>
                       <div><Label>Plafond mensuel (FCFA)</Label><Input name="plafond" type="number" min="0" className="mt-1" /></div>
-                      <Button type="submit" disabled={loading} className="w-full bg-orange-400 hover:bg-orange-500 text-white">Créer</Button>
+                      <Button type="submit" disabled={loading} className="w-full bg-[#0369A1] hover:bg-blue-700 text-white">Créer</Button>
                     </form>
                   </DialogContent>
                 </Dialog>
@@ -195,7 +195,7 @@ export function CartesClient({
                               {carte.active ? "Active" : "Inactive"}
                             </Badge>
                             <Dialog open={openTx === carte.id} onOpenChange={(v) => setOpenTx(v ? carte.id : null)}>
-                              <DialogTrigger className="inline-flex items-center justify-center rounded-md bg-orange-400 hover:bg-orange-500 text-white text-xs font-medium px-2.5 py-1.5 transition-colors">
+                              <DialogTrigger className="inline-flex items-center justify-center rounded-md bg-[#0369A1] hover:bg-blue-700 text-white text-xs font-medium px-2.5 py-1.5 transition-colors">
                                 <Fuel className="w-3 h-3 mr-1" /> Transaction
                               </DialogTrigger>
                               <DialogContent>
@@ -220,7 +220,7 @@ export function CartesClient({
                                     <div><Label>Prix unitaire *</Label><Input name="unitPrice" type="number" step="1" min="1" required className="mt-1" defaultValue={selectedFuelPrice || ""} /></div>
                                   </div>
                                   <div><Label>Référence</Label><Input name="reference" className="mt-1" /></div>
-                                  <Button type="submit" disabled={loading} className="w-full bg-orange-400 hover:bg-orange-500 text-white">Enregistrer</Button>
+                                  <Button type="submit" disabled={loading} className="w-full bg-[#0369A1] hover:bg-blue-700 text-white">Enregistrer</Button>
                                 </form>
                               </DialogContent>
                             </Dialog>

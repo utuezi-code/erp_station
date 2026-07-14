@@ -52,7 +52,7 @@ export default async function DemandesPage({
           <p className="text-gray-500 mt-1">{requests.length} demande(s)</p>
         </div>
         <Link href="/dashboard/achats/demandes/new">
-          <Button className="bg-orange-400 hover:bg-orange-500">
+          <Button className="bg-[#0369A1] hover:bg-blue-700">
             <Plus className="w-4 h-4 mr-2" /> Nouvelle DA
           </Button>
         </Link>

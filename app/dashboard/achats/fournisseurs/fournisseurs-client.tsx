@@ -57,7 +57,7 @@ export function FournisseursClient({ suppliers }: { suppliers: Supplier[] }) {
       <div className="flex justify-end mb-4">
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger>
-            <Button className="bg-orange-400 hover:bg-orange-500" onClick={openCreate}>
+            <Button className="bg-[#0369A1] hover:bg-blue-700" onClick={openCreate}>
               <Plus className="w-4 h-4 mr-2" /> Nouveau fournisseur
             </Button>
           </DialogTrigger>
@@ -113,7 +113,7 @@ export function FournisseursClient({ suppliers }: { suppliers: Supplier[] }) {
                 <Label className="text-xs">Compte bancaire</Label>
                 <Input name="bankAccount" defaultValue={editing?.bankAccount || ""} />
               </div>
-              <Button type="submit" disabled={loading} className="w-full bg-orange-400 hover:bg-orange-500">
+              <Button type="submit" disabled={loading} className="w-full bg-[#0369A1] hover:bg-blue-700">
                 {loading ? "Enregistrement..." : "Enregistrer"}
               </Button>
             </form>

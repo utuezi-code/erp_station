@@ -149,7 +149,7 @@ export function NewReceptionClient({
           </Card>
         )}
 
-        <Button type="submit" disabled={loading || !orderId} className="bg-orange-400 hover:bg-orange-500">
+        <Button type="submit" disabled={loading || !orderId} className="bg-[#0369A1] hover:bg-blue-700">
           <Save className="w-4 h-4 mr-2" /> Enregistrer la réception
         </Button>
       </div>

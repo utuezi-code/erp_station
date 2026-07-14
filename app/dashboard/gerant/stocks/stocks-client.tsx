@@ -99,7 +99,7 @@ export function StocksClientPage({ stationId, selectedDate, tanks, movementMap }
                     </div>
                   </div>
                   <div className="flex justify-end">
-                    <Button type="submit" size="sm" disabled={loading[tank.id]} className="bg-orange-400 hover:bg-orange-500">
+                    <Button type="submit" size="sm" disabled={loading[tank.id]} className="bg-[#0369A1] hover:bg-blue-700">
                       <Save className="w-3 h-3 mr-1" />{loading[tank.id] ? "..." : "Enregistrer"}
                     </Button>
                   </div>

@@ -124,7 +124,7 @@ export function NewFactureClient({ suppliers, orders }: Props) {
             Annuler
           </Link>
           <button type="submit" disabled={loading}
-            className="flex items-center gap-2 px-5 py-2 bg-orange-400 hover:bg-orange-500 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors">
+            className="flex items-center gap-2 px-5 py-2 bg-[#0369A1] hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors">
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
             Enregistrer
           </button>

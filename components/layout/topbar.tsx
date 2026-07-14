@@ -115,27 +115,27 @@ export function Topbar({ onMenuClick, userRole, userName }: TopbarProps) {
   }
 
   return (
-    <header className="sticky top-0 z-10 flex items-center justify-between h-14 px-4 bg-white border-b border-slate-100 shadow-sm flex-shrink-0">
+    <header className="sticky top-0 z-10 flex items-center justify-between h-16 px-5 bg-white border-b border-slate-100 flex-shrink-0">
       {/* Left */}
       <div className="flex items-center gap-3 min-w-0">
         <button
           onClick={onMenuClick}
-          className="lg:hidden flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+          className="lg:hidden flex items-center justify-center w-9 h-9 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
           aria-label="Menu"
         >
           <Menu className="w-5 h-5" />
         </button>
         {/* Mobile logo */}
-        <div className="flex lg:hidden items-center gap-2">
-          <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-orange-100">
-            <Fuel className="w-3.5 h-3.5 text-orange-500" />
+        <div className="flex lg:hidden items-center gap-2.5">
+          <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-[#0369A1]">
+            <Fuel className="w-4 h-4 text-white" />
           </div>
         </div>
         <div className="hidden sm:block min-w-0">
-          <h1 className="text-sm font-semibold text-slate-800 truncate">{title}</h1>
-          <p className="text-[11px] text-slate-400 capitalize hidden md:block">{today}</p>
+          <h1 className="text-[15px] font-bold text-[#0F172A] truncate tracking-tight">{title}</h1>
+          <p className="text-[11px] text-slate-400 capitalize hidden md:block font-medium">{today}</p>
         </div>
-        <h1 className="sm:hidden text-sm font-semibold text-slate-800 truncate">{title}</h1>
+        <h1 className="sm:hidden text-[15px] font-bold text-[#0F172A] truncate">{title}</h1>
       </div>
 
       {/* Right */}
@@ -144,7 +144,7 @@ export function Topbar({ onMenuClick, userRole, userName }: TopbarProps) {
         <div className="relative">
           <button
             onClick={() => { setOpen((v) => !v); if (!open) loadAlerts(); }}
-            className="relative flex items-center justify-center w-8 h-8 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+            className="relative flex items-center justify-center w-9 h-9 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
             aria-label="Notifications"
           >
             <Bell className="w-4 h-4" />
@@ -228,11 +228,14 @@ export function Topbar({ onMenuClick, userRole, userName }: TopbarProps) {
         </div>
 
         {/* User avatar */}
-        <div className="flex items-center gap-2 pl-2 border-l border-slate-100">
-          <div className="w-7 h-7 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
-            <span className="text-[11px] font-bold text-orange-600">{userName.charAt(0).toUpperCase()}</span>
+        <div className="flex items-center gap-2.5 pl-3 ml-1 border-l border-slate-100">
+          <div className="w-8 h-8 rounded-xl bg-[#0F172A] flex items-center justify-center flex-shrink-0">
+            <span className="text-[12px] font-bold text-white">{userName.charAt(0).toUpperCase()}</span>
           </div>
-          <p className="hidden md:block text-[13px] font-medium text-slate-700 max-w-[120px] truncate">{userName}</p>
+          <div className="hidden md:block">
+            <p className="text-[13px] font-semibold text-[#0F172A] max-w-[120px] truncate leading-tight">{userName}</p>
+            <p className="text-[10px] text-slate-400 font-medium">En ligne</p>
+          </div>
         </div>
       </div>
     </header>

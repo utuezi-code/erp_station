@@ -56,7 +56,7 @@ export function StationsClientPage({ stations, regions }: { stations: Station[];
   return (
     <>
       <div className="flex justify-end mb-4">
-        <Button onClick={() => { setEditing(null); setOpen(true); }} className="bg-orange-400 hover:bg-orange-500">
+        <Button onClick={() => { setEditing(null); setOpen(true); }} className="bg-[#0369A1] hover:bg-blue-700">
           <Plus className="w-4 h-4 mr-2" /> Nouvelle station
         </Button>
       </div>
@@ -152,7 +152,7 @@ export function StationsClientPage({ stations, regions }: { stations: Station[];
             )}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-              <Button type="submit" disabled={loading} className="bg-orange-400 hover:bg-orange-500">
+              <Button type="submit" disabled={loading} className="bg-[#0369A1] hover:bg-blue-700">
                 {loading ? "Enregistrement..." : "Enregistrer"}
               </Button>
             </DialogFooter>
