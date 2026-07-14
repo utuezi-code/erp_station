@@ -5,9 +5,10 @@ import { NewCommandeClient } from "./new-commande-client";
 export default async function NewCommandePage({
   searchParams,
 }: {
-  searchParams: { daId?: string };
+  searchParams: Promise<{ daId?: string }>;
 }) {
   await requireRole(["ADMIN", "RESPONSABLE_SERVICE"]);
+  const { daId } = await searchParams;
 
   const [suppliers, validatedRequests] = await Promise.all([
     db.supplier.findMany({ where: { active: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
@@ -40,7 +41,7 @@ export default async function NewCommandePage({
             tva: 18,
           })),
         }))}
-        preSelectedDA={searchParams.daId || ""}
+        preSelectedDA={daId || ""}
       />
     </div>
   );

@@ -5,9 +5,10 @@ import { NewReceptionClient } from "./new-reception-client";
 export default async function NewReceptionPage({
   searchParams,
 }: {
-  searchParams: { orderId?: string };
+  searchParams: Promise<{ orderId?: string }>;
 }) {
   await requireRole(["ADMIN", "RESPONSABLE_SERVICE"]);
+  const { orderId } = await searchParams;
 
   const [pendingOrders, stations] = await Promise.all([
     db.purchaseOrder.findMany({
@@ -46,7 +47,7 @@ export default async function NewReceptionPage({
           })),
         }))}
         stations={stations}
-        preSelectedOrderId={searchParams.orderId || ""}
+        preSelectedOrderId={orderId || ""}
       />
     </div>
   );
