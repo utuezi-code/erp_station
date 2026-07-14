@@ -58,7 +58,7 @@ export default async function DemandesPage({
         </Link>
       </div>
 
-      <div className="flex gap-2 mb-4">
+      <div className="flex flex-wrap gap-2 mb-4">
         {(["", "EN_ATTENTE", "VALIDE", "REJETE", "ANNULE"] as const).map((s) => (
           <Link key={s} href={s ? `?status=${s}` : "?"}>
             <button className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${(params.status || "") === s ? "bg-orange-400 text-white border-orange-400" : "bg-white text-gray-600 border-gray-200 hover:border-orange-300"}`}>
@@ -69,7 +69,7 @@ export default async function DemandesPage({
       </div>
 
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="p-0 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>

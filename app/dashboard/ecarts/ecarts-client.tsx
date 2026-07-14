@@ -171,7 +171,7 @@ export function EcartsClient({
       {/* Station table */}
       <Card>
         <CardHeader><CardTitle className="text-base">Détail par station</CardTitle></CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -219,7 +219,7 @@ export function EcartsClient({
       {dailyData.length > 0 && (
         <Card className="mt-6">
           <CardHeader><CardTitle className="text-base">Détail journalier</CardTitle></CardHeader>
-          <CardContent className="p-0">
+          <CardContent className="p-0 overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>

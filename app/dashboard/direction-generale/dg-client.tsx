@@ -66,7 +66,7 @@ export function DGClient({
   return (
     <div>
       {/* Period filter */}
-      <div className="flex gap-4 mb-6 bg-white border rounded-xl p-4">
+      <div className="flex flex-wrap gap-4 mb-6 bg-white border rounded-xl p-4">
         <div className="space-y-1">
           <Label className="text-xs">Période (mois)</Label>
           <Input
@@ -116,7 +116,7 @@ export function DGClient({
 
       {/* Alerts banner */}
       {(alertsCount > 0 || pendingVersements > 0) && (
-        <div className="flex gap-3 mb-6">
+        <div className="flex flex-wrap gap-3 mb-6">
           {alertsCount > 0 && (
             <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-4 py-2">
               <AlertTriangle className="w-4 h-4 text-red-500" />
@@ -170,7 +170,7 @@ export function DGClient({
       {/* Station table */}
       <Card>
         <CardHeader><CardTitle className="text-base">Performance par station — {period}</CardTitle></CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>

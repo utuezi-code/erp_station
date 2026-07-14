@@ -84,7 +84,7 @@ export function EncaissementsClient({ stationId, selectedDate, collections }: an
         </Button>
       </div>
 
-      <div className="bg-white rounded-xl border">
+      <div className="bg-white rounded-xl border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>

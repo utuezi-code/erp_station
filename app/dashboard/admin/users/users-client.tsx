@@ -85,7 +85,7 @@ export function UsersClientPage({ users, stations }: { users: User[]; stations: 
         </Button>
       </div>
 
-      <div className="bg-white rounded-xl border">
+      <div className="bg-white rounded-xl border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>

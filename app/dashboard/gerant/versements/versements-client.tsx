@@ -81,7 +81,7 @@ export function VersementsClientPage({ stationId, versements, bankAccounts, user
         </Button>
       </div>
 
-      <div className="bg-white rounded-xl border">
+      <div className="bg-white rounded-xl border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>

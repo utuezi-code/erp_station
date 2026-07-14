@@ -61,7 +61,7 @@ export function StationsClientPage({ stations, regions }: { stations: Station[];
         </Button>
       </div>
 
-      <div className="bg-white rounded-xl border">
+      <div className="bg-white rounded-xl border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>

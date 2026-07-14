@@ -75,7 +75,7 @@ export function FacturesClient({ invoices }: Props) {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       {/* Filters */}
-      <div className="flex gap-1 p-4 border-b border-gray-50">
+      <div className="flex flex-wrap gap-1 p-4 border-b border-gray-50">
         {[
           { key: "all", label: "Toutes" },
           { key: "pending", label: "En attente" },

@@ -39,7 +39,7 @@ export function LivraisonsClient({ stationId, deliveries, fuels }: any) {
           <Plus className="w-4 h-4 mr-2" /> Nouvelle livraison
         </Button>
       </div>
-      <div className="bg-white rounded-xl border">
+      <div className="bg-white rounded-xl border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>

@@ -50,7 +50,7 @@ export function PumpsClientPage({ stations, fuels, pumps, tanks }: Props) {
           <Button variant="outline" onClick={() => setNozzleOpen(true)}><Plus className="w-4 h-4 mr-1" />Pistolet</Button>
           <Button className="bg-[#0369A1] hover:bg-blue-700" onClick={() => setPumpOpen(true)}><Plus className="w-4 h-4 mr-1" />Pompe</Button>
         </div>
-        <div className="bg-white rounded-xl border">
+        <div className="bg-white rounded-xl border overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -84,7 +84,7 @@ export function PumpsClientPage({ stations, fuels, pumps, tanks }: Props) {
         <div className="flex justify-end mb-4">
           <Button className="bg-[#0369A1] hover:bg-blue-700" onClick={() => setTankOpen(true)}><Plus className="w-4 h-4 mr-1" />Nouvelle cuve</Button>
         </div>
-        <div className="bg-white rounded-xl border">
+        <div className="bg-white rounded-xl border overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
