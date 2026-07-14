@@ -39,23 +39,22 @@ export function VersementsClientPage({ stationId, versements, bankAccounts, user
     e.preventDefault();
     setLoading(true);
     const fd = new FormData(e.currentTarget);
-    try {
-      await createVersement(fd);
+    const result = await createVersement(fd);
+    setLoading(false);
+    if (result.success) {
       toast.success("Versement déclaré.");
       setOpen(false);
-    } catch (err: any) {
-      toast.error(err.message);
-    } finally {
-      setLoading(false);
+    } else {
+      toast.error(result.error || "Une erreur est survenue.");
     }
   }
 
   async function handleValidate(id: string, approved: boolean) {
-    try {
-      await validateVersement(id, approved);
+    const result = await validateVersement(id, approved);
+    if (result.success) {
       toast.success(approved ? "Versement validé." : "Versement rejeté.");
-    } catch (err: any) {
-      toast.error(err.message);
+    } else {
+      toast.error(result.error || "Une erreur est survenue.");
     }
   }
 
