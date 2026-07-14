@@ -1,3 +1,4 @@
+import { serialize } from "@/lib/serialize";
 import { requireRole } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { StocksClientPage } from "./stocks-client";
@@ -37,8 +38,8 @@ export default async function StocksPage({ searchParams }: { searchParams: Promi
       <StocksClientPage
         stationId={stationId}
         selectedDate={selectedDate}
-        tanks={tanks as any}
-        movementMap={movementMap as any}
+        tanks={serialize(tanks)}
+        movementMap={serialize(movementMap)}
       />
     </div>
   );

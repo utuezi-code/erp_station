@@ -1,3 +1,4 @@
+import { serialize } from "@/lib/serialize";
 import { requireRole } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { PumpsClientPage } from "./pumps-client";
@@ -30,7 +31,7 @@ export default async function PumpsPage() {
         <h1 className="text-2xl font-bold text-gray-900">Pompes & Cuves</h1>
         <p className="text-gray-500 mt-1">Gestion des équipements des stations</p>
       </div>
-      <PumpsClientPage stations={stations} fuels={fuels} pumps={pumps as any} tanks={tanks as any} />
+      <PumpsClientPage stations={stations} fuels={fuels} pumps={serialize(pumps)} tanks={serialize(tanks)} />
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { serialize } from "@/lib/serialize";
 import { requireRole } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { CommercialClient } from "./commercial-client";

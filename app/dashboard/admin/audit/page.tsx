@@ -1,3 +1,4 @@
+import { serialize } from "@/lib/serialize";
 import { requireRole } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { Search, Shield } from "lucide-react";
@@ -50,7 +51,7 @@ export default async function AuditPage({
       </div>
 
       <AuditClient
-        logs={logs as any}
+        logs={serialize(logs)}
         users={users}
         entities={entities.map((e) => e.entity)}
         total={total}

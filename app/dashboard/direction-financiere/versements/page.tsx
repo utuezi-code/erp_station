@@ -1,6 +1,7 @@
 import { requireRole } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { VersementsClientPage } from "@/app/dashboard/gerant/versements/versements-client";
+import { serialize } from "@/lib/serialize";
 
 export default async function FinancierVersementsPage() {
   const session = await requireRole(["ADMIN", "DIRECTION_FINANCIERE"]);
@@ -39,7 +40,7 @@ export default async function FinancierVersementsPage() {
       </div>
       <VersementsClientPage
         stationId=""
-        versements={versements.map(v => ({ ...v, amount: Number(v.amount), stationName: (v as any).station?.name }))}
+        versements={serialize(versements.map(v => ({ ...v, stationName: (v as any).station?.name })))}
         bankAccounts={[]}
         userRole={user.role}
       />

@@ -1,3 +1,4 @@
+import { serialize } from "@/lib/serialize";
 import { requireRole } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { UsersClientPage } from "./users-client";
@@ -23,7 +24,7 @@ export default async function UsersPage() {
         <h1 className="text-2xl font-bold text-gray-900">Gestion des utilisateurs</h1>
         <p className="text-gray-500 mt-1">{users.length} utilisateur(s) enregistré(s)</p>
       </div>
-      <UsersClientPage users={users as any} stations={stations} />
+      <UsersClientPage users={serialize(users)} stations={stations} />
     </div>
   );
 }

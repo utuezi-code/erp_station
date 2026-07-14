@@ -1,3 +1,4 @@
+import { serialize } from "@/lib/serialize";
 import { requireRole } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import Link from "next/link";
@@ -72,7 +73,7 @@ export default async function FacturesPage() {
       </div>
 
       {/* Table */}
-      <FacturesClient invoices={invoices as any} suppliers={suppliers} />
+      <FacturesClient invoices={serialize(invoices)} suppliers={suppliers} />
     </div>
   );
 }

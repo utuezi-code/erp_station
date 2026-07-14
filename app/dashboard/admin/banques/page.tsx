@@ -1,3 +1,4 @@
+import { serialize } from "@/lib/serialize";
 import { requireRole } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { BanquesClient } from "./banques-client";
@@ -26,7 +27,7 @@ export default async function BanquesPage() {
         <h2 className="text-xl font-bold text-gray-900">Comptes bancaires</h2>
         <p className="text-sm text-gray-400 mt-0.5">{accounts.length} compte(s) enregistré(s)</p>
       </div>
-      <BanquesClient accounts={accounts as any} stations={stations} />
+      <BanquesClient accounts={serialize(accounts)} stations={stations} />
     </div>
   );
 }

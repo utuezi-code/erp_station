@@ -1,3 +1,4 @@
+import { serialize } from "@/lib/serialize";
 import { requireRole } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { IndexClientPage } from "./index-client";
@@ -57,8 +58,8 @@ export default async function IndexPage({ searchParams }: { searchParams: Promis
       <IndexClientPage
         stationId={selectedStation}
         selectedDate={selectedDate}
-        pumps={pumps as any}
-        indexMap={indexMap as any}
+        pumps={serialize(pumps)}
+        indexMap={serialize(indexMap)}
         userRole={user.role}
         isToday={isToday}
       />

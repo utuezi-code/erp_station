@@ -1,3 +1,4 @@
+import { serialize } from "@/lib/serialize";
 import { requireRole } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { StationsClientPage } from "./stations-client";
@@ -22,7 +23,7 @@ export default async function StationsPage() {
         <h1 className="text-2xl font-bold text-gray-900">Gestion des stations</h1>
         <p className="text-gray-500 mt-1">{stations.length} station(s) enregistrée(s)</p>
       </div>
-      <StationsClientPage stations={stations as any} regions={regions} />
+      <StationsClientPage stations={serialize(stations)} regions={regions} />
     </div>
   );
 }
