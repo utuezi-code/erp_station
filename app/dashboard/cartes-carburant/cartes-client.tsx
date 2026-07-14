@@ -119,7 +119,7 @@ export function CartesClient({
       </div>
 
       {/* Clients list */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Left: client list */}
         <div className="space-y-3">
           <h2 className="text-sm font-semibold text-slate-600 uppercase tracking-wide">Clients</h2>
@@ -133,7 +133,7 @@ export function CartesClient({
               <button
                 key={client.id}
                 onClick={() => router.push(`?clientId=${client.id}`)}
-                className={`w-full text-left p-3 rounded-xl border transition-all ${selectedClientId === client.id ? "border-orange-300 bg-orange-50 shadow-sm" : "border-slate-100 bg-white hover:border-slate-200 hover:shadow-sm"}`}
+                className={`w-full text-left p-3 rounded-xl border transition-all touch-manipulation min-h-[56px] ${selectedClientId === client.id ? "border-[#0369A1]/30 bg-blue-50 shadow-sm" : "border-slate-100 bg-white hover:border-slate-200 hover:shadow-sm"}`}
               >
                 <div className="flex items-center justify-between">
                   <div>

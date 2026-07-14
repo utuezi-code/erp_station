@@ -158,7 +158,7 @@ export default async function DashboardPage() {
             </span>
             <h3 className="font-bold text-[#0F172A] text-sm tracking-tight">Accès rapide</h3>
           </div>
-          <div className="p-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="p-3 sm:p-4 grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
             {visibleActions.slice(0, 6).map((action) => {
               const Icon = action.icon;
               const c = ACTION_COLORS[action.color] || ACTION_COLORS.blue;
@@ -166,14 +166,14 @@ export default async function DashboardPage() {
                 <Link
                   key={action.href}
                   href={action.href}
-                  className="flex flex-col gap-2 p-3 rounded-xl border border-slate-100 hover:border-slate-200 hover:shadow-sm transition-all group bg-slate-50/50 hover:bg-white"
+                  className="flex flex-col gap-2 p-3 rounded-xl border border-slate-100 hover:border-slate-200 hover:shadow-sm active:scale-[0.97] transition-all group bg-slate-50/50 hover:bg-white touch-manipulation min-h-[80px]"
                 >
-                  <div className={`flex items-center justify-center w-8 h-8 rounded-lg ${c.bg} ring-1 ${c.ring} flex-shrink-0`}>
-                    <Icon className={`w-4 h-4 ${c.icon}`} />
+                  <div className={`flex items-center justify-center w-9 h-9 rounded-lg ${c.bg} ring-1 ${c.ring} flex-shrink-0`}>
+                    <Icon className={`w-4.5 h-4.5 ${c.icon}`} />
                   </div>
                   <div>
-                    <p className="text-[13px] font-semibold text-slate-700 group-hover:text-slate-900 transition-colors">{action.label}</p>
-                    <p className="text-[11px] text-slate-400 leading-tight mt-0.5">{action.desc}</p>
+                    <p className="text-[12px] sm:text-[13px] font-semibold text-slate-700 group-hover:text-slate-900 transition-colors leading-tight">{action.label}</p>
+                    <p className="text-[10px] sm:text-[11px] text-slate-400 leading-tight mt-0.5 hidden sm:block">{action.desc}</p>
                   </div>
                 </Link>
               );
@@ -203,19 +203,19 @@ function KpiCard({
   const s = styles[color] || styles.blue;
 
   const content = (
-    <div className={`bg-white rounded-2xl border shadow-sm p-5 transition-all hover:shadow-md hover:-translate-y-0.5 group ${href ? "cursor-pointer" : ""} border-slate-100`}>
+    <div className={`bg-white rounded-2xl border shadow-sm p-4 sm:p-5 transition-all hover:shadow-md active:scale-[0.98] group ${href ? "cursor-pointer touch-manipulation" : ""} border-slate-100 min-h-[88px] flex flex-col justify-between`}>
       <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-[0.08em] truncate">{title}</p>
-          <p className="text-3xl sm:text-4xl font-extrabold text-[#0F172A] mt-2 leading-none tabular-nums">{value}</p>
-          <p className="text-[11px] text-slate-400 mt-1.5 font-medium">{suffix}</p>
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] sm:text-[11px] font-semibold text-slate-400 uppercase tracking-[0.08em] truncate leading-tight">{title}</p>
+          <p className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#0F172A] mt-1.5 leading-none tabular-nums">{value}</p>
+          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1 font-medium">{suffix}</p>
         </div>
-        <div className={`p-2.5 rounded-xl flex-shrink-0 ${s.bg}`}>
-          <Icon className={`w-5 h-5 ${s.icon}`} />
+        <div className={`p-2 sm:p-2.5 rounded-xl flex-shrink-0 ${s.bg}`}>
+          <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${s.icon}`} />
         </div>
       </div>
       {href && (
-        <div className={`mt-4 flex items-center gap-1 text-[11px] font-semibold ${s.accent} opacity-0 group-hover:opacity-100 transition-opacity`}>
+        <div className={`mt-2 sm:mt-4 flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold ${s.accent} sm:opacity-0 sm:group-hover:opacity-100 transition-opacity`}>
           Voir le détail <ArrowUpRight className="w-3 h-3" />
         </div>
       )}

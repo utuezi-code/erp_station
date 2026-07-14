@@ -123,8 +123,18 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Eliminate 300ms tap delay on all interactive elements */
+    touch-action: manipulation;
+    /* Prevent pull-to-refresh on main body */
+    overscroll-behavior: none;
   }
   html {
     @apply font-sans;
+    /* Use dvh for correct mobile viewport height (accounts for browser chrome) */
+    height: 100dvh;
+  }
+  /* Ensure buttons/links respond immediately to touch */
+  button, a, [role="button"] {
+    touch-action: manipulation;
   }
 }
