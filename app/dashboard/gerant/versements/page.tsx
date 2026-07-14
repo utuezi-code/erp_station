@@ -28,7 +28,7 @@ export default async function VersementsPage() {
       </div>
       <VersementsClientPage
         stationId={stationId}
-        versements={versements as any}
+        versements={versements.map((v) => ({ ...v, amount: Number(v.amount) }))}
         bankAccounts={bankAccounts}
         userRole={user.role}
       />

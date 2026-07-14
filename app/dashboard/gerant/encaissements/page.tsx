@@ -25,7 +25,7 @@ export default async function EncaissementsPage({ searchParams }: { searchParams
         <h1 className="text-2xl font-bold text-gray-900">Encaissements</h1>
         <p className="text-gray-500 mt-1">{station?.name}</p>
       </div>
-      <EncaissementsClient stationId={stationId} selectedDate={selectedDate} collections={collections as any} />
+      <EncaissementsClient stationId={stationId} selectedDate={selectedDate} collections={collections.map((c) => ({ ...c, amount: Number(c.amount), date: c.date.toISOString(), createdAt: c.createdAt.toISOString() }))} />
     </div>
   );
 }

@@ -39,7 +39,7 @@ export default async function FinancierVersementsPage() {
       </div>
       <VersementsClientPage
         stationId=""
-        versements={versements.map(v => ({ ...v, stationName: (v as any).station?.name }))}
+        versements={versements.map(v => ({ ...v, amount: Number(v.amount), stationName: (v as any).station?.name }))}
         bankAccounts={[]}
         userRole={user.role}
       />

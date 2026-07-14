@@ -26,7 +26,7 @@ export default async function LivraisonsPage() {
         <h1 className="text-2xl font-bold text-gray-900">Livraisons carburant</h1>
         <p className="text-gray-500 mt-1">{station?.name}</p>
       </div>
-      <LivraisonsClient stationId={stationId} deliveries={deliveries as any} fuels={fuels} />
+      <LivraisonsClient stationId={stationId} deliveries={deliveries.map((d) => ({ ...d, quantity: Number(d.quantity), date: d.date.toISOString(), createdAt: d.createdAt.toISOString() }))} fuels={fuels} />
     </div>
   );
 }
