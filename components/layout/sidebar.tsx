@@ -245,6 +245,9 @@ export function Sidebar({ userRole, userName, collapsed, onCollapse, onClose }: 
           <span className={collapsed ? "lg:hidden" : ""}>Déconnexion</span>
         </button>
       </div>
+
+      {/* Spacer on mobile to clear the bottom nav bar (h-14 = 56px) */}
+      <div className="h-14 flex-shrink-0 lg:hidden" />
     </aside>
   );
 }
