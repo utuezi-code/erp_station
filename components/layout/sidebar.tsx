@@ -10,6 +10,7 @@ import {
   BarChart3, Bell, FileText, ShoppingCart, Settings, LogOut,
   GitCompare, Calculator, ChevronLeft, ChevronRight, Landmark,
   Shield, UserCircle, Trophy, HardHat, CreditCard, FlaskConical,
+  X,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 
@@ -96,12 +97,12 @@ interface SidebarProps {
   userName: string;
   collapsed: boolean;
   onCollapse: () => void;
+  onClose?: () => void;
 }
 
-export function Sidebar({ userRole, userName, collapsed, onCollapse }: SidebarProps) {
+export function Sidebar({ userRole, userName, collapsed, onCollapse, onClose }: SidebarProps) {
   const pathname = usePathname();
 
-  // Find the single best-matching nav href (longest prefix wins)
   const allHrefs = navGroups.flatMap((g) => g.items.map((i) => i.href));
   const activeHref = allHrefs
     .filter((h) => pathname === h || (h !== "/dashboard" && pathname.startsWith(h + "/")))
@@ -110,31 +111,40 @@ export function Sidebar({ userRole, userName, collapsed, onCollapse }: SidebarPr
   return (
     <aside
       className={cn(
-        "flex flex-col h-screen bg-[#0F172A] flex-shrink-0 transition-all duration-300 ease-in-out",
-        collapsed ? "w-[68px]" : "w-64"
+        // h-full fills the fixed inset-y-0 parent on mobile; on desktop it fills the flex row
+        "flex flex-col h-full bg-[#0F172A] flex-shrink-0 transition-all duration-300 ease-in-out relative",
+        // On mobile always full width (no collapsed); on desktop respect collapsed
+        "w-72 lg:w-auto",
+        collapsed ? "lg:w-[68px]" : "lg:w-64"
       )}
     >
-      {/* Logo + collapse toggle */}
+      {/* Header: logo + close (mobile) / collapse (desktop) */}
       <div className={cn(
         "flex items-center h-16 px-4 flex-shrink-0 border-b border-white/5",
-        collapsed ? "justify-center" : "justify-between"
+        collapsed ? "lg:justify-center" : "justify-between"
       )}>
-        {!collapsed && (
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-[#0369A1] flex-shrink-0 shadow-lg shadow-blue-900/40">
-              <Fuel className="w-4.5 h-4.5 text-white" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[13px] font-bold text-white tracking-wide truncate leading-tight">IVORY ENERGIES</p>
-              <p className="text-[10px] text-slate-400 truncate font-medium">Plateforme ERP</p>
-            </div>
-          </div>
-        )}
-        {collapsed && (
-          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-[#0369A1] shadow-lg shadow-blue-900/40">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-[#0369A1] flex-shrink-0 shadow-lg shadow-blue-900/40">
             <Fuel className="w-4 h-4 text-white" />
           </div>
+          <div className={cn("min-w-0", collapsed ? "lg:hidden" : "")}>
+            <p className="text-[13px] font-bold text-white tracking-wide truncate leading-tight">IVORY ENERGIES</p>
+            <p className="text-[10px] text-slate-400 truncate font-medium">Plateforme ERP</p>
+          </div>
+        </div>
+
+        {/* Mobile: close button */}
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="lg:hidden flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors touch-manipulation"
+            aria-label="Fermer le menu"
+          >
+            <X className="w-4 h-4" />
+          </button>
         )}
+
+        {/* Desktop: collapse toggle */}
         {!collapsed && (
           <button
             onClick={onCollapse}
@@ -155,19 +165,20 @@ export function Sidebar({ userRole, userName, collapsed, onCollapse }: SidebarPr
         )}
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 overflow-y-auto overflow-x-hidden py-4 px-2.5 space-y-5">
+      {/* Nav — scrollable, fills available height */}
+      <nav className="flex-1 overflow-y-auto overflow-x-hidden py-3 px-2.5 space-y-4">
         {navGroups.map((group) => {
           const visibleItems = group.items.filter((item) => item.roles.includes(userRole));
           if (visibleItems.length === 0) return null;
           return (
             <div key={group.label}>
-              {!collapsed && (
-                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 px-2 mb-1.5">
-                  {group.label}
-                </p>
-              )}
-              {collapsed && <div className="h-px bg-white/5 mx-1 mb-3" />}
+              <p className={cn(
+                "text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 px-2 mb-1",
+                collapsed ? "lg:hidden" : ""
+              )}>
+                {group.label}
+              </p>
+              {collapsed && <div className="hidden lg:block h-px bg-white/5 mx-1 mb-2" />}
               <div className="space-y-0.5">
                 {visibleItems.map((item) => {
                   const Icon = item.icon;
@@ -178,20 +189,24 @@ export function Sidebar({ userRole, userName, collapsed, onCollapse }: SidebarPr
                       href={item.href}
                       title={collapsed ? item.label : undefined}
                       className={cn(
-                        "flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm font-medium transition-all duration-150 group relative",
-                        collapsed ? "justify-center" : "",
+                        // min-h-[44px] for touch targets on mobile
+                        "flex items-center gap-3 px-3 py-2.5 min-h-[44px] rounded-xl text-sm font-medium transition-all duration-150 group touch-manipulation",
+                        collapsed ? "lg:justify-center lg:px-2" : "",
                         active
                           ? "bg-[#0369A1] text-white shadow-sm"
-                          : "text-slate-400 hover:bg-white/5 hover:text-slate-100"
+                          : "text-slate-400 hover:bg-white/8 hover:text-slate-100 active:bg-white/10"
                       )}
                     >
                       <Icon className={cn(
-                        "w-[17px] h-[17px] flex-shrink-0 transition-colors",
+                        "w-[18px] h-[18px] flex-shrink-0 transition-colors",
                         active ? "text-white" : "text-slate-500 group-hover:text-slate-300"
                       )} />
-                      {!collapsed && (
-                        <span className="flex-1 truncate text-[13px] font-medium">{item.label}</span>
-                      )}
+                      <span className={cn(
+                        "flex-1 truncate text-[13px] font-medium",
+                        collapsed ? "lg:hidden" : ""
+                      )}>
+                        {item.label}
+                      </span>
                       {!collapsed && active && (
                         <span className="w-1.5 h-1.5 rounded-full bg-white/60 flex-shrink-0" />
                       )}
@@ -204,41 +219,31 @@ export function Sidebar({ userRole, userName, collapsed, onCollapse }: SidebarPr
         })}
       </nav>
 
-      {/* User footer */}
+      {/* User footer — always visible */}
       <div className="px-2.5 py-3 border-t border-white/5 flex-shrink-0">
-        {!collapsed ? (
-          <>
-            <div className="flex items-center gap-2.5 px-2.5 py-2.5 rounded-xl bg-white/5 mb-1">
-              <div className="w-8 h-8 rounded-lg bg-[#0369A1] flex items-center justify-center flex-shrink-0 shadow-sm">
-                <span className="text-[12px] font-bold text-white">{userName.charAt(0).toUpperCase()}</span>
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[13px] font-semibold text-white truncate leading-tight">{userName}</p>
-                <p className="text-[10px] text-slate-400 truncate font-medium">{ROLE_LABELS[userRole] || userRole}</p>
-              </div>
-            </div>
-            <button
-              onClick={() => signOut({ callbackUrl: "/login" })}
-              className="flex items-center gap-2 w-full px-2.5 py-1.5 text-xs text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors font-medium"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              Déconnexion
-            </button>
-          </>
-        ) : (
-          <div className="flex flex-col items-center gap-2">
-            <div className="w-9 h-9 rounded-lg bg-[#0369A1] flex items-center justify-center shadow-sm" title={userName}>
-              <span className="text-xs font-bold text-white">{userName.charAt(0).toUpperCase()}</span>
-            </div>
-            <button
-              onClick={() => signOut({ callbackUrl: "/login" })}
-              title="Déconnexion"
-              className="flex items-center justify-center w-8 h-8 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
+        <div className={cn(
+          "flex items-center gap-2.5 px-2.5 py-2.5 rounded-xl bg-white/5 mb-1",
+          collapsed ? "lg:justify-center lg:px-0" : ""
+        )}>
+          <div className="w-9 h-9 rounded-lg bg-[#0369A1] flex items-center justify-center flex-shrink-0 shadow-sm">
+            <span className="text-[13px] font-bold text-white">{userName.charAt(0).toUpperCase()}</span>
           </div>
-        )}
+          <div className={cn("min-w-0 flex-1", collapsed ? "lg:hidden" : "")}>
+            <p className="text-[13px] font-semibold text-white truncate leading-tight">{userName}</p>
+            <p className="text-[10px] text-slate-400 truncate font-medium">{ROLE_LABELS[userRole] || userRole}</p>
+          </div>
+        </div>
+        <button
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          className={cn(
+            "flex items-center gap-2 w-full px-2.5 py-2.5 min-h-[44px] text-xs text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors font-medium touch-manipulation",
+            collapsed ? "lg:justify-center lg:px-0" : ""
+          )}
+          title={collapsed ? "Déconnexion" : undefined}
+        >
+          <LogOut className="w-4 h-4 flex-shrink-0" />
+          <span className={collapsed ? "lg:hidden" : ""}>Déconnexion</span>
+        </button>
       </div>
     </aside>
   );

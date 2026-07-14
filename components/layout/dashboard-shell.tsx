@@ -18,6 +18,7 @@ export function DashboardShell({ userRole, userName, children }: Props) {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
 
+  // Auto-close sidebar on navigation
   useEffect(() => {
     setSidebarOpen(false);
   }, [pathname]);
@@ -27,30 +28,39 @@ export function DashboardShell({ userRole, userName, children }: Props) {
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-20 bg-slate-900/40 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-20 bg-slate-900/50 backdrop-blur-[2px] lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* Sidebar — desktop only visible; mobile: slide-in drawer */}
+      {/* Sidebar wrapper:
+          - Mobile: fixed full-height drawer, slides in from left
+          - Desktop: static sidebar in the flex row */}
       <div
-        className={`
-          fixed inset-y-0 left-0 z-30 flex-shrink-0
-          lg:relative lg:translate-x-0
-          transition-transform duration-300 ease-in-out
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-          ${collapsed ? "lg:w-[68px]" : "lg:w-64"}
-        `}
+        className={[
+          // Positioning
+          "fixed inset-y-0 left-0 z-30",
+          "lg:relative lg:inset-auto lg:z-auto",
+          // Height — inset-y-0 handles it on mobile; h-full on desktop
+          "lg:h-full",
+          // Slide animation on mobile
+          "transition-transform duration-300 ease-in-out",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+          // Width matches sidebar inner width
+          "w-72 lg:w-auto",
+          collapsed ? "lg:w-[68px]" : "lg:w-64",
+        ].join(" ")}
       >
         <Sidebar
           userRole={userRole}
           userName={userName}
           collapsed={collapsed}
           onCollapse={() => setCollapsed((v) => !v)}
+          onClose={() => setSidebarOpen(false)}
         />
       </div>
 
-      {/* Main */}
+      {/* Main content */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <Topbar
           onMenuClick={() => setSidebarOpen((v) => !v)}
