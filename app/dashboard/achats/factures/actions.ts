@@ -51,3 +51,39 @@ export async function deleteInvoice(invoiceId: string) {
   await db.supplierInvoice.delete({ where: { id: invoiceId } });
   revalidatePath("/dashboard/achats/factures");
 }
+
+export async function completeInvoice(
+  invoiceId: string,
+  amountImposable: number,
+  amountNonImposable: number
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    await requireRole(["ADMIN", "DIRECTION_FINANCIERE"]);
+
+    const invoice = await db.supplierInvoice.findUnique({ where: { id: invoiceId } });
+    if (!invoice) return { success: false, error: "Facture introuvable." };
+
+    const total = amountImposable + amountNonImposable;
+    const amountHT = Number(invoice.amountHT);
+    if (Math.abs(total - amountHT) > 1) {
+      return {
+        success: false,
+        error: `La somme imposable (${amountImposable}) + non-imposable (${amountNonImposable}) = ${total} ne correspond pas au montant HT de la facture (${amountHT}).`,
+      };
+    }
+
+    await db.supplierInvoice.update({
+      where: { id: invoiceId },
+      data: {
+        amountImposable,
+        amountNonImposable,
+        invoiceStatus: "COMPLETE",
+      },
+    });
+
+    revalidatePath("/dashboard/achats/factures");
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message || "Erreur interne." };
+  }
+}

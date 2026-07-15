@@ -657,5 +657,8 @@ model SupplierInvoice {
   paid         Boolean       @default(false)
   paidAt       DateTime?
   note         String?
+  amountImposable    Decimal?  @db.Decimal(14, 2)
+  amountNonImposable Decimal?  @db.Decimal(14, 2)
+  invoiceStatus      String    @default("PROVISOIRE")
   createdAt    DateTime      @default(now())
 }

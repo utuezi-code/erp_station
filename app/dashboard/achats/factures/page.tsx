@@ -76,7 +76,11 @@ export default async function FacturesPage() {
       </div>
 
       {/* Table */}
-      <FacturesClient invoices={serialize(invoices)} suppliers={suppliers} />
+      <FacturesClient
+        invoices={serialize(invoices)}
+        suppliers={suppliers}
+        isDF={["ADMIN", "DIRECTION_FINANCIERE"].includes((session.user as any).role)}
+      />
     </div>
   );
 }
