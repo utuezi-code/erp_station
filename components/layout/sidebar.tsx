@@ -10,7 +10,7 @@ import {
   BarChart3, Bell, FileText, ShoppingCart, Settings, LogOut,
   GitCompare, Calculator, ChevronLeft, ChevronRight, Landmark,
   Shield, UserCircle, Trophy, HardHat, CreditCard, FlaskConical,
-  X,
+  Warehouse, Truck, PackageCheck, X,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 
@@ -59,6 +59,15 @@ const navGroups: NavGroup[] = [
       { label: "Exploitation", href: "/dashboard/exploitation", icon: Calculator, roles: ["ADMIN", "GERANT", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"] },
       { label: "Réconciliation cuves", href: "/dashboard/reconciliation", icon: FlaskConical, roles: ["ADMIN", "GERANT", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"] },
       { label: "Cartes carburant", href: "/dashboard/cartes-carburant", icon: CreditCard, roles: ["ADMIN", "GERANT", "DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"] },
+    ],
+  },
+  {
+    label: "Approvisionnement",
+    items: [
+      { label: "Vue d'ensemble", href: "/dashboard/approvisionnement", icon: Warehouse, roles: ["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"] },
+      { label: "Achats SIR", href: "/dashboard/approvisionnement/sir", icon: TrendingUp, roles: ["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"] },
+      { label: "Stock GESTOCI", href: "/dashboard/approvisionnement/gestoci", icon: Package, roles: ["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"] },
+      { label: "Mises à disposition", href: "/dashboard/approvisionnement/mises-a-disposition", icon: Truck, roles: ["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE", "GERANT"] },
     ],
   },
   {

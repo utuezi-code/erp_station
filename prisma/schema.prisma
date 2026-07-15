@@ -180,6 +180,7 @@ model Station {
   tankMovements   TankMovement[]
   purchaseRequests PurchaseRequest[]
   receipts        GoodsReceipt[]
+  misesADispo     MiseADisposition[]
   pompistes       Pompiste[]
   pompisteShifts  PompisteShift[]
   carteTransactions TransactionCarte[]
@@ -217,6 +218,9 @@ model Fuel {
   deliveries   FuelDelivery[]
   tankMovements TankMovement[]
   carteTransactions TransactionCarte[]
+  sirPurchases     SIRPurchase[]
+  gestociMovements GESTOCIMovement[]
+  misesADispo      MiseADisposition[]
 }
 
 // ─── POMPES & PISTOLETS ───────────────────────────────────────────────────────
@@ -661,4 +665,63 @@ model SupplierInvoice {
   amountNonImposable Decimal?  @db.Decimal(14, 2)
   invoiceStatus      String    @default("PROVISOIRE")
   createdAt    DateTime      @default(now())
+}
+
+// ─── APPROVISIONNEMENT SIR / GESTOCI ─────────────────────────────────────────
+
+model SIRPurchase {
+  id            String   @id @default(cuid())
+  reference     String   @unique
+  purchaseDate  DateTime @db.Date
+  fuelId        String
+  fuel          Fuel     @relation(fields: [fuelId], references: [id])
+  quantity      Decimal  @db.Decimal(14, 3)
+  unitPrice     Decimal  @db.Decimal(10, 2)
+  totalAmount   Decimal  @db.Decimal(16, 2)
+  invoiceNumber String?
+  status        String   @default("COMMANDE")
+  note          String?
+  createdAt     DateTime @default(now())
+
+  gestociMovements GESTOCIMovement[]
+}
+
+model GESTOCIMovement {
+  id             String          @id @default(cuid())
+  date           DateTime        @db.Date
+  fuelId         String
+  fuel           Fuel            @relation(fields: [fuelId], references: [id])
+  type           String
+  quantity       Decimal         @db.Decimal(14, 3)
+  reference      String?
+  sirPurchaseId  String?
+  sirPurchase    SIRPurchase?    @relation(fields: [sirPurchaseId], references: [id])
+  miseADispoId   String?
+  miseADispo     MiseADisposition? @relation(fields: [miseADispoId], references: [id])
+  note           String?
+  createdAt      DateTime        @default(now())
+
+  @@index([fuelId, date])
+}
+
+model MiseADisposition {
+  id          String   @id @default(cuid())
+  number      String   @unique
+  date        DateTime @db.Date
+  stationId   String
+  station     Station  @relation(fields: [stationId], references: [id])
+  fuelId      String
+  fuel        Fuel     @relation(fields: [fuelId], references: [id])
+  quantity    Decimal  @db.Decimal(14, 3)
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  totalAmount Decimal  @db.Decimal(16, 2)
+  orderId     String?
+  status      String   @default("EMISE")
+  note        String?
+  createdAt   DateTime @default(now())
+
+  gestociMovements GESTOCIMovement[]
+
+  @@index([stationId])
+  @@index([fuelId])
 }
