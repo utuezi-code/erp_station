@@ -158,6 +158,21 @@ export async function createMiseADispo(formData: FormData): Promise<{ success: b
       },
     });
 
+    // Vérifier stock restant après sortie et créer alerte si bas
+    const stockApres = disponible - quantity;
+    const SEUIL_ALERTE_L = 15_000;
+    if (stockApres < SEUIL_ALERTE_L) {
+      const fuel = await db.fuel.findUnique({ where: { id: fuelId }, select: { name: true, code: true } });
+      await db.alert.create({
+        data: {
+          type: "STOCK_FAIBLE",
+          level: stockApres < 5_000 ? "RED" : "ORANGE",
+          message: `Stock GESTOCI ${fuel?.code || fuelId} bas après MD ${number} : ${stockApres.toLocaleString("fr-CI")} L restants (seuil ${SEUIL_ALERTE_L.toLocaleString("fr-CI")} L).`,
+        },
+      });
+      revalidatePath("/dashboard/alertes");
+    }
+
     revalidatePath("/dashboard/approvisionnement");
     revalidatePath("/dashboard/approvisionnement/gestoci");
     revalidatePath("/dashboard/approvisionnement/mises-a-disposition");

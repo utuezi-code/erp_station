@@ -13,10 +13,11 @@ const schema = z.object({
   blNumber: z.string().optional(),
   truckNumber: z.string().optional(),
   depot: z.string().optional(),
+  miseADispoId: z.string().optional(),
 });
 
 export async function saveLivraison(formData: FormData) {
-  const session = await requireRole(["ADMIN", "GERANT"]);
+  const session = await requireRole(["ADMIN", "GERANT", "DIRECTION_GENERALE"]);
   const userRole = (session.user as any).role as string;
   const userStationId = (session.user as any).stationId as string | null;
 
@@ -28,16 +29,34 @@ export async function saveLivraison(formData: FormData) {
     blNumber: formData.get("blNumber") || undefined,
     truckNumber: formData.get("truckNumber") || undefined,
     depot: formData.get("depot") || undefined,
+    miseADispoId: formData.get("miseADispoId") || undefined,
   });
 
-  // IDOR guard: GERANT can only save livraisons for their own station
   if (userRole === "GERANT" && data.stationId !== userStationId) {
     throw new Error("Accès refusé : vous ne pouvez saisir des livraisons que pour votre propre station.");
   }
 
   await db.fuelDelivery.create({
-    data: { ...data, date: new Date(data.date) },
+    data: {
+      stationId: data.stationId,
+      fuelId: data.fuelId,
+      date: new Date(data.date),
+      quantity: data.quantity,
+      blNumber: data.blNumber,
+      truckNumber: data.truckNumber,
+      depot: data.depot,
+      miseADispoId: data.miseADispoId || null,
+    },
   });
+
+  // Si liée à une MD → passer la MD à LIVREE
+  if (data.miseADispoId) {
+    await db.miseADisposition.update({
+      where: { id: data.miseADispoId },
+      data: { status: "LIVREE" },
+    });
+    revalidatePath("/dashboard/approvisionnement/mises-a-disposition");
+  }
 
   revalidatePath("/dashboard/gerant/livraisons");
   return { success: true };

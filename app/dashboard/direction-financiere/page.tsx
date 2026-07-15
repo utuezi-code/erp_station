@@ -1,7 +1,7 @@
 import { requireRole } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import Link from "next/link";
-import { CheckCircle, Clock, XCircle, TrendingUp, ArrowRight } from "lucide-react";
+import { CheckCircle, Clock, XCircle, TrendingUp, TrendingDown, ArrowRight, Scale } from "lucide-react";
 
 function fmt(n: { toNumber?: () => number } | number | null | undefined) {
   const num = n == null ? 0 : typeof n === "object" && typeof n.toNumber === "function" ? n.toNumber() : Number(n);
@@ -15,7 +15,7 @@ export default async function DirectionFinancierePage() {
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
-  const [versementsMonth, versementsPending, versementsValidated, dailyMonth, stations, recentPending, disponibleBancaire] = await Promise.all([
+  const [versementsMonth, versementsPending, versementsValidated, dailyMonth, stations, recentPending, disponibleBancaire, sirCostsMonth, invoicesPending] = await Promise.all([
     db.versement.aggregate({
       where: { date: { gte: startOfMonth, lte: endOfMonth } },
       _sum: { amount: true },
@@ -52,6 +52,16 @@ export default async function DirectionFinancierePage() {
       where: { status: "VALIDE" },
       _sum: { amount: true },
     }),
+    db.sIRPurchase.aggregate({
+      where: { purchaseDate: { gte: startOfMonth, lte: endOfMonth } },
+      _sum: { totalAmount: true },
+      _count: true,
+    }),
+    db.supplierInvoice.aggregate({
+      where: { paid: false },
+      _sum: { amountTTC: true },
+      _count: true,
+    }),
   ]);
 
   // Per-station summary
@@ -75,6 +85,9 @@ export default async function DirectionFinancierePage() {
   const totalCA = Number(dailyMonth._sum.revenue || 0);
   const totalVersements = Number(versementsMonth._sum.amount || 0);
   const ecart = totalCA - Number(versementsValidated._sum.amount || 0);
+  const totalSIR = Number(sirCostsMonth._sum.totalAmount || 0);
+  const totalFacturesImpayees = Number(invoicesPending._sum.amountTTC || 0);
+  const resultatNet = totalCA - totalSIR;
 
   return (
     <div>
@@ -138,6 +151,34 @@ export default async function DirectionFinancierePage() {
             <p className="text-3xl font-bold text-blue-800">{fmt(Number(disponibleBancaire._sum.amount || 0))} FCFA</p>
             <p className="text-xs text-blue-500 mt-0.5">Cumul de tous les versements validés toutes périodes confondues</p>
           </div>
+        </div>
+      </div>
+
+      {/* P&L mensuel */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div className="bg-white rounded-2xl border border-green-200 shadow-sm p-5">
+          <div className="flex items-center gap-2 mb-2">
+            <TrendingUp className="w-4 h-4 text-green-500" />
+            <p className="text-xs font-medium text-gray-500">Chiffre d'affaires (mois)</p>
+          </div>
+          <p className="text-2xl font-bold text-green-700 tabular-nums">{fmt(totalCA)}</p>
+          <p className="text-xs text-gray-400 mt-1">FCFA — ventes carburant</p>
+        </div>
+        <div className="bg-white rounded-2xl border border-red-200 shadow-sm p-5">
+          <div className="flex items-center gap-2 mb-2">
+            <TrendingDown className="w-4 h-4 text-red-500" />
+            <p className="text-xs font-medium text-gray-500">Achats SIR (mois)</p>
+          </div>
+          <p className="text-2xl font-bold text-red-600 tabular-nums">{fmt(totalSIR)}</p>
+          <p className="text-xs text-gray-400 mt-1">FCFA — {sirCostsMonth._count} achat(s) + {invoicesPending._count} facture(s) impayée(s) : {fmt(totalFacturesImpayees)} FCFA</p>
+        </div>
+        <div className={`bg-white rounded-2xl border shadow-sm p-5 ${resultatNet >= 0 ? "border-blue-200" : "border-red-300"}`}>
+          <div className="flex items-center gap-2 mb-2">
+            <Scale className={`w-4 h-4 ${resultatNet >= 0 ? "text-blue-500" : "text-red-500"}`} />
+            <p className="text-xs font-medium text-gray-500">Résultat brut (CA − achats SIR)</p>
+          </div>
+          <p className={`text-2xl font-bold tabular-nums ${resultatNet >= 0 ? "text-blue-700" : "text-red-600"}`}>{fmt(resultatNet)}</p>
+          <p className="text-xs text-gray-400 mt-1">FCFA</p>
         </div>
       </div>
 

@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ValidateActions } from "./validate-actions";
-import { CheckCircle, Clock } from "lucide-react";
+import { CheckCircle, Clock, PackageCheck } from "lucide-react";
+import Link from "next/link";
 
 function fmt(n: any) { return Number(n || 0).toLocaleString("fr-CI", { maximumFractionDigits: 0 }); }
 
@@ -31,6 +32,14 @@ export default async function DemandePage({ params }: { params: { id: string } }
       orders: { select: { id: true, number: true, status: true } },
     },
   });
+
+  const linkedMDs = request
+    ? await db.miseADisposition.findMany({
+        where: { orderId: request.id },
+        include: { fuel: { select: { name: true, code: true } }, station: { select: { name: true } } },
+        orderBy: { date: "desc" },
+      })
+    : [];
 
   if (!request) notFound();
 
@@ -91,10 +100,18 @@ export default async function DemandePage({ params }: { params: { id: string } }
         <div className="h-px w-8 bg-gray-300 flex-shrink-0" />
         <Step
           label="BC"
-          sublabel="Création commande"
+          sublabel="Bon de commande"
           done={request.orders.length > 0}
-          active={request.status === "VALIDE"}
+          active={request.status === "VALIDE" && linkedMDs.length === 0}
           icon={<CheckCircle className="w-4 h-4" />}
+        />
+        <div className="h-px w-8 bg-gray-300 flex-shrink-0" />
+        <Step
+          label="Mise à dispo"
+          sublabel="Livraison GESTOCI"
+          done={linkedMDs.some((m) => ["LIVREE", "CONFIRMEE"].includes(m.status))}
+          active={request.status === "VALIDE" || linkedMDs.some((m) => m.status === "EMISE")}
+          icon={<PackageCheck className="w-4 h-4" />}
         />
       </div>
 
@@ -148,11 +165,50 @@ export default async function DemandePage({ params }: { params: { id: string } }
               <CardHeader><CardTitle className="text-sm">Bons de commande liés</CardTitle></CardHeader>
               <CardContent className="space-y-2">
                 {request.orders.map((o) => (
-                  <div key={o.id} className="text-sm">
-                    <span className="font-mono font-medium">{o.number}</span>
-                    <span className="ml-2 text-gray-400">{o.status}</span>
-                  </div>
+                  <Link key={o.id} href={`/dashboard/achats/commandes/${o.id}`} className="flex items-center justify-between hover:bg-gray-50 rounded-lg px-2 py-1.5">
+                    <span className="font-mono font-medium text-sm">{o.number}</span>
+                    <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{o.status}</span>
+                  </Link>
                 ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {linkedMDs.length > 0 && (
+            <Card>
+              <CardHeader><CardTitle className="text-sm flex items-center gap-2"><PackageCheck className="w-4 h-4 text-blue-500" />Mises à disposition liées</CardTitle></CardHeader>
+              <CardContent className="space-y-2">
+                {linkedMDs.map((md) => {
+                  const mdStatus: Record<string, { label: string; color: string }> = {
+                    EMISE: { label: "Émise", color: "bg-blue-100 text-blue-700" },
+                    LIVREE: { label: "Livrée", color: "bg-green-100 text-green-700" },
+                    CONFIRMEE: { label: "Confirmée", color: "bg-gray-100 text-gray-600" },
+                  };
+                  const s = mdStatus[md.status] || { label: md.status, color: "bg-gray-100 text-gray-600" };
+                  return (
+                    <div key={md.id} className="flex items-center justify-between px-2 py-1.5">
+                      <div>
+                        <span className="font-mono font-medium text-sm">{md.number}</span>
+                        <span className="ml-2 text-xs text-gray-400">{md.fuel.code} · {Number(md.quantity).toLocaleString("fr-CI")} L · {md.station.name}</span>
+                      </div>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${s.color}`}>{s.label}</span>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
+
+          {request.status === "VALIDE" && linkedMDs.length === 0 && (
+            <Card className="border-dashed border-blue-300 bg-blue-50/50">
+              <CardContent className="pt-4 flex items-center justify-between">
+                <p className="text-sm text-blue-700">DA validée — créer une mise à disposition carburant ou un bon de commande fournisseur.</p>
+                <Link
+                  href={`/dashboard/approvisionnement/mises-a-disposition/new?orderId=${request.id}`}
+                  className="text-xs px-3 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 whitespace-nowrap ml-3"
+                >
+                  Créer une MD
+                </Link>
               </CardContent>
             </Card>
           )}

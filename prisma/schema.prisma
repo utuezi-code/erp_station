@@ -354,19 +354,21 @@ model Versement {
 // ─── LIVRAISONS ───────────────────────────────────────────────────────────────
 
 model FuelDelivery {
-  id          String   @id @default(cuid())
-  stationId   String
-  station     Station  @relation(fields: [stationId], references: [id])
-  fuelId      String
-  fuel        Fuel     @relation(fields: [fuelId], references: [id])
-  date        DateTime @db.Date
-  truckNumber String?
-  depot       String?
-  quantity    Decimal  @db.Decimal(12, 3)
-  blNumber    String?
-  blPhotoUrl  String?
-  note        String?
-  createdAt   DateTime @default(now())
+  id             String            @id @default(cuid())
+  stationId      String
+  station        Station           @relation(fields: [stationId], references: [id])
+  fuelId         String
+  fuel           Fuel              @relation(fields: [fuelId], references: [id])
+  date           DateTime          @db.Date
+  truckNumber    String?
+  depot          String?
+  quantity       Decimal           @db.Decimal(12, 3)
+  blNumber       String?
+  blPhotoUrl     String?
+  note           String?
+  miseADispoId   String?
+  miseADispo     MiseADisposition? @relation(fields: [miseADispoId], references: [id])
+  createdAt      DateTime          @default(now())
 
   @@index([stationId, date])
 }
@@ -721,6 +723,7 @@ model MiseADisposition {
   createdAt   DateTime @default(now())
 
   gestociMovements GESTOCIMovement[]
+  fuelDeliveries   FuelDelivery[]
 
   @@index([stationId])
   @@index([fuelId])
