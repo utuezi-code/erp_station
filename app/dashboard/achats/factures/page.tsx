@@ -6,7 +6,8 @@ import { Plus, FileText, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { FacturesClient } from "./factures-client";
 
 export default async function FacturesPage() {
-  await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
+  const session = await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
+  const canCreate = ["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE"].includes((session.user as any).role);
 
   const [invoices, suppliers] = await Promise.all([
     db.supplierInvoice.findMany({
@@ -38,12 +39,14 @@ export default async function FacturesPage() {
           <h2 className="text-xl font-bold text-gray-900">Factures fournisseurs</h2>
           <p className="text-sm text-gray-400 mt-0.5">{invoices.length} facture(s) enregistrée(s)</p>
         </div>
-        <Link
-          href="/dashboard/achats/factures/new"
-          className="flex items-center gap-2 px-4 py-2 bg-[#0369A1] hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm shadow-orange-400/20"
-        >
-          <Plus className="w-4 h-4" /> Nouvelle facture
-        </Link>
+        {canCreate && (
+          <Link
+            href="/dashboard/achats/factures/new"
+            className="flex items-center gap-2 px-4 py-2 bg-[#0369A1] hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm shadow-orange-400/20"
+          >
+            <Plus className="w-4 h-4" /> Nouvelle facture
+          </Link>
+        )}
       </div>
 
       {/* KPIs */}

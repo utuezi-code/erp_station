@@ -27,7 +27,9 @@ export default async function CommandesPage({
 }: {
   searchParams: Promise<{ status?: string }>;
 }) {
-  await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
+  const session = await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
+  const userRole = (session.user as any).role as string;
+  const canCreate = ["ADMIN", "RESPONSABLE_SERVICE"].includes(userRole);
   const params = await searchParams;
 
   const where: any = {};
@@ -50,11 +52,13 @@ export default async function CommandesPage({
           <h1 className="text-2xl font-bold text-gray-900">Bons de commande</h1>
           <p className="text-gray-500 mt-1">{orders.length} commande(s)</p>
         </div>
-        <Link href="/dashboard/achats/commandes/new">
-          <Button className="bg-[#0369A1] hover:bg-blue-700">
-            <Plus className="w-4 h-4 mr-2" /> Nouveau BC
-          </Button>
-        </Link>
+        {canCreate && (
+          <Link href="/dashboard/achats/commandes/new">
+            <Button className="bg-[#0369A1] hover:bg-blue-700">
+              <Plus className="w-4 h-4 mr-2" /> Nouveau BC
+            </Button>
+          </Link>
+        )}
       </div>
 
       <div className="flex gap-2 mb-4 flex-wrap">

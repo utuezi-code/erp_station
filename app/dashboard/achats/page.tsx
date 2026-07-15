@@ -29,7 +29,9 @@ const BC_STATUS: Record<string, { label: string; color: string }> = {
 };
 
 export default async function AchatsPage() {
-  await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
+  const session = await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
+  const userRole = (session.user as any).role as string;
+  const canInitiate = ["ADMIN", "RESPONSABLE_SERVICE", "GERANT"].includes(userRole);
 
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -106,11 +108,13 @@ export default async function AchatsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Gestion des achats</h1>
           <p className="text-gray-500 mt-1">Demandes, bons de commande, livraisons et factures</p>
         </div>
-        <Link href="/dashboard/achats/demandes/new">
-          <button className="bg-[#0369A1] hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-xl flex items-center gap-2 transition-colors">
-            <FileText className="w-4 h-4" /> Nouvelle demande
-          </button>
-        </Link>
+        {canInitiate && (
+          <Link href="/dashboard/achats/demandes/new">
+            <button className="bg-[#0369A1] hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-xl flex items-center gap-2 transition-colors">
+              <FileText className="w-4 h-4" /> Nouvelle demande
+            </button>
+          </Link>
+        )}
       </div>
 
       {/* Indicateurs opérationnels */}
