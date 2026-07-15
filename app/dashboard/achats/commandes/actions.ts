@@ -63,9 +63,44 @@ export async function createPurchaseOrder(formData: FormData) {
   redirect(`/dashboard/achats/commandes/${po.id}`);
 }
 
-export async function updateOrderStatus(id: string, status: string) {
-  await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE"]);
-  await db.purchaseOrder.update({ where: { id }, data: { status: status as any } });
-  revalidatePath("/dashboard/achats/commandes");
-  revalidatePath(`/dashboard/achats/commandes/${id}`);
+export async function updateOrderStatus(
+  id: string,
+  status: string,
+  comment?: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const session = await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE"]);
+    const userId = (session.user as any).id;
+
+    // Threshold-based multi-level validation (15.4)
+    // Orders > 5M FCFA require DIRECTION_FINANCIERE or ADMIN to validate
+    if (status === "VALIDE") {
+      const order = await db.purchaseOrder.findUnique({ where: { id }, select: { totalHT: true } });
+      const amount = Number(order?.totalHT || 0);
+      const role = (session.user as any).role as string;
+      if (amount > 5_000_000 && !["ADMIN", "DIRECTION_FINANCIERE"].includes(role)) {
+        return { success: false, error: "Les commandes supérieures à 5 000 000 FCFA doivent être validées par la Direction Financière." };
+      }
+    }
+
+    await db.purchaseOrder.update({ where: { id }, data: { status: status as any } });
+
+    // Record validation history
+    if (["VALIDE", "ANNULE"].includes(status)) {
+      await db.orderValidation.create({
+        data: {
+          orderId: id,
+          userId,
+          action: status === "VALIDE" ? "APPROVED" : "REJECTED",
+          comment: comment || null,
+        },
+      });
+    }
+
+    revalidatePath("/dashboard/achats/commandes");
+    revalidatePath(`/dashboard/achats/commandes/${id}`);
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message || "Une erreur est survenue." };
+  }
 }

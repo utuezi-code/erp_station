@@ -36,6 +36,10 @@ export default async function CommandePage({ params }: { params: { id: string } 
       receipts: { include: { items: true }, orderBy: { receiptDate: "desc" } },
       invoices: { take: 1 },
       request: { select: { id: true, number: true } },
+      validations: {
+        include: { user: { select: { name: true } } },
+        orderBy: { createdAt: "asc" },
+      },
     },
   });
 
@@ -116,7 +120,17 @@ export default async function CommandePage({ params }: { params: { id: string } 
         </div>
 
         <div className="space-y-4">
-          {canEdit && <OrderStatusActions orderId={order.id} currentStatus={order.status} />}
+          {canEdit && (
+            <OrderStatusActions
+              orderId={order.id}
+              currentStatus={order.status}
+              totalHT={Number(order.totalHT)}
+              validations={order.validations.map((v) => ({
+                ...v,
+                createdAt: v.createdAt.toISOString(),
+              }))}
+            />
+          )}
 
           <Card>
             <CardHeader><CardTitle className="text-sm">Résumé financier</CardTitle></CardHeader>

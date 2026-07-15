@@ -13,7 +13,8 @@ const receiptItemSchema = z.object({
 });
 
 export async function createReceipt(formData: FormData) {
-  await requireRole(["ADMIN", "RESPONSABLE_SERVICE"]);
+  const session = await requireRole(["ADMIN", "RESPONSABLE_SERVICE"]);
+  const userId = (session.user as any).id;
 
   const orderId = formData.get("orderId") as string;
   const stationId = formData.get("stationId") as string;
@@ -69,6 +70,29 @@ export async function createReceipt(formData: FormData) {
     },
   });
 
+  // 15.8 Gestion des écarts de livraison — alert on significant gap
+  const ecarts = items.filter((i) => {
+    const gap = i.quantityOrdered - i.quantityReceived;
+    const pct = i.quantityOrdered > 0 ? gap / i.quantityOrdered : 0;
+    return gap > 0 && pct > 0.05; // alert if received < 95% of ordered
+  });
+  if (ecarts.length > 0) {
+    const orderNum = order.number;
+    const stationId = formData.get("stationId") as string | null;
+    for (const ec of ecarts) {
+      const pct = Math.round((1 - ec.quantityReceived / ec.quantityOrdered) * 100);
+      await db.alert.create({
+        data: {
+          type: "ECART_STOCK",
+          level: pct > 20 ? "RED" : "ORANGE",
+          message: `Écart de livraison sur BC ${orderNum} — "${ec.description}": commandé ${ec.quantityOrdered}, reçu ${ec.quantityReceived} (manque ${pct}%).`,
+          stationId: stationId || null,
+        },
+      });
+    }
+  }
+
   revalidatePath("/dashboard/achats/receptions");
+  revalidatePath("/dashboard/alertes");
   revalidatePath(`/dashboard/achats/commandes/${orderId}`);
 }
