@@ -16,7 +16,7 @@ async function createRegion(formData: FormData) {
 }
 
 export default async function SettingsPage() {
-  await requireRole(["ADMIN"]);
+  await requireRole(["ADMIN", "DIRECTION_GENERALE"]);
 
   const regions = await db.region.findMany({ orderBy: { name: "asc" } });
 

@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { StocksClientPage } from "./stocks-client";
 
 export default async function StocksPage({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
-  const session = await requireRole(["ADMIN", "GERANT"]);
+  const session = await requireRole(["ADMIN", "GERANT", "DIRECTION_GENERALE"]);
   const user = session.user as any;
   const stationId = user.stationId;
 

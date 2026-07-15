@@ -4,7 +4,7 @@ import Link from "next/link";
 import { NewMDClient } from "./new-md-client";
 
 export default async function NewMDPage({ searchParams }: { searchParams: Promise<{ orderId?: string }> }) {
-  await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_GENERALE"]);
+  await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
   const { orderId } = await searchParams;
 
   const [stations, fuels, stockByFuel, pendingOrders] = await Promise.all([

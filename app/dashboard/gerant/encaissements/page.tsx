@@ -4,7 +4,7 @@ import { EncaissementsClient } from "./encaissements-client";
 import { serialize } from "@/lib/serialize";
 
 export default async function EncaissementsPage({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
-  const session = await requireRole(["ADMIN", "GERANT"]);
+  const session = await requireRole(["ADMIN", "GERANT", "DIRECTION_GENERALE"]);
   const user = session.user as any;
   const stationId = user.stationId;
   const today = new Date().toISOString().split("T")[0];

@@ -7,7 +7,7 @@ import { serialize } from "@/lib/serialize";
 
 export default async function SIRPage() {
   const session = await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
-  const canCreate = ["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_GENERALE"].includes((session.user as any).role);
+  const canCreate = ["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"].includes((session.user as any).role);
 
   const [purchases, fuels] = await Promise.all([
     db.sIRPurchase.findMany({

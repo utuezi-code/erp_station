@@ -4,7 +4,7 @@ import Link from "next/link";
 import { NewSIRClient } from "./new-sir-client";
 
 export default async function NewSIRPage() {
-  await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_GENERALE"]);
+  await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
 
   const fuels = await db.fuel.findMany({
     where: { active: true },

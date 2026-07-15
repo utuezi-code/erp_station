@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
 
 export async function createSIRPurchase(formData: FormData): Promise<{ success: boolean; error?: string }> {
   try {
-    await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_GENERALE"]);
+    await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
 
     const fuelId = formData.get("fuelId") as string;
     const purchaseDate = formData.get("purchaseDate") as string;
@@ -64,7 +64,7 @@ export async function updateSIRStatus(
   status: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_GENERALE"]);
+    await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
 
     const purchase = await db.sIRPurchase.findUnique({ where: { id } });
     if (!purchase) return { success: false, error: "Achat introuvable." };
@@ -100,7 +100,7 @@ export async function updateSIRStatus(
 
 export async function createMiseADispo(formData: FormData): Promise<{ success: boolean; error?: string }> {
   try {
-    await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_GENERALE"]);
+    await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
 
     const stationId = formData.get("stationId") as string;
     const fuelId = formData.get("fuelId") as string;

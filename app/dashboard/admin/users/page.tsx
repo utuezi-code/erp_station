@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { UsersClientPage } from "./users-client";
 
 export default async function UsersPage() {
-  await requireRole(["ADMIN"]);
+  await requireRole(["ADMIN", "DIRECTION_GENERALE"]);
 
   const [users, stations] = await Promise.all([
     db.user.findMany({

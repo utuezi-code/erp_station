@@ -26,7 +26,7 @@ const tankSchema = z.object({
 });
 
 export async function createPump(formData: FormData) {
-  await requireRole(["ADMIN"]);
+  await requireRole(["ADMIN", "DIRECTION_GENERALE"]);
   const data = pumpSchema.parse({
     stationId: formData.get("stationId"),
     name: formData.get("name"),
@@ -38,7 +38,7 @@ export async function createPump(formData: FormData) {
 }
 
 export async function createNozzle(formData: FormData) {
-  await requireRole(["ADMIN"]);
+  await requireRole(["ADMIN", "DIRECTION_GENERALE"]);
   const data = nozzleSchema.parse({
     pumpId: formData.get("pumpId"),
     fuelId: formData.get("fuelId"),
@@ -50,7 +50,7 @@ export async function createNozzle(formData: FormData) {
 }
 
 export async function createTank(formData: FormData) {
-  await requireRole(["ADMIN"]);
+  await requireRole(["ADMIN", "DIRECTION_GENERALE"]);
   const data = tankSchema.parse({
     stationId: formData.get("stationId"),
     fuelId: formData.get("fuelId"),

@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { IndexClientPage } from "./index-client";
 
 export default async function IndexPage({ searchParams }: { searchParams: Promise<{ date?: string; stationId?: string }> }) {
-  const session = await requireRole(["ADMIN", "GERANT"]);
+  const session = await requireRole(["ADMIN", "GERANT", "DIRECTION_GENERALE"]);
   const user = session.user as any;
   const params = await searchParams;
 

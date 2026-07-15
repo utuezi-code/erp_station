@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { PumpsClientPage } from "./pumps-client";
 
 export default async function PumpsPage() {
-  await requireRole(["ADMIN"]);
+  await requireRole(["ADMIN", "DIRECTION_GENERALE"]);
 
   const [stations, fuels, pumps, tanks] = await Promise.all([
     db.station.findMany({ where: { status: "ACTIVE" }, select: { id: true, name: true }, orderBy: { name: "asc" } }),

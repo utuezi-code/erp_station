@@ -17,7 +17,7 @@ const userSchema = z.object({
 });
 
 export async function createUser(formData: FormData) {
-  const session = await requireRole(["ADMIN"]);
+  const session = await requireRole(["ADMIN", "DIRECTION_GENERALE"]);
 
   const data = userSchema.parse({
     name: formData.get("name"),
@@ -56,7 +56,7 @@ export async function createUser(formData: FormData) {
 }
 
 export async function updateUser(id: string, formData: FormData) {
-  const session = await requireRole(["ADMIN"]);
+  const session = await requireRole(["ADMIN", "DIRECTION_GENERALE"]);
 
   const before = await db.user.findUnique({ where: { id } });
 
@@ -97,7 +97,7 @@ export async function updateUser(id: string, formData: FormData) {
 }
 
 export async function deleteUser(id: string) {
-  const session = await requireRole(["ADMIN"]);
+  const session = await requireRole(["ADMIN", "DIRECTION_GENERALE"]);
   const currentUserId = (session.user as any).id;
   if (id === currentUserId) throw new Error("Impossible de supprimer votre propre compte.");
 

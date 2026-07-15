@@ -9,7 +9,7 @@ export default async function AuditPage({
 }: {
   searchParams: Promise<{ userId?: string; entity?: string; page?: string }>;
 }) {
-  await requireRole(["ADMIN"]);
+  await requireRole(["ADMIN", "DIRECTION_GENERALE"]);
   const params = await searchParams;
 
   const page = parseInt(params.page || "1");

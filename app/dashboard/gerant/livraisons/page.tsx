@@ -4,7 +4,7 @@ import { LivraisonsClient } from "./livraisons-client";
 import { serialize } from "@/lib/serialize";
 
 export default async function LivraisonsPage() {
-  const session = await requireRole(["ADMIN", "GERANT"]);
+  const session = await requireRole(["ADMIN", "GERANT", "DIRECTION_GENERALE"]);
   const user = session.user as any;
   const stationId = user.stationId;
 

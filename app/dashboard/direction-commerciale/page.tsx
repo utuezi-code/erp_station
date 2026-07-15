@@ -8,7 +8,7 @@ export default async function DirectionCommercialePage({
 }: {
   searchParams: Promise<{ from?: string; to?: string; stationId?: string }>;
 }) {
-  await requireRole(["ADMIN", "DIRECTION_COMMERCIALE"]);
+  await requireRole(["ADMIN", "DIRECTION_COMMERCIALE", "DIRECTION_GENERALE"]);
   const params = await searchParams;
 
   const today = new Date();

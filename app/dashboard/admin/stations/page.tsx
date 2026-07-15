@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { StationsClientPage } from "./stations-client";
 
 export default async function StationsPage() {
-  await requireRole(["ADMIN"]);
+  await requireRole(["ADMIN", "DIRECTION_GENERALE"]);
 
   const [stations, regions] = await Promise.all([
     db.station.findMany({

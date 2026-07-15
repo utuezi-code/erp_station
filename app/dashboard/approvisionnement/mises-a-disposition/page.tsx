@@ -8,7 +8,7 @@ import { MDClient } from "./md-client";
 export default async function MisesADispositionPage() {
   const session = await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE", "GERANT"]);
   const role = (session.user as any).role as string;
-  const canCreate = ["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_GENERALE"].includes(role);
+  const canCreate = ["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"].includes(role);
 
   const [mds, fuels, stations] = await Promise.all([
     db.miseADisposition.findMany({

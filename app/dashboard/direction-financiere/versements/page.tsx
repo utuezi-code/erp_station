@@ -4,7 +4,7 @@ import { VersementsClientPage } from "@/app/dashboard/gerant/versements/versemen
 import { serialize } from "@/lib/serialize";
 
 export default async function FinancierVersementsPage() {
-  const session = await requireRole(["ADMIN", "DIRECTION_FINANCIERE"]);
+  const session = await requireRole(["ADMIN", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
   const user = session.user as any;
 
   const [versements, stations] = await Promise.all([

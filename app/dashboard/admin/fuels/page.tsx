@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { FuelsClientPage } from "./fuels-client";
 
 export default async function FuelsPage() {
-  await requireRole(["ADMIN"]);
+  await requireRole(["ADMIN", "DIRECTION_GENERALE"]);
 
   const fuels = await db.fuel.findMany({ orderBy: { name: "asc" } });
 

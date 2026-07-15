@@ -8,7 +8,7 @@ export default async function PompistesPage({
 }: {
   searchParams: Promise<{ stationId?: string; date?: string }>;
 }) {
-  const session = await requireRole(["ADMIN", "GERANT"]);
+  const session = await requireRole(["ADMIN", "GERANT", "DIRECTION_GENERALE"]);
   const params = await searchParams;
   const user = session.user as any;
   const isGerant = user.role === "GERANT";

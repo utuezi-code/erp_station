@@ -9,7 +9,7 @@ function fmt(n: { toNumber?: () => number } | number | null | undefined) {
 }
 
 export default async function DirectionFinancierePage() {
-  await requireRole(["ADMIN", "DIRECTION_FINANCIERE"]);
+  await requireRole(["ADMIN", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
 
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);

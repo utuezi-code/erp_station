@@ -16,7 +16,7 @@ const fuelSchema = z.object({
 });
 
 export async function createFuel(formData: FormData) {
-  const session = await requireRole(["ADMIN"]);
+  const session = await requireRole(["ADMIN", "DIRECTION_GENERALE"]);
 
   const data = fuelSchema.parse({
     name: formData.get("name"),
@@ -46,7 +46,7 @@ export async function createFuel(formData: FormData) {
 }
 
 export async function updateFuel(id: string, formData: FormData) {
-  const session = await requireRole(["ADMIN"]);
+  const session = await requireRole(["ADMIN", "DIRECTION_GENERALE"]);
 
   const data = fuelSchema.parse({
     name: formData.get("name"),

@@ -26,68 +26,72 @@ interface NavGroup {
   items: NavItem[];
 }
 
+const DG = "DIRECTION_GENERALE";
+const DF = "DIRECTION_FINANCIERE";
+const ALL: Role[] = ["ADMIN", "GERANT", "DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE", "RESPONSABLE_SERVICE"];
+
 const navGroups: NavGroup[] = [
   {
     label: "Général",
     items: [
-      { label: "Tableau de bord", href: "/dashboard", icon: LayoutDashboard, roles: ["ADMIN", "GERANT", "DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE", "RESPONSABLE_SERVICE"] },
-      { label: "Alertes", href: "/dashboard/alertes", icon: Bell, roles: ["ADMIN", "GERANT", "DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE", "RESPONSABLE_SERVICE"] },
-      { label: "Mon profil", href: "/dashboard/profil", icon: UserCircle, roles: ["ADMIN", "GERANT", "DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE", "RESPONSABLE_SERVICE"] },
+      { label: "Tableau de bord", href: "/dashboard", icon: LayoutDashboard, roles: ALL },
+      { label: "Alertes", href: "/dashboard/alertes", icon: Bell, roles: ALL },
+      { label: "Mon profil", href: "/dashboard/profil", icon: UserCircle, roles: ALL },
     ],
   },
   {
     label: "Opérations",
     items: [
-      { label: "Index pompes", href: "/dashboard/gerant/index", icon: Gauge, roles: ["GERANT"] },
-      { label: "Stocks cuves", href: "/dashboard/gerant/stocks", icon: Droplets, roles: ["GERANT"] },
-      { label: "Encaissements", href: "/dashboard/gerant/encaissements", icon: Wallet, roles: ["GERANT"] },
-      { label: "Versements", href: "/dashboard/gerant/versements", icon: ArrowUpCircle, roles: ["GERANT", "DIRECTION_FINANCIERE"] },
-      { label: "Livraisons", href: "/dashboard/gerant/livraisons", icon: Package, roles: ["GERANT"] },
-      { label: "Pompistes", href: "/dashboard/pompistes", icon: HardHat, roles: ["ADMIN", "GERANT"] },
+      { label: "Index pompes", href: "/dashboard/gerant/index", icon: Gauge, roles: ["ADMIN", "GERANT", DG] },
+      { label: "Stocks cuves", href: "/dashboard/gerant/stocks", icon: Droplets, roles: ["ADMIN", "GERANT", DG] },
+      { label: "Encaissements", href: "/dashboard/gerant/encaissements", icon: Wallet, roles: ["ADMIN", "GERANT", DG] },
+      { label: "Versements", href: "/dashboard/gerant/versements", icon: ArrowUpCircle, roles: ["ADMIN", "GERANT", DF, DG] },
+      { label: "Livraisons", href: "/dashboard/gerant/livraisons", icon: Package, roles: ["ADMIN", "GERANT", DG] },
+      { label: "Pompistes", href: "/dashboard/pompistes", icon: HardHat, roles: ["ADMIN", "GERANT", DG] },
     ],
   },
   {
     label: "Direction",
     items: [
-      { label: "Ventes", href: "/dashboard/direction-commerciale", icon: TrendingUp, roles: ["ADMIN", "DIRECTION_COMMERCIALE"] },
-      { label: "Classement", href: "/dashboard/classement", icon: Trophy, roles: ["ADMIN", "DIRECTION_COMMERCIALE", "DIRECTION_GENERALE"] },
-      { label: "Tableau financier", href: "/dashboard/direction-financiere", icon: BarChart3, roles: ["ADMIN", "DIRECTION_FINANCIERE"] },
-      { label: "Suivi financier", href: "/dashboard/direction-financiere/versements", icon: BarChart3, roles: ["ADMIN", "DIRECTION_FINANCIERE"] },
-      { label: "Direction Générale", href: "/dashboard/direction-generale", icon: LayoutDashboard, roles: ["ADMIN", "DIRECTION_GENERALE"] },
-      { label: "Prix carburants", href: "/dashboard/prix-carburants", icon: Fuel, roles: ["ADMIN", "DIRECTION_GENERALE"] },
-      { label: "Écarts", href: "/dashboard/ecarts", icon: GitCompare, roles: ["ADMIN", "GERANT", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"] },
-      { label: "Exploitation", href: "/dashboard/exploitation", icon: Calculator, roles: ["ADMIN", "GERANT", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"] },
-      { label: "Réconciliation cuves", href: "/dashboard/reconciliation", icon: FlaskConical, roles: ["ADMIN", "GERANT", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"] },
-      { label: "Cartes carburant", href: "/dashboard/cartes-carburant", icon: CreditCard, roles: ["ADMIN", "GERANT", "DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"] },
+      { label: "Ventes", href: "/dashboard/direction-commerciale", icon: TrendingUp, roles: ["ADMIN", "DIRECTION_COMMERCIALE", DG] },
+      { label: "Classement", href: "/dashboard/classement", icon: Trophy, roles: ["ADMIN", "DIRECTION_COMMERCIALE", DG] },
+      { label: "Tableau financier", href: "/dashboard/direction-financiere", icon: BarChart3, roles: ["ADMIN", DF, DG] },
+      { label: "Suivi financier", href: "/dashboard/direction-financiere/versements", icon: BarChart3, roles: ["ADMIN", DF, DG] },
+      { label: "Direction Générale", href: "/dashboard/direction-generale", icon: LayoutDashboard, roles: ["ADMIN", DG] },
+      { label: "Prix carburants", href: "/dashboard/prix-carburants", icon: Fuel, roles: ["ADMIN", DG] },
+      { label: "Écarts", href: "/dashboard/ecarts", icon: GitCompare, roles: ["ADMIN", "GERANT", DF, DG] },
+      { label: "Exploitation", href: "/dashboard/exploitation", icon: Calculator, roles: ["ADMIN", "GERANT", DF, DG] },
+      { label: "Réconciliation cuves", href: "/dashboard/reconciliation", icon: FlaskConical, roles: ["ADMIN", "GERANT", DF, DG] },
+      { label: "Cartes carburant", href: "/dashboard/cartes-carburant", icon: CreditCard, roles: ["ADMIN", "GERANT", "DIRECTION_COMMERCIALE", DF, DG] },
     ],
   },
   {
     label: "Approvisionnement",
     items: [
-      { label: "Vue d'ensemble", href: "/dashboard/approvisionnement", icon: Warehouse, roles: ["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"] },
-      { label: "Achats SIR", href: "/dashboard/approvisionnement/sir", icon: TrendingUp, roles: ["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"] },
-      { label: "Stock GESTOCI", href: "/dashboard/approvisionnement/gestoci", icon: Package, roles: ["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"] },
-      { label: "Mises à disposition", href: "/dashboard/approvisionnement/mises-a-disposition", icon: Truck, roles: ["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE", "GERANT"] },
+      { label: "Vue d'ensemble", href: "/dashboard/approvisionnement", icon: Warehouse, roles: ["ADMIN", "RESPONSABLE_SERVICE", DF, DG] },
+      { label: "Achats SIR", href: "/dashboard/approvisionnement/sir", icon: TrendingUp, roles: ["ADMIN", "RESPONSABLE_SERVICE", DF, DG] },
+      { label: "Stock GESTOCI", href: "/dashboard/approvisionnement/gestoci", icon: Package, roles: ["ADMIN", "RESPONSABLE_SERVICE", DF, DG] },
+      { label: "Mises à disposition", href: "/dashboard/approvisionnement/mises-a-disposition", icon: Truck, roles: ["ADMIN", "RESPONSABLE_SERVICE", DF, DG, "GERANT"] },
     ],
   },
   {
     label: "Outils",
     items: [
-      { label: "Rapports", href: "/dashboard/rapports", icon: FileText, roles: ["ADMIN", "GERANT", "DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"] },
-      { label: "Achats", href: "/dashboard/achats", icon: ShoppingCart, roles: ["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"] },
-      { label: "Factures", href: "/dashboard/achats/factures", icon: FileText, roles: ["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"] },
+      { label: "Rapports", href: "/dashboard/rapports", icon: FileText, roles: ["ADMIN", "GERANT", "DIRECTION_COMMERCIALE", DF, DG] },
+      { label: "Achats", href: "/dashboard/achats", icon: ShoppingCart, roles: ["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_COMMERCIALE", DF, DG] },
+      { label: "Factures", href: "/dashboard/achats/factures", icon: FileText, roles: ["ADMIN", "RESPONSABLE_SERVICE", DF, DG] },
     ],
   },
   {
     label: "Administration",
     items: [
-      { label: "Stations", href: "/dashboard/admin/stations", icon: Building2, roles: ["ADMIN"] },
-      { label: "Carburants", href: "/dashboard/admin/fuels", icon: Fuel, roles: ["ADMIN"] },
-      { label: "Pompes & cuves", href: "/dashboard/admin/pumps", icon: Gauge, roles: ["ADMIN"] },
-      { label: "Comptes bancaires", href: "/dashboard/admin/banques", icon: Landmark, roles: ["ADMIN", "DIRECTION_FINANCIERE"] },
-      { label: "Utilisateurs", href: "/dashboard/admin/users", icon: Users, roles: ["ADMIN"] },
-      { label: "Journal d'audit", href: "/dashboard/admin/audit", icon: Shield, roles: ["ADMIN"] },
-      { label: "Paramètres", href: "/dashboard/admin/settings", icon: Settings, roles: ["ADMIN"] },
+      { label: "Stations", href: "/dashboard/admin/stations", icon: Building2, roles: ["ADMIN", DG] },
+      { label: "Carburants", href: "/dashboard/admin/fuels", icon: Fuel, roles: ["ADMIN", DG] },
+      { label: "Pompes & cuves", href: "/dashboard/admin/pumps", icon: Gauge, roles: ["ADMIN", DG] },
+      { label: "Comptes bancaires", href: "/dashboard/admin/banques", icon: Landmark, roles: ["ADMIN", DF, DG] },
+      { label: "Utilisateurs", href: "/dashboard/admin/users", icon: Users, roles: ["ADMIN", DG] },
+      { label: "Journal d'audit", href: "/dashboard/admin/audit", icon: Shield, roles: ["ADMIN", DG] },
+      { label: "Paramètres", href: "/dashboard/admin/settings", icon: Settings, roles: ["ADMIN", DG] },
     ],
   },
 ];

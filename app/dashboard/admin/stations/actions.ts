@@ -16,7 +16,7 @@ const stationSchema = z.object({
 });
 
 export async function createStation(formData: FormData) {
-  const session = await requireRole(["ADMIN"]);
+  const session = await requireRole(["ADMIN", "DIRECTION_GENERALE"]);
 
   const data = stationSchema.parse({
     name: formData.get("name"),
@@ -43,7 +43,7 @@ export async function createStation(formData: FormData) {
 }
 
 export async function updateStation(id: string, formData: FormData) {
-  const session = await requireRole(["ADMIN"]);
+  const session = await requireRole(["ADMIN", "DIRECTION_GENERALE"]);
 
   const before = await db.station.findUnique({ where: { id } });
 
