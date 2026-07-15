@@ -7,7 +7,7 @@ export default async function NewReceptionPage({
 }: {
   searchParams: Promise<{ orderId?: string }>;
 }) {
-  await requireRole(["ADMIN", "RESPONSABLE_SERVICE"]);
+  await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "GERANT"]);
   const { orderId } = await searchParams;
 
   const [pendingOrders, stations] = await Promise.all([
@@ -40,10 +40,13 @@ export default async function NewReceptionPage({
           id: o.id,
           number: o.number,
           supplierName: o.supplier?.name || "",
+          supplierId: o.supplierId,
           items: o.items.map((i) => ({
             description: i.description,
             quantity: Number(i.quantity),
             unit: i.unit,
+            unitPrice: Number(i.unitPrice),
+            tva: Number(i.tva),
           })),
         }))}
         stations={stations}
