@@ -69,7 +69,7 @@ export async function updateOrderStatus(
   comment?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const session = await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE"]);
+    const session = await requireRole(["ADMIN", "DIRECTION_GENERALE", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE"]);
     const userId = (session.user as any).id;
 
     // Threshold-based multi-level validation (15.4)

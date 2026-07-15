@@ -7,7 +7,7 @@ import { FacturesClient } from "./factures-client";
 
 export default async function FacturesPage() {
   const session = await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
-  const canCreate = ["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE"].includes((session.user as any).role);
+  const canCreate = ["ADMIN", "DIRECTION_GENERALE", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE"].includes((session.user as any).role);
 
   const [invoices, suppliers] = await Promise.all([
     db.supplierInvoice.findMany({
