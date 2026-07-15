@@ -58,15 +58,58 @@ export async function createPurchaseRequest(formData: FormData) {
   return { id: pr.id };
 }
 
-export async function validatePurchaseRequest(id: string, approved: boolean, comment?: string) {
-  const session = await requireRole(["ADMIN", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
-  const user = session.user as any;
+/**
+ * Circuit de validation 3 niveaux :
+ *  1. Gérant → crée la DA (EN_ATTENTE)
+ *  2. Direction Financière → 1ère validation (EN_ATTENTE → VALIDE_DF)
+ *  3. Direction Générale → validation finale (VALIDE_DF → VALIDE)
+ *
+ * Seul ADMIN peut valider à n'importe quel niveau.
+ * Un rejet à n'importe quel niveau → REJETE.
+ */
+export async function validatePurchaseRequest(
+  id: string,
+  approved: boolean,
+  comment?: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const session = await requireRole(["ADMIN", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
+    const role = (session.user as any).role as string;
 
-  await db.purchaseRequest.update({
-    where: { id },
-    data: { status: approved ? "VALIDE" : "REJETE" },
-  });
+    const pr = await db.purchaseRequest.findUnique({ where: { id }, select: { status: true } });
+    if (!pr) return { success: false, error: "Demande introuvable." };
 
-  revalidatePath("/dashboard/achats/demandes");
-  revalidatePath(`/dashboard/achats/demandes/${id}`);
+    if (!approved) {
+      await db.purchaseRequest.update({ where: { id }, data: { status: "REJETE" } });
+      revalidatePath("/dashboard/achats/demandes");
+      revalidatePath(`/dashboard/achats/demandes/${id}`);
+      return { success: true };
+    }
+
+    // Étape 1 : DF valide en premier (EN_ATTENTE → VALIDE_DF)
+    if (pr.status === "EN_ATTENTE") {
+      if (!["ADMIN", "DIRECTION_FINANCIERE"].includes(role)) {
+        return { success: false, error: "Seule la Direction Financière peut effectuer la 1ère validation." };
+      }
+      await db.purchaseRequest.update({ where: { id }, data: { status: "VALIDE_DF" as any } });
+      revalidatePath("/dashboard/achats/demandes");
+      revalidatePath(`/dashboard/achats/demandes/${id}`);
+      return { success: true };
+    }
+
+    // Étape 2 : DG valide en dernier (VALIDE_DF → VALIDE)
+    if ((pr.status as string) === "VALIDE_DF") {
+      if (!["ADMIN", "DIRECTION_GENERALE"].includes(role)) {
+        return { success: false, error: "Seule la Direction Générale peut effectuer la validation finale." };
+      }
+      await db.purchaseRequest.update({ where: { id }, data: { status: "VALIDE" } });
+      revalidatePath("/dashboard/achats/demandes");
+      revalidatePath(`/dashboard/achats/demandes/${id}`);
+      return { success: true };
+    }
+
+    return { success: false, error: `Cette demande ne peut pas être validée depuis son statut actuel.` };
+  } catch (err: any) {
+    return { success: false, error: err?.message || "Une erreur est survenue." };
+  }
 }

@@ -8,7 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus } from "lucide-react";
 
 const STATUS: Record<string, { label: string; color: string }> = {
-  EN_ATTENTE: { label: "En attente", color: "bg-blue-100 text-blue-700" },
+  EN_ATTENTE: { label: "En attente (DF)", color: "bg-blue-100 text-blue-700" },
+  VALIDE_DF: { label: "Validé DF — attente DG", color: "bg-yellow-100 text-yellow-700" },
   VALIDE: { label: "Validé", color: "bg-green-100 text-green-700" },
   REJETE: { label: "Rejeté", color: "bg-red-100 text-red-700" },
   ANNULE: { label: "Annulé", color: "bg-gray-100 text-gray-600" },

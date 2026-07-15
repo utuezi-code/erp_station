@@ -59,6 +59,7 @@ enum OrderStatus {
 
 enum PurchaseRequestStatus {
   EN_ATTENTE
+  VALIDE_DF
   VALIDE
   REJETE
   ANNULE
