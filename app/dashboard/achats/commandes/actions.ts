@@ -15,7 +15,7 @@ const itemSchema = z.object({
 });
 
 export async function createPurchaseOrder(formData: FormData) {
-  await requireRole(["ADMIN", "RESPONSABLE_SERVICE"]);
+  await requireRole(["RESPONSABLE_SERVICE"]);
 
   const supplierId = formData.get("supplierId") as string;
   const requestId = formData.get("requestId") as string || null;
@@ -69,7 +69,7 @@ export async function updateOrderStatus(
   comment?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const session = await requireRole(["ADMIN", "DIRECTION_GENERALE", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE"]);
+    const session = await requireRole(["ADMIN", "DIRECTION_GENERALE", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE", "GERANT"]);
     const userId = (session.user as any).id;
 
     // Threshold-based multi-level validation (15.4)

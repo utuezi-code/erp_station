@@ -29,7 +29,7 @@ export default async function CommandesPage({
 }) {
   const session = await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
   const userRole = (session.user as any).role as string;
-  const canCreate = ["ADMIN", "DIRECTION_GENERALE", "RESPONSABLE_SERVICE"].includes(userRole);
+  const canCreate = ["RESPONSABLE_SERVICE"].includes(userRole);
   const params = await searchParams;
 
   const where: any = {};

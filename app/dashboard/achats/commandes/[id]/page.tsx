@@ -26,7 +26,7 @@ const STATUS: Record<string, { label: string; color: string }> = {
 export default async function CommandePage({ params }: { params: { id: string } }) {
   const session = await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
   const user = session.user as any;
-  const canEdit = ["ADMIN", "DIRECTION_GENERALE", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE"].includes(user.role);
+  const canEdit = ["RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE"].includes(user.role);
 
   const order = await db.purchaseOrder.findUnique({
     where: { id: params.id },

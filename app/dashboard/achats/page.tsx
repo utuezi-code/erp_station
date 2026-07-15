@@ -31,7 +31,7 @@ const BC_STATUS: Record<string, { label: string; color: string }> = {
 export default async function AchatsPage() {
   const session = await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
   const userRole = (session.user as any).role as string;
-  const canInitiate = ["ADMIN", "DIRECTION_GENERALE", "RESPONSABLE_SERVICE", "GERANT"].includes(userRole);
+  const canInitiate = ["RESPONSABLE_SERVICE", "GERANT"].includes(userRole);
 
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
