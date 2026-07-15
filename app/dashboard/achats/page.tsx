@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import {
   ShoppingCart, FileText, Package, Truck, Receipt, Building2,
-  AlertTriangle, Clock, CheckCircle, XCircle, TrendingUp,
+  AlertTriangle, Clock, CheckCircle, XCircle, TrendingUp, GitCompare,
 } from "lucide-react";
 
 function fmt(n: any) {
@@ -197,13 +197,14 @@ export default async function AchatsPage() {
 
       {/* Liens rapides */}
       <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Liens rapides</p>
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-3 mb-6">
         {[
           { href: "/dashboard/achats/fournisseurs", icon: Building2, label: "Fournisseurs" },
           { href: "/dashboard/achats/demandes", icon: FileText, label: "Demandes d'achat" },
           { href: "/dashboard/achats/commandes", icon: ShoppingCart, label: "Bons de commande" },
           { href: "/dashboard/achats/receptions", icon: Truck, label: "Réceptions" },
           { href: "/dashboard/achats/factures", icon: Receipt, label: "Factures" },
+          { href: "/dashboard/achats/rapprochement", icon: GitCompare, label: "Rapprochement BC/BL/Facture" },
         ].map((item) => (
           <Link key={item.href} href={item.href}>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:border-orange-300 hover:bg-orange-50 transition-colors cursor-pointer p-4 flex items-center gap-3">

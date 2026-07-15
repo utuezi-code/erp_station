@@ -20,7 +20,14 @@ export default async function DirectionGeneralePage({
 
   const stations = await db.station.findMany({
     where: { status: "ACTIVE" },
-    include: { region: { select: { name: true } } },
+    select: {
+      id: true,
+      name: true,
+      city: true,
+      latitude: true,
+      longitude: true,
+      region: { select: { name: true } },
+    },
     orderBy: { name: "asc" },
   });
 
@@ -62,6 +69,8 @@ export default async function DirectionGeneralePage({
       versements,
       ecart: sales.revenue - versements,
       grossResult: ex ? Number(ex.grossResult) : null,
+      lat: s.latitude ? Number(s.latitude) : null,
+      lng: s.longitude ? Number(s.longitude) : null,
     };
   }).sort((a, b) => b.revenue - a.revenue);
 

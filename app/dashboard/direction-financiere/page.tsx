@@ -15,7 +15,7 @@ export default async function DirectionFinancierePage() {
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
-  const [versementsMonth, versementsPending, versementsValidated, dailyMonth, stations, recentPending] = await Promise.all([
+  const [versementsMonth, versementsPending, versementsValidated, dailyMonth, stations, recentPending, disponibleBancaire] = await Promise.all([
     db.versement.aggregate({
       where: { date: { gte: startOfMonth, lte: endOfMonth } },
       _sum: { amount: true },
@@ -47,6 +47,10 @@ export default async function DirectionFinancierePage() {
         station: { select: { name: true } },
         user: { select: { name: true } },
       },
+    }),
+    db.versement.aggregate({
+      where: { status: "VALIDE" },
+      _sum: { amount: true },
     }),
   ]);
 
@@ -120,6 +124,20 @@ export default async function DirectionFinancierePage() {
           </div>
           <p className={`text-2xl font-bold ${ecart > 0 ? "text-red-600" : "text-gray-900"}`}>{fmt(ecart)}</p>
           <p className="text-xs text-gray-400 mt-1">FCFA</p>
+        </div>
+      </div>
+
+      {/* Disponible bancaire */}
+      <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 mb-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+            <CheckCircle className="w-5 h-5 text-blue-600" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">Disponible bancaire (total historique validé)</p>
+            <p className="text-3xl font-bold text-blue-800">{fmt(Number(disponibleBancaire._sum.amount || 0))} FCFA</p>
+            <p className="text-xs text-blue-500 mt-0.5">Cumul de tous les versements validés toutes périodes confondues</p>
+          </div>
         </div>
       </div>
 
