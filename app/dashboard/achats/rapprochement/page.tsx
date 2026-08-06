@@ -4,7 +4,7 @@ import { serialize } from "@/lib/serialize";
 import { RapprochementClient } from "./rapprochement-client";
 
 export default async function RapprochementPage() {
-  await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE"]);
+  await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE"]);
 
   // Load all orders with their receipts and invoices for 3-way matching
   const orders = await db.purchaseOrder.findMany({

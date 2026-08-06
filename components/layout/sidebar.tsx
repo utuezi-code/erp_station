@@ -85,7 +85,7 @@ const navGroups: NavGroup[] = [
       { label: "Réceptions", href: "/dashboard/achats/receptions", icon: PackageCheck, roles: ["ADMIN", "RESPONSABLE_SERVICE", DC] },
       { label: "Fournisseurs", href: "/dashboard/achats/fournisseurs", icon: Users, roles: ["ADMIN", "RESPONSABLE_SERVICE", DC, DF] },
       { label: "Factures", href: "/dashboard/achats/factures", icon: Landmark, roles: ["ADMIN", "RESPONSABLE_SERVICE", DC, DF, DG] },
-      { label: "Rapprochement", href: "/dashboard/achats/rapprochement", icon: GitCompare, roles: ["ADMIN", "RESPONSABLE_SERVICE", DC, DF] },
+      { label: "Rapprochement", href: "/dashboard/achats/rapprochement", icon: GitCompare, roles: ["ADMIN", "RESPONSABLE_SERVICE", DF] },
     ],
   },
   {
