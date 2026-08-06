@@ -28,6 +28,7 @@ interface NavGroup {
 
 const DG = "DIRECTION_GENERALE";
 const DF = "DIRECTION_FINANCIERE";
+const DC = "DIRECTION_COMMERCIALE";
 const ALL: Role[] = ["ADMIN", "GERANT", "DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE", "RESPONSABLE_SERVICE"];
 
 const navGroups: NavGroup[] = [
@@ -78,8 +79,8 @@ const navGroups: NavGroup[] = [
     label: "Outils",
     items: [
       { label: "Rapports", href: "/dashboard/rapports", icon: FileText, roles: ["ADMIN", "GERANT", "DIRECTION_COMMERCIALE", DF, DG] },
-      { label: "Achats", href: "/dashboard/achats", icon: ShoppingCart, roles: ["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_COMMERCIALE", DF, DG] },
-      { label: "Factures", href: "/dashboard/achats/factures", icon: FileText, roles: ["ADMIN", "RESPONSABLE_SERVICE", DF, DG] },
+      { label: "Achats", href: "/dashboard/achats", icon: ShoppingCart, roles: ["ADMIN", "RESPONSABLE_SERVICE", DC, DF, DG] },
+      { label: "Factures", href: "/dashboard/achats/factures", icon: FileText, roles: ["ADMIN", "RESPONSABLE_SERVICE", DC, DF, DG] },
     ],
   },
   {

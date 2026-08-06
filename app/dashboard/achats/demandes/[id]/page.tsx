@@ -11,7 +11,8 @@ import Link from "next/link";
 function fmt(n: any) { return Number(n || 0).toLocaleString("fr-CI", { maximumFractionDigits: 0 }); }
 
 const STATUS: Record<string, { label: string; color: string }> = {
-  EN_ATTENTE: { label: "En attente — validation Direction Financière", color: "bg-blue-100 text-blue-700" },
+  EN_ATTENTE: { label: "En attente — validation Direction Commerciale", color: "bg-blue-100 text-blue-700" },
+  VALIDE_DC: { label: "Validé DC — en attente Direction Financière", color: "bg-orange-100 text-orange-700" },
   VALIDE_DF: { label: "Validé DF — en attente Direction Générale", color: "bg-yellow-100 text-yellow-700" },
   VALIDE: { label: "Validé (DG)", color: "bg-green-100 text-green-700" },
   REJETE: { label: "Rejeté", color: "bg-red-100 text-red-700" },
@@ -19,7 +20,7 @@ const STATUS: Record<string, { label: string; color: string }> = {
 };
 
 export default async function DemandePage({ params }: { params: { id: string } }) {
-  const session = await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "GERANT", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
+  const session = await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "GERANT", "DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
   const user = session.user as any;
   const role = user.role as string;
 
@@ -47,10 +48,11 @@ export default async function DemandePage({ params }: { params: { id: string } }
   const total = request.items.reduce((s, i) => s + Number(i.quantity) * Number(i.estimatedCost || 0), 0);
 
   // Determine what action this user can take
-  const canValidateDF = ["ADMIN", "DIRECTION_FINANCIERE"].includes(role) && request.status === "EN_ATTENTE";
+  const canValidateDC = ["ADMIN", "DIRECTION_COMMERCIALE"].includes(role) && request.status === "EN_ATTENTE";
+  const canValidateDF = ["ADMIN", "DIRECTION_FINANCIERE"].includes(role) && (request.status as string) === "VALIDE_DC";
   const canValidateDG = ["ADMIN", "DIRECTION_GENERALE"].includes(role) && (request.status as string) === "VALIDE_DF";
-  const canReject = ["ADMIN", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"].includes(role)
-    && ["EN_ATTENTE", "VALIDE_DF"].includes(request.status as string);
+  const canReject = ["ADMIN", "DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"].includes(role)
+    && ["EN_ATTENTE", "VALIDE_DC", "VALIDE_DF"].includes(request.status as string);
 
   return (
     <div>
@@ -81,16 +83,25 @@ export default async function DemandePage({ params }: { params: { id: string } }
         />
         <div className="h-px w-8 bg-gray-300 flex-shrink-0" />
         <Step
-          label="Direction Financière"
+          label="Dir. Commerciale"
           sublabel="1ère validation"
-          done={["VALIDE_DF", "VALIDE"].includes(request.status as string)}
+          done={["VALIDE_DC", "VALIDE_DF", "VALIDE"].includes(request.status as string)}
           active={request.status === "EN_ATTENTE"}
           rejected={request.status === "REJETE"}
           icon={request.status === "EN_ATTENTE" ? <Clock className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
         />
         <div className="h-px w-8 bg-gray-300 flex-shrink-0" />
         <Step
-          label="Direction Générale"
+          label="Dir. Financière"
+          sublabel="2ème validation"
+          done={["VALIDE_DF", "VALIDE"].includes(request.status as string)}
+          active={(request.status as string) === "VALIDE_DC"}
+          rejected={request.status === "REJETE"}
+          icon={(request.status as string) === "VALIDE_DC" ? <Clock className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
+        />
+        <div className="h-px w-8 bg-gray-300 flex-shrink-0" />
+        <Step
+          label="Dir. Générale"
           sublabel="Validation finale"
           done={request.status === "VALIDE"}
           active={(request.status as string) === "VALIDE_DF"}
@@ -214,12 +225,12 @@ export default async function DemandePage({ params }: { params: { id: string } }
           )}
         </div>
 
-        {(canValidateDF || canValidateDG || canReject) && (
+        {(canValidateDC || canValidateDF || canValidateDG || canReject) && (
           <ValidateActions
             requestId={request.id}
-            canValidate={canValidateDF || canValidateDG}
+            canValidate={canValidateDC || canValidateDF || canValidateDG}
             canReject={canReject}
-            step={canValidateDF ? "DF" : "DG"}
+            step={canValidateDC ? "DC" : canValidateDF ? "DF" : "DG"}
           />
         )}
       </div>

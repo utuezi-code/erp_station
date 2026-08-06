@@ -18,7 +18,7 @@ export function ValidateActions({
   requestId: string;
   canValidate: boolean;
   canReject: boolean;
-  step: "DF" | "DG";
+  step: "DC" | "DF" | "DG";
 }) {
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(false);
@@ -34,19 +34,35 @@ export function ValidateActions({
     }
   }
 
-  const title = step === "DF" ? "Validation Direction Financière" : "Validation Direction Générale";
-  const color = step === "DF" ? "border-blue-200 bg-blue-50" : "border-purple-200 bg-purple-50";
-  const titleColor = step === "DF" ? "text-blue-800" : "text-purple-800";
+  const config = {
+    DC: {
+      title: "Validation Direction Commerciale",
+      color: "border-orange-200 bg-orange-50",
+      titleColor: "text-orange-800",
+      desc: "Votre validation transmettra la demande à la Direction Financière.",
+      btnLabel: "Valider — transmettre à la DF",
+    },
+    DF: {
+      title: "Validation Direction Financière",
+      color: "border-blue-200 bg-blue-50",
+      titleColor: "text-blue-800",
+      desc: "Votre validation transmettra la demande à la Direction Générale.",
+      btnLabel: "Valider — transmettre à la DG",
+    },
+    DG: {
+      title: "Validation Direction Générale",
+      color: "border-purple-200 bg-purple-50",
+      titleColor: "text-purple-800",
+      desc: "Votre validation autorise la création du bon de commande.",
+      btnLabel: "Approuver définitivement",
+    },
+  }[step];
 
   return (
-    <Card className={color}>
+    <Card className={config.color}>
       <CardHeader>
-        <CardTitle className={`text-sm ${titleColor}`}>{title}</CardTitle>
-        <p className="text-xs text-gray-500">
-          {step === "DF"
-            ? "En tant que Direction Financière, votre validation transmettra la demande à la Direction Générale."
-            : "En tant que Direction Générale, votre validation autorise la création du bon de commande."}
-        </p>
+        <CardTitle className={`text-sm ${config.titleColor}`}>{config.title}</CardTitle>
+        <p className="text-xs text-gray-500">{config.desc}</p>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="space-y-1">
@@ -56,7 +72,7 @@ export function ValidateActions({
         {canValidate && (
           <Button className="w-full bg-green-600 hover:bg-green-700" disabled={loading} onClick={() => handle(true)}>
             <CheckCircle className="w-4 h-4 mr-2" />
-            {step === "DF" ? "Valider — transmettre à la DG" : "Approuver définitivement"}
+            {config.btnLabel}
           </Button>
         )}
         {canReject && (
