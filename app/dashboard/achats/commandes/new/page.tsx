@@ -7,7 +7,7 @@ export default async function NewCommandePage({
 }: {
   searchParams: Promise<{ daId?: string }>;
 }) {
-  await requireRole(["ADMIN", "RESPONSABLE_SERVICE"]);
+  await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_COMMERCIALE"]);
   const { daId } = await searchParams;
 
   const [suppliers, validatedRequests] = await Promise.all([

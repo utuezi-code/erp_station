@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus } from "lucide-react";
 
 export default async function ReceptionsPage() {
-  await requireRole(["ADMIN", "RESPONSABLE_SERVICE"]);
+  await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_COMMERCIALE"]);
 
   const receipts = await db.goodsReceipt.findMany({
     include: {

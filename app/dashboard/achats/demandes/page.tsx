@@ -26,7 +26,7 @@ export default async function DemandesPage({
 }: {
   searchParams: Promise<{ status?: string }>;
 }) {
-  const session = await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "GERANT", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
+  const session = await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "GERANT", "DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
   const params = await searchParams;
   const user = session.user as any;
 

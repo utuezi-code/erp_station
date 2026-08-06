@@ -27,7 +27,7 @@ export default async function CommandesPage({
 }: {
   searchParams: Promise<{ status?: string }>;
 }) {
-  const session = await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
+  const session = await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
   const userRole = (session.user as any).role as string;
   const canCreate = ["RESPONSABLE_SERVICE"].includes(userRole);
   const params = await searchParams;

@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { FournisseursClient } from "./fournisseurs-client";
 
 export default async function FournisseursPage() {
-  await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE"]);
+  await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE"]);
 
   const suppliers = await db.supplier.findMany({
     include: { _count: { select: { purchaseOrders: true } } },

@@ -80,7 +80,12 @@ const navGroups: NavGroup[] = [
     items: [
       { label: "Rapports", href: "/dashboard/rapports", icon: FileText, roles: ["ADMIN", "GERANT", "DIRECTION_COMMERCIALE", DF, DG] },
       { label: "Achats", href: "/dashboard/achats", icon: ShoppingCart, roles: ["ADMIN", "RESPONSABLE_SERVICE", DC, DF, DG] },
-      { label: "Factures", href: "/dashboard/achats/factures", icon: FileText, roles: ["ADMIN", "RESPONSABLE_SERVICE", DC, DF, DG] },
+      { label: "Demandes d'achat", href: "/dashboard/achats/demandes", icon: FileText, roles: ["ADMIN", "RESPONSABLE_SERVICE", "GERANT", DC, DF, DG] },
+      { label: "Bons de commande", href: "/dashboard/achats/commandes", icon: Package, roles: ["ADMIN", "RESPONSABLE_SERVICE", DC, DF, DG] },
+      { label: "Réceptions", href: "/dashboard/achats/receptions", icon: PackageCheck, roles: ["ADMIN", "RESPONSABLE_SERVICE", DC] },
+      { label: "Fournisseurs", href: "/dashboard/achats/fournisseurs", icon: Users, roles: ["ADMIN", "RESPONSABLE_SERVICE", DC, DF] },
+      { label: "Factures", href: "/dashboard/achats/factures", icon: Landmark, roles: ["ADMIN", "RESPONSABLE_SERVICE", DC, DF, DG] },
+      { label: "Rapprochement", href: "/dashboard/achats/rapprochement", icon: GitCompare, roles: ["ADMIN", "RESPONSABLE_SERVICE", DC, DF] },
     ],
   },
   {
