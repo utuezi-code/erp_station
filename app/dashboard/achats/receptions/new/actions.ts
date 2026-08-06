@@ -15,7 +15,7 @@ const receiptItemSchema = z.object({
 });
 
 export async function createReceipt(formData: FormData) {
-  const session = await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "GERANT"]);
+  const session = await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_COMMERCIALE", "GERANT"]);
   const userId = (session.user as any).id;
 
   const orderId = formData.get("orderId") as string;

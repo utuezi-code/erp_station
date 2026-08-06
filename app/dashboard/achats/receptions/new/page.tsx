@@ -7,7 +7,7 @@ export default async function NewReceptionPage({
 }: {
   searchParams: Promise<{ orderId?: string }>;
 }) {
-  await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "GERANT"]);
+  await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_COMMERCIALE", "GERANT"]);
   const { orderId } = await searchParams;
 
   const [pendingOrders, stations] = await Promise.all([

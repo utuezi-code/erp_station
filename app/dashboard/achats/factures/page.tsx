@@ -6,7 +6,7 @@ import { Plus, FileText, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { FacturesClient } from "./factures-client";
 
 export default async function FacturesPage() {
-  const session = await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
+  const session = await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
   const canCreate = ["RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE"].includes((session.user as any).role);
 
   const [invoices, suppliers] = await Promise.all([

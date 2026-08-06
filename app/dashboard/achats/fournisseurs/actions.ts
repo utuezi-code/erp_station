@@ -19,7 +19,7 @@ const supplierSchema = z.object({
 });
 
 export async function saveSupplier(formData: FormData) {
-  await requireRole(["ADMIN", "RESPONSABLE_SERVICE"]);
+  await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_COMMERCIALE"]);
 
   const id = formData.get("id") as string | null;
   const data = supplierSchema.parse({
@@ -45,7 +45,7 @@ export async function saveSupplier(formData: FormData) {
 }
 
 export async function toggleSupplierActive(id: string, active: boolean) {
-  await requireRole(["ADMIN", "RESPONSABLE_SERVICE"]);
+  await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_COMMERCIALE"]);
   await db.supplier.update({ where: { id }, data: { active } });
   revalidatePath("/dashboard/achats/fournisseurs");
 }
