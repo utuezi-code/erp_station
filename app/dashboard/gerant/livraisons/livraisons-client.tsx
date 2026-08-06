@@ -152,7 +152,7 @@ export function LivraisonsClient({ stationId, deliveries, fuels, pendingMDs }: {
             {/* Lier à une MD */}
             <div className="space-y-2">
               <Label>Mise à disposition GESTOCI</Label>
-              <Select value={linkedMD} onValueChange={setLinkedMD}>
+              <Select value={linkedMD} onValueChange={(v) => setLinkedMD(v ?? "")}>
                 <SelectTrigger>
                   <SelectValue placeholder="Aucune MD liée (livraison directe)" />
                 </SelectTrigger>
