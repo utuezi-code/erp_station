@@ -42,12 +42,12 @@ const navGroups: NavGroup[] = [
   {
     label: "Opérations",
     items: [
-      { label: "Index pompes", href: "/dashboard/gerant/index", icon: Gauge, roles: ["ADMIN", "GERANT", DG] },
-      { label: "Stocks cuves", href: "/dashboard/gerant/stocks", icon: Droplets, roles: ["ADMIN", "GERANT", DG] },
-      { label: "Encaissements", href: "/dashboard/gerant/encaissements", icon: Wallet, roles: ["ADMIN", "GERANT", DG] },
-      { label: "Versements", href: "/dashboard/gerant/versements", icon: ArrowUpCircle, roles: ["ADMIN", "GERANT", DF, DG] },
-      { label: "Livraisons", href: "/dashboard/gerant/livraisons", icon: Package, roles: ["ADMIN", "GERANT", DG] },
-      { label: "Pompistes", href: "/dashboard/pompistes", icon: HardHat, roles: ["ADMIN", "GERANT", DG] },
+      { label: "Index pompes", href: "/dashboard/gerant/index", icon: Gauge, roles: ["ADMIN", "GERANT"] },
+      { label: "Stocks cuves", href: "/dashboard/gerant/stocks", icon: Droplets, roles: ["ADMIN", "GERANT"] },
+      { label: "Encaissements", href: "/dashboard/gerant/encaissements", icon: Wallet, roles: ["ADMIN", "GERANT"] },
+      { label: "Versements", href: "/dashboard/gerant/versements", icon: ArrowUpCircle, roles: ["ADMIN", "GERANT", DF] },
+      { label: "Livraisons", href: "/dashboard/gerant/livraisons", icon: Package, roles: ["ADMIN", "GERANT"] },
+      { label: "Pompistes", href: "/dashboard/pompistes", icon: HardHat, roles: ["ADMIN", "GERANT"] },
     ],
   },
   {
