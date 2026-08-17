@@ -6,7 +6,7 @@ import { serialize } from "@/lib/serialize";
 import { MDClient } from "./md-client";
 
 export default async function MisesADispositionPage() {
-  const session = await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE", "GERANT"]);
+  const session = await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE", "DIRECTION_COMMERCIALE", "GERANT"]);
   const role = (session.user as any).role as string;
   const canCreate = ["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"].includes(role);
 
