@@ -9,7 +9,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { createBudgetRequest, respondBudgetRequest } from "./actions";
@@ -191,46 +190,66 @@ export function BudgetClient({
           <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
 
             {/* Lignes produits */}
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <Label className="text-xs font-semibold uppercase tracking-wide">Produits demandés</Label>
+                <Label className="text-sm font-semibold text-gray-700">Produits demandés</Label>
                 <Button variant="outline" size="sm" onClick={addLine}>
                   <Plus className="w-3 h-3 mr-1" /> Ajouter un produit
                 </Button>
               </div>
+
               {lines.map((l, idx) => (
-                <div key={idx} className="grid grid-cols-7 gap-2 items-end border rounded-lg p-3">
-                  <div className="col-span-3 space-y-1">
-                    <Label className="text-xs">Produit *</Label>
-                    <Select value={l.fuelId} onValueChange={(v) => { const n = [...lines]; n[idx] = { ...n[idx], fuelId: v ?? "" }; setLines(n); }}>
-                      <SelectTrigger className="h-8"><SelectValue placeholder="Carburant" /></SelectTrigger>
-                      <SelectContent>
-                        {fuels.map((f) => <SelectItem key={f.id} value={f.id}>{f.name} ({f.code})</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                <div key={idx} className="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-gray-500">Produit {idx + 1}</span>
+                    {lines.length > 1 && (
+                      <button onClick={() => removeLine(idx)} className="text-red-400 hover:text-red-600 transition-colors">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
-                  <div className="col-span-2 space-y-1">
-                    <Label className="text-xs">Qté estimée (M15) *</Label>
-                    <Input className="h-8" type="number" placeholder="ex: 100000" value={l.qty}
-                      onChange={(e) => { const n = [...lines]; n[idx] = { ...n[idx], qty: e.target.value }; setLines(n); }} />
+                  <div className="space-y-1">
+                    <Label className="text-xs text-gray-600">Carburant *</Label>
+                    <select
+                      value={l.fuelId}
+                      onChange={(e) => { const n = [...lines]; n[idx] = { ...n[idx], fuelId: e.target.value }; setLines(n); }}
+                      className="w-full h-9 rounded-md border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Sélectionner un carburant</option>
+                      {fuels.map((f) => (
+                        <option key={f.id} value={f.id}>{f.name} ({f.code})</option>
+                      ))}
+                    </select>
                   </div>
-                  <div className="col-span-2 space-y-1">
-                    <Label className="text-xs">Montant estimé (FCFA) *</Label>
-                    <div className="flex items-center gap-1">
-                      <Input className="h-8" type="number" placeholder="ex: 73000000" value={l.amount}
-                        onChange={(e) => { const n = [...lines]; n[idx] = { ...n[idx], amount: e.target.value }; setLines(n); }} />
-                      {lines.length > 1 && (
-                        <Button variant="ghost" size="sm" className="h-8 px-2 flex-shrink-0" onClick={() => removeLine(idx)}>
-                          <Trash2 className="w-3 h-3 text-red-400" />
-                        </Button>
-                      )}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-600">Quantité estimée (M15) *</Label>
+                      <Input
+                        type="number"
+                        placeholder="ex : 100 000"
+                        value={l.qty}
+                        onChange={(e) => { const n = [...lines]; n[idx] = { ...n[idx], qty: e.target.value }; setLines(n); }}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-600">Montant estimé (FCFA) *</Label>
+                      <Input
+                        type="number"
+                        placeholder="ex : 73 000 000"
+                        value={l.amount}
+                        onChange={(e) => { const n = [...lines]; n[idx] = { ...n[idx], amount: e.target.value }; setLines(n); }}
+                      />
                     </div>
                   </div>
                 </div>
               ))}
+
               {totalDemande > 0 && (
-                <div className="flex justify-end text-sm font-semibold text-gray-700 pr-1">
-                  Total demandé : {fmt(totalDemande)} FCFA
+                <div className="flex justify-end">
+                  <div className="bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm">
+                    <span className="text-gray-500">Total demandé : </span>
+                    <span className="font-bold text-gray-900">{fmt(totalDemande)} FCFA</span>
+                  </div>
                 </div>
               )}
             </div>
