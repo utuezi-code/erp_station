@@ -43,7 +43,7 @@ interface Proposal {
 interface Allocation {
   id: string;
   allocatedAmount: number;
-  budgetRequest: { fuel: { name: string; code: string } | null };
+  budgetRequest: { items: { fuel: { name: string; code: string } }[] };
 }
 
 export function PropositionsClient({
@@ -188,7 +188,7 @@ export function PropositionsClient({
                 <SelectContent>
                   {allocations.map((a) => (
                     <SelectItem key={a.id} value={a.id}>
-                      {a.budgetRequest.fuel?.name ?? "—"} — {fmt(a.allocatedAmount)} FCFA
+                      {a.budgetRequest.items.map((i) => i.fuel.code).join(", ") || "—"} — {fmt(a.allocatedAmount)} FCFA
                     </SelectItem>
                   ))}
                 </SelectContent>

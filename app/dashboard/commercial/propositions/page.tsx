@@ -24,7 +24,7 @@ export default async function PropositionsPage() {
         proposals: { none: { status: { in: ["EN_ATTENTE", "VALIDE"] } } },
       },
       include: {
-        budgetRequest: { include: { fuel: { select: { name: true, code: true } } } },
+        budgetRequest: { include: { items: { include: { fuel: { select: { name: true, code: true } } } } } },
       },
     }),
     db.fuel.findMany({ where: { active: true }, select: { id: true, name: true, code: true } }),
