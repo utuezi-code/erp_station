@@ -76,6 +76,15 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
+    label: "Module Commercial",
+    items: [
+      { label: "Demandes de budget", href: "/dashboard/commercial/budget", icon: Wallet, roles: [DC, DF, DG, "ADMIN"] },
+      { label: "Propositions d'achat", href: "/dashboard/commercial/propositions", icon: FileText, roles: [DC, DG, "ADMIN"] },
+      { label: "Bons de commande SIR", href: "/dashboard/commercial/sir-orders", icon: ShoppingCart, roles: [DC, DF, DG, "ADMIN"] },
+      { label: "Stock GESTOCI", href: "/dashboard/commercial/gestoci", icon: Warehouse, roles: [DC, DF, DG, "ADMIN"] },
+    ],
+  },
+  {
     label: "Outils",
     items: [
       { label: "Rapports", href: "/dashboard/rapports", icon: FileText, roles: ["ADMIN", "GERANT", "DIRECTION_COMMERCIALE", DF, DG] },

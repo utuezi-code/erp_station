@@ -106,6 +106,12 @@ model User {
   versements    Versement[]
   purchaseRequests PurchaseRequest[]
   orderValidations OrderValidation[]
+  budgetRequests    BudgetRequest[]    @relation("BudgetRequestUser")
+  budgetAllocations BudgetAllocation[] @relation("BudgetAllocationUser")
+  purchaseProposals PurchaseProposal[] @relation("PurchaseProposalUser")
+  sirOrders         SIROrder[]         @relation("SIROrderUser")
+  sirPayments       SIRPayment[]       @relation("SIRPaymentUser")
+  gestociWithdrawals GESTOCIWithdrawal[] @relation("GESTOCIWithdrawalUser")
 
   @@index([email])
   @@index([stationId])
@@ -184,6 +190,7 @@ model Station {
   pompistes       Pompiste[]
   pompisteShifts  PompisteShift[]
   carteTransactions TransactionCarte[]
+  gestociWithdrawalItems GESTOCIWithdrawalItem[] @relation("GESTOCIWithdrawalItemStation")
 
   @@index([regionId])
 }
@@ -221,6 +228,11 @@ model Fuel {
   sirPurchases     SIRPurchase[]
   gestociMovements GESTOCIMovement[]
   misesADispo      MiseADisposition[]
+  budgetRequests    BudgetRequest[]    @relation("BudgetRequestFuel")
+  purchaseProposals PurchaseProposal[] @relation("PurchaseProposalFuel")
+  sirOrderItems     SIROrderItem[]     @relation("SIROrderItemFuel")
+  gestociEntries    GESTOCIEntry[]     @relation("GESTOCIEntryFuel")
+  gestociWithdrawalItems GESTOCIWithdrawalItem[] @relation("GESTOCIWithdrawalItemFuel")
 }
 
 // ─── POMPES & PISTOLETS ───────────────────────────────────────────────────────
@@ -454,6 +466,7 @@ model Supplier {
 
   purchaseOrders  PurchaseOrder[]
   invoices        SupplierInvoice[]
+  sirOrders       SIROrder[]
 }
 
 model PurchaseRequest {
@@ -727,4 +740,206 @@ model MiseADisposition {
 
   @@index([stationId])
   @@index([fuelId])
+}
+
+// ─── MODULE COMMERCIAL ───────────────────────────────────────────────────────
+
+// 1. DC demande un budget à la DF pour une commande SIR
+model BudgetRequest {
+  id              String   @id @default(cuid())
+  number          String   @unique
+  userId          String
+  user            User     @relation("BudgetRequestUser", fields: [userId], references: [id])
+  fuelId          String?
+  fuel            Fuel?    @relation("BudgetRequestFuel", fields: [fuelId], references: [id])
+  estimatedQty    Decimal  @db.Decimal(14, 3)
+  estimatedAmount Decimal  @db.Decimal(16, 2)
+  justification   String?
+  status          String   @default("EN_ATTENTE") // EN_ATTENTE | ACCORDE | REJETE
+  rejectionReason String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  allocation BudgetAllocation?
+
+  @@index([userId])
+  @@index([status])
+}
+
+// 2. DF accorde (ou refuse) le budget demandé
+model BudgetAllocation {
+  id              String        @id @default(cuid())
+  budgetRequestId String        @unique
+  budgetRequest   BudgetRequest @relation(fields: [budgetRequestId], references: [id])
+  userId          String
+  user            User          @relation("BudgetAllocationUser", fields: [userId], references: [id])
+  allocatedAmount Decimal       @db.Decimal(16, 2)
+  note            String?
+  createdAt       DateTime      @default(now())
+
+  proposals PurchaseProposal[]
+}
+
+// 3. DC fait une proposition d'achat au DG
+model PurchaseProposal {
+  id                 String           @id @default(cuid())
+  number             String           @unique
+  budgetAllocationId String
+  budgetAllocation   BudgetAllocation @relation(fields: [budgetAllocationId], references: [id])
+  userId             String
+  user               User             @relation("PurchaseProposalUser", fields: [userId], references: [id])
+  fuelId             String
+  fuel               Fuel             @relation("PurchaseProposalFuel", fields: [fuelId], references: [id])
+  quantityM15        Decimal          @db.Decimal(14, 3) // quantité en M15 (m³ à 15°C)
+  estimatedUnitPrice Decimal          @db.Decimal(10, 2)
+  totalAmount        Decimal          @db.Decimal(16, 2)
+  justification      String?
+  status             String           @default("EN_ATTENTE") // EN_ATTENTE | VALIDE | REJETE
+  rejectionReason    String?
+  validatedAt        DateTime?
+  validatedBy        String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  sirOrders SIROrder[]
+
+  @@index([status])
+}
+
+// 4. Bon de commande SIR (après validation DG)
+model SIROrder {
+  id                 String           @id @default(cuid())
+  number             String           @unique // ex: BC/DC/2026/059
+  version            Int              @default(1) // "Bon modifié" si > 1
+  proposalId         String
+  proposal           PurchaseProposal @relation(fields: [proposalId], references: [id])
+  userId             String
+  user               User             @relation("SIROrderUser", fields: [userId], references: [id])
+  supplierId         String?
+  supplier           Supplier?        @relation(fields: [supplierId], references: [id])
+  status             String           @default("BROUILLON") // BROUILLON | ENVOYE | OFFRE_RECUE | PAYE | LIVRE | ANNULE
+  sentAt             DateTime?
+  note               String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  items         SIROrderItem[]
+  offers        SIROffer[]
+  payments      SIRPayment[]
+  deliveryOrders SIRDeliveryOrder[]
+
+  @@index([status])
+}
+
+// 5. Lignes du bon de commande SIR
+model SIROrderItem {
+  id          String   @id @default(cuid())
+  sirOrderId  String
+  sirOrder    SIROrder @relation(fields: [sirOrderId], references: [id], onDelete: Cascade)
+  fuelId      String
+  fuel        Fuel     @relation("SIROrderItemFuel", fields: [fuelId], references: [id])
+  quantityM15 Decimal  @db.Decimal(14, 3)
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  totalAmount Decimal  @db.Decimal(16, 2)
+  note        String?
+}
+
+// 6. Offre SIR reçue par email (PDF uploadé)
+model SIROffer {
+  id           String   @id @default(cuid())
+  sirOrderId   String
+  sirOrder     SIROrder @relation(fields: [sirOrderId], references: [id])
+  offerNumber  String? // ex: 20017668
+  pdfUrl       String? // URL stockage PDF uploadé
+  validFrom    DateTime? @db.Date
+  validTo      DateTime? @db.Date
+  totalAmount  Decimal?  @db.Decimal(16, 2)
+  receivedAt   DateTime  @default(now())
+  note         String?
+}
+
+// 7. Paiement par chèque (SIR ou CNQ, un BC peut avoir plusieurs chèques)
+model SIRPayment {
+  id            String   @id @default(cuid())
+  sirOrderId    String
+  sirOrder      SIROrder @relation(fields: [sirOrderId], references: [id])
+  beneficiary   String   // "SIR" | "CNQ" | autre
+  checkNumber   String
+  bankName      String?
+  amount        Decimal  @db.Decimal(16, 2)
+  paidAt        DateTime @db.Date
+  userId        String
+  user          User     @relation("SIRPaymentUser", fields: [userId], references: [id])
+  note          String?
+  createdAt     DateTime @default(now())
+
+  @@index([sirOrderId])
+}
+
+// 8. Ordre de livraison SIR → GESTOCI
+model SIRDeliveryOrder {
+  id            String   @id @default(cuid())
+  sirOrderId    String
+  sirOrder      SIROrder @relation(fields: [sirOrderId], references: [id])
+  reference     String? // ex: 17568
+  depotName     String?  // ex: GESTOCI
+  deliveryDate  DateTime? @db.Date
+  pdfUrl        String?
+  note          String?
+  createdAt     DateTime @default(now())
+
+  gestociEntries GESTOCIEntry[]
+}
+
+// 9. Entrée en stock GESTOCI (suite ordre de livraison SIR)
+model GESTOCIEntry {
+  id               String           @id @default(cuid())
+  deliveryOrderId  String
+  deliveryOrder    SIRDeliveryOrder @relation(fields: [deliveryOrderId], references: [id])
+  fuelId           String
+  fuel             Fuel             @relation("GESTOCIEntryFuel", fields: [fuelId], references: [id])
+  quantityM15      Decimal          @db.Decimal(14, 3) // volume à 15°C (référence GESTOCI)
+  date             DateTime         @db.Date
+  note             String?
+  createdAt        DateTime         @default(now())
+
+  @@index([fuelId])
+}
+
+// 10. Retrait GESTOCI → camion → station(s)
+model GESTOCIWithdrawal {
+  id          String   @id @default(cuid())
+  number      String   @unique
+  userId      String
+  user        User     @relation("GESTOCIWithdrawalUser", fields: [userId], references: [id])
+  date        DateTime @db.Date
+  truckRef    String? // immatriculation ou référence camion
+  driverName  String?
+  status      String   @default("EN_COURS") // EN_COURS | LIVRE | CONFIRME
+  note        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  items GESTOCIWithdrawalItem[]
+
+  @@index([date])
+  @@index([status])
+}
+
+// 11. Lignes de retrait (par produit + station destinataire, avec correction température)
+model GESTOCIWithdrawalItem {
+  id               String            @id @default(cuid())
+  withdrawalId     String
+  withdrawal       GESTOCIWithdrawal @relation(fields: [withdrawalId], references: [id], onDelete: Cascade)
+  fuelId           String
+  fuel             Fuel              @relation("GESTOCIWithdrawalItemFuel", fields: [fuelId], references: [id])
+  stationId        String
+  station          Station           @relation("GESTOCIWithdrawalItemStation", fields: [stationId], references: [id])
+  quantityM15      Decimal           @db.Decimal(14, 3) // volume référence 15°C (GESTOCI)
+  quantityReel     Decimal           @db.Decimal(14, 3) // volume réel à température ambiante (citerne camion)
+  unitPrice        Decimal           @db.Decimal(10, 2)
+  note             String?
+
+  @@index([fuelId])
+  @@index([stationId])
 }
