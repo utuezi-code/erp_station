@@ -5,13 +5,13 @@ import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
 export async function createBudgetRequest(data: {
-  fuelId?: string;
-  estimatedQty: number;
-  estimatedAmount: number;
   justification?: string;
+  items: { fuelId: string; estimatedQty: number; estimatedAmount: number }[];
 }) {
   const session = await requireRole(["DIRECTION_COMMERCIALE", "ADMIN"]);
   const user = session.user as any;
+
+  if (!data.items.length) return { success: false, error: "Au moins un produit requis." };
 
   const count = await db.budgetRequest.count();
   const number = `BR/${new Date().getFullYear()}/${String(count + 1).padStart(3, "0")}`;
@@ -20,10 +20,14 @@ export async function createBudgetRequest(data: {
     data: {
       number,
       userId: user.id,
-      fuelId: data.fuelId || null,
-      estimatedQty: data.estimatedQty,
-      estimatedAmount: data.estimatedAmount,
       justification: data.justification || null,
+      items: {
+        create: data.items.map((i) => ({
+          fuelId: i.fuelId,
+          estimatedQty: i.estimatedQty,
+          estimatedAmount: i.estimatedAmount,
+        })),
+      },
     },
   });
 

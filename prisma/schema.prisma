@@ -228,8 +228,8 @@ model Fuel {
   sirPurchases     SIRPurchase[]
   gestociMovements GESTOCIMovement[]
   misesADispo      MiseADisposition[]
-  budgetRequests    BudgetRequest[]    @relation("BudgetRequestFuel")
-  purchaseProposals PurchaseProposal[] @relation("PurchaseProposalFuel")
+  budgetRequestItems BudgetRequestItem[] @relation("BudgetRequestItemFuel")
+  purchaseProposals  PurchaseProposal[]  @relation("PurchaseProposalFuel")
   sirOrderItems     SIROrderItem[]     @relation("SIROrderItemFuel")
   gestociEntries    GESTOCIEntry[]     @relation("GESTOCIEntryFuel")
   gestociWithdrawalItems GESTOCIWithdrawalItem[] @relation("GESTOCIWithdrawalItemFuel")
@@ -750,20 +750,27 @@ model BudgetRequest {
   number          String   @unique
   userId          String
   user            User     @relation("BudgetRequestUser", fields: [userId], references: [id])
-  fuelId          String?
-  fuel            Fuel?    @relation("BudgetRequestFuel", fields: [fuelId], references: [id])
-  estimatedQty    Decimal  @db.Decimal(14, 3)
-  estimatedAmount Decimal  @db.Decimal(16, 2)
   justification   String?
   status          String   @default("EN_ATTENTE") // EN_ATTENTE | ACCORDE | REJETE
   rejectionReason String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  items      BudgetRequestItem[]
   allocation BudgetAllocation?
 
   @@index([userId])
   @@index([status])
+}
+
+model BudgetRequestItem {
+  id              String        @id @default(cuid())
+  budgetRequestId String
+  budgetRequest   BudgetRequest @relation(fields: [budgetRequestId], references: [id], onDelete: Cascade)
+  fuelId          String
+  fuel            Fuel          @relation("BudgetRequestItemFuel", fields: [fuelId], references: [id])
+  estimatedQty    Decimal       @db.Decimal(14, 3)
+  estimatedAmount Decimal       @db.Decimal(16, 2)
 }
 
 // 2. DF accorde (ou refuse) le budget demandé

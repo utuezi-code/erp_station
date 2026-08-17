@@ -12,7 +12,7 @@ export default async function BudgetPage() {
     db.budgetRequest.findMany({
       include: {
         user: { select: { name: true } },
-        fuel: { select: { name: true, code: true } },
+        items: { include: { fuel: { select: { name: true, code: true } } } },
         allocation: { include: { user: { select: { name: true } } } },
       },
       orderBy: { createdAt: "desc" },
