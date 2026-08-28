@@ -15,6 +15,14 @@ export async function createProposal(data: {
   if (!data.items.length) return { success: false, error: "Au moins un produit requis." };
 
   const totalAmount = data.items.reduce((s, i) => s + i.quantityM15 * i.estimatedUnitPrice, 0);
+
+  // Vérifier que le total ne dépasse pas le budget DF disponible
+  const allocation = await db.budgetAllocation.findUnique({ where: { id: data.budgetAllocationId } });
+  if (!allocation) return { success: false, error: "Budget introuvable." };
+  if (totalAmount > Number(allocation.allocatedAmount)) {
+    return { success: false, error: `Le total (${totalAmount.toLocaleString("fr-CI")} FCFA) dépasse le budget disponible (${Number(allocation.allocatedAmount).toLocaleString("fr-CI")} FCFA).` };
+  }
+
   const count = await db.purchaseProposal.count();
   const number = `PP/${new Date().getFullYear()}/${String(count + 1).padStart(3, "0")}`;
 
