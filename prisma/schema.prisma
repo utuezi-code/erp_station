@@ -229,7 +229,7 @@ model Fuel {
   gestociMovements GESTOCIMovement[]
   misesADispo      MiseADisposition[]
   budgetRequestItems BudgetRequestItem[] @relation("BudgetRequestItemFuel")
-  purchaseProposals  PurchaseProposal[]  @relation("PurchaseProposalFuel")
+  purchaseProposalItems PurchaseProposalItem[] @relation("PurchaseProposalItemFuel")
   sirOrderItems     SIROrderItem[]     @relation("SIROrderItemFuel")
   gestociEntries    GESTOCIEntry[]     @relation("GESTOCIEntryFuel")
   gestociWithdrawalItems GESTOCIWithdrawalItem[] @relation("GESTOCIWithdrawalItemFuel")
@@ -795,11 +795,7 @@ model PurchaseProposal {
   budgetAllocation   BudgetAllocation @relation(fields: [budgetAllocationId], references: [id])
   userId             String
   user               User             @relation("PurchaseProposalUser", fields: [userId], references: [id])
-  fuelId             String
-  fuel               Fuel             @relation("PurchaseProposalFuel", fields: [fuelId], references: [id])
-  quantityM15        Decimal          @db.Decimal(14, 3) // quantité en M15 (m³ à 15°C)
-  estimatedUnitPrice Decimal          @db.Decimal(10, 2)
-  totalAmount        Decimal          @db.Decimal(16, 2)
+  totalAmount        Decimal          @db.Decimal(16, 2) // somme des items
   justification      String?
   status             String           @default("EN_ATTENTE") // EN_ATTENTE | VALIDE | REJETE
   rejectionReason    String?
@@ -808,9 +804,21 @@ model PurchaseProposal {
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
 
+  items     PurchaseProposalItem[]
   sirOrders SIROrder[]
 
   @@index([status])
+}
+
+model PurchaseProposalItem {
+  id                 String           @id @default(cuid())
+  proposalId         String
+  proposal           PurchaseProposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  fuelId             String
+  fuel               Fuel             @relation("PurchaseProposalItemFuel", fields: [fuelId], references: [id])
+  quantityM15        Decimal          @db.Decimal(14, 3)
+  estimatedUnitPrice Decimal          @db.Decimal(10, 2)
+  totalAmount        Decimal          @db.Decimal(16, 2)
 }
 
 // 4. Bon de commande SIR (après validation DG)

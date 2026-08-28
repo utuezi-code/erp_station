@@ -12,8 +12,9 @@ export default async function PropositionsPage() {
     db.purchaseProposal.findMany({
       include: {
         user: { select: { name: true } },
-        fuel: { select: { name: true, code: true } },
+        items: { include: { fuel: { select: { name: true, code: true } } } },
         budgetAllocation: { select: { allocatedAmount: true } },
+        sirOrders: { select: { id: true, number: true } },
       },
       orderBy: { createdAt: "desc" },
       take: 50,

@@ -9,8 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, CheckCircle, XCircle } from "lucide-react";
+import { Plus, Trash2, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { createProposal, validateProposal } from "./actions";
 import { useRouter } from "next/navigation";
@@ -24,18 +23,24 @@ const STATUS: Record<string, { label: string; color: string }> = {
   REJETE: { label: "Rejetée", color: "bg-red-100 text-red-700" },
 };
 
+interface ProposalItem {
+  id: string;
+  quantityM15: number;
+  estimatedUnitPrice: number;
+  totalAmount: number;
+  fuel: { name: string; code: string };
+}
+
 interface Proposal {
   id: string;
   number: string;
   status: string;
-  quantityM15: number;
-  estimatedUnitPrice: number;
   totalAmount: number;
   justification: string | null;
   rejectionReason: string | null;
   createdAt: string;
-  fuel: { name: string; code: string };
   user: { name: string };
+  items: ProposalItem[];
   budgetAllocation: { allocatedAmount: number };
   sirOrders?: { id: string; number: string }[];
 }
@@ -66,27 +71,45 @@ export function PropositionsClient({
   const [selected, setSelected] = useState<Proposal | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // New proposal form
   const [allocId, setAllocId] = useState("");
-  const [fuelId, setFuelId] = useState("");
-  const [qty, setQty] = useState("");
-  const [unitPrice, setUnitPrice] = useState("");
   const [justification, setJustification] = useState("");
+  const [lines, setLines] = useState<{ fuelId: string; qty: string; unitPrice: string }[]>([
+    { fuelId: "", qty: "", unitPrice: "" },
+  ]);
+
+  // DG validation
   const [dgNote, setDgNote] = useState("");
 
-  const total = Number(qty || 0) * Number(unitPrice || 0);
+  const selectedAlloc = allocations.find((a) => a.id === allocId);
+  const totalPropose = lines.reduce((s, l) => s + Number(l.qty || 0) * Number(l.unitPrice || 0), 0);
+
+  function addLine() { setLines([...lines, { fuelId: "", qty: "", unitPrice: "" }]); }
+  function removeLine(idx: number) { setLines(lines.filter((_, i) => i !== idx)); }
+
+  function resetNew() {
+    setShowNew(false);
+    setAllocId(""); setJustification("");
+    setLines([{ fuelId: "", qty: "", unitPrice: "" }]);
+  }
 
   async function submitNew() {
-    if (!allocId || !fuelId || !qty || !unitPrice) { toast.error("Tous les champs obligatoires."); return; }
+    const valid = lines.filter((l) => l.fuelId && Number(l.qty) > 0 && Number(l.unitPrice) > 0);
+    if (!allocId) { toast.error("Sélectionner un budget disponible."); return; }
+    if (valid.length === 0) { toast.error("Au moins un produit avec quantité et prix requis."); return; }
     setLoading(true);
-    const r = await createProposal({ budgetAllocationId: allocId, fuelId, quantityM15: Number(qty), estimatedUnitPrice: Number(unitPrice), justification: justification || undefined });
+    const r = await createProposal({
+      budgetAllocationId: allocId,
+      justification: justification || undefined,
+      items: valid.map((l) => ({ fuelId: l.fuelId, quantityM15: Number(l.qty), estimatedUnitPrice: Number(l.unitPrice) })),
+    });
     setLoading(false);
     if (r.success) {
-      toast.success("Proposition envoyée au Directeur Général.");
-      setShowNew(false);
-      setAllocId(""); setFuelId(""); setQty(""); setUnitPrice(""); setJustification("");
+      toast.success("Proposition soumise au Directeur Général.");
+      resetNew();
       router.refresh();
     } else {
-      toast.error("Erreur.");
+      toast.error(r.error || "Erreur.");
     }
   }
 
@@ -120,7 +143,7 @@ export function PropositionsClient({
 
       {(isDC || isAdmin) && allocations.length === 0 && (
         <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800">
-          Aucun budget accordé disponible. <Link href="/dashboard/commercial/budget" className="font-semibold underline">Faire une demande de budget</Link> d'abord.
+          Aucun budget disponible communiqué par la DF. <Link href="/dashboard/commercial/budget" className="font-semibold underline">Faire une demande de budget</Link> d'abord.
         </div>
       )}
 
@@ -130,11 +153,9 @@ export function PropositionsClient({
             <TableHeader>
               <TableRow>
                 <TableHead>Numéro</TableHead>
-                <TableHead>Produit</TableHead>
-                <TableHead className="text-right">Qté (M15)</TableHead>
-                <TableHead className="text-right">P.U.</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-                <TableHead>Budget alloué</TableHead>
+                <TableHead>Produits</TableHead>
+                <TableHead className="text-right">Total proposé</TableHead>
+                <TableHead className="text-right">Budget DF</TableHead>
                 <TableHead>Statut</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead></TableHead>
@@ -144,11 +165,11 @@ export function PropositionsClient({
               {proposals.map((p) => (
                 <TableRow key={p.id}>
                   <TableCell className="font-mono text-sm">{p.number}</TableCell>
-                  <TableCell>{p.fuel.name} ({p.fuel.code})</TableCell>
-                  <TableCell className="text-right">{fmt(p.quantityM15)}</TableCell>
-                  <TableCell className="text-right">{fmt(p.estimatedUnitPrice)}</TableCell>
+                  <TableCell className="text-sm text-gray-600">
+                    {p.items.map((i) => `${i.fuel.code} (${fmt(i.quantityM15)} L)`).join(" · ")}
+                  </TableCell>
                   <TableCell className="text-right font-medium">{fmt(p.totalAmount)} FCFA</TableCell>
-                  <TableCell className="text-sm text-gray-500">{fmt(p.budgetAllocation.allocatedAmount)} FCFA</TableCell>
+                  <TableCell className="text-right text-sm text-gray-500">{fmt(p.budgetAllocation.allocatedAmount)} FCFA</TableCell>
                   <TableCell><Badge className={STATUS[p.status]?.color ?? "bg-gray-100 text-gray-600"}>{STATUS[p.status]?.label ?? p.status}</Badge></TableCell>
                   <TableCell className="text-sm text-gray-400">{new Date(p.createdAt).toLocaleDateString("fr-CI")}</TableCell>
                   <TableCell>
@@ -169,65 +190,115 @@ export function PropositionsClient({
                 </TableRow>
               ))}
               {proposals.length === 0 && (
-                <TableRow><TableCell colSpan={9} className="text-center text-gray-500 py-8">Aucune proposition d'achat.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center text-gray-500 py-8">Aucune proposition d'achat.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
 
-      {/* Modal nouvelle proposition */}
-      <Dialog open={showNew} onOpenChange={(v) => { if (!v) setShowNew(false); }}>
-        <DialogContent className="max-w-lg">
+      {/* Modal nouvelle proposition (DC) */}
+      <Dialog open={showNew} onOpenChange={(v) => { if (!v) resetNew(); }}>
+        <DialogContent className="max-w-2xl">
           <DialogHeader><DialogTitle>Nouvelle proposition d'achat SIR</DialogTitle></DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+
+            {/* Sélection budget DF */}
             <div className="space-y-1">
-              <Label>Budget alloué *</Label>
-              <Select value={allocId} onValueChange={(v) => setAllocId(v ?? "")}>
-                <SelectTrigger><SelectValue placeholder="Sélectionner un budget accordé" /></SelectTrigger>
-                <SelectContent>
-                  {allocations.map((a) => (
-                    <SelectItem key={a.id} value={a.id}>
-                      {a.budgetRequest.items.map((i) => i.fuel.code).join(", ") || "—"} — {fmt(a.allocatedAmount)} FCFA
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Budget disponible (DF) *</Label>
+              <select
+                value={allocId}
+                onChange={(e) => setAllocId(e.target.value)}
+                className="w-full h-9 rounded-md border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Sélectionner un budget disponible</option>
+                {allocations.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.budgetRequest.items.map((i) => i.fuel.code).join(", ")} — {fmt(a.allocatedAmount)} FCFA disponibles
+                  </option>
+                ))}
+              </select>
+              {selectedAlloc && (
+                <p className="text-xs text-green-700 font-medium mt-1">
+                  Budget disponible : {fmt(selectedAlloc.allocatedAmount)} FCFA
+                </p>
+              )}
             </div>
+
+            {/* Répartition par produit */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold text-gray-700">Répartition par produit</Label>
+                <Button variant="outline" size="sm" onClick={addLine}>
+                  <Plus className="w-3 h-3 mr-1" /> Ajouter un produit
+                </Button>
+              </div>
+
+              {lines.map((l, idx) => (
+                <div key={idx} className="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-gray-500">Produit {idx + 1}</span>
+                    {lines.length > 1 && (
+                      <button onClick={() => removeLine(idx)} className="text-red-400 hover:text-red-600 transition-colors">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-gray-600">Carburant *</Label>
+                    <select
+                      value={l.fuelId}
+                      onChange={(e) => { const n = [...lines]; n[idx] = { ...n[idx], fuelId: e.target.value }; setLines(n); }}
+                      className="w-full h-9 rounded-md border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Sélectionner un carburant</option>
+                      {fuels.map((f) => <option key={f.id} value={f.id}>{f.name} ({f.code})</option>)}
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-600">Quantité M15 (litres) *</Label>
+                      <Input type="number" placeholder="ex : 100 000" value={l.qty}
+                        onChange={(e) => { const n = [...lines]; n[idx] = { ...n[idx], qty: e.target.value }; setLines(n); }} />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-600">Prix unitaire (FCFA/L) *</Label>
+                      <Input type="number" placeholder="ex : 730.72" value={l.unitPrice}
+                        onChange={(e) => { const n = [...lines]; n[idx] = { ...n[idx], unitPrice: e.target.value }; setLines(n); }} />
+                    </div>
+                  </div>
+                  {Number(l.qty) > 0 && Number(l.unitPrice) > 0 && (
+                    <p className="text-xs text-gray-500 text-right">
+                      Sous-total : <span className="font-semibold text-gray-800">{fmt(Number(l.qty) * Number(l.unitPrice))} FCFA</span>
+                    </p>
+                  )}
+                </div>
+              ))}
+
+              {totalPropose > 0 && (
+                <div className={`flex justify-end`}>
+                  <div className={`rounded-lg px-4 py-2 text-sm border ${selectedAlloc && totalPropose > Number(selectedAlloc.allocatedAmount) ? "bg-red-50 border-red-200" : "bg-white border-gray-200"}`}>
+                    <span className="text-gray-500">Total proposé : </span>
+                    <span className={`font-bold ${selectedAlloc && totalPropose > Number(selectedAlloc.allocatedAmount) ? "text-red-600" : "text-gray-900"}`}>
+                      {fmt(totalPropose)} FCFA
+                    </span>
+                    {selectedAlloc && totalPropose > Number(selectedAlloc.allocatedAmount) && (
+                      <span className="ml-2 text-xs text-red-500">⚠ dépasse le budget disponible</span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="space-y-1">
-              <Label>Produit *</Label>
-              <Select value={fuelId} onValueChange={(v) => setFuelId(v ?? "")}>
-                <SelectTrigger><SelectValue placeholder="Carburant" /></SelectTrigger>
-                <SelectContent>
-                  {fuels.map((f) => <SelectItem key={f.id} value={f.id}>{f.name} ({f.code})</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label>Quantité M15 *</Label>
-                <Input type="number" value={qty} onChange={(e) => setQty(e.target.value)} placeholder="ex: 100000" />
-              </div>
-              <div className="space-y-1">
-                <Label>Prix unitaire (FCFA/L) *</Label>
-                <Input type="number" value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} placeholder="ex: 730.717" />
-              </div>
-            </div>
-            {total > 0 && (
-              <div className="bg-gray-50 rounded-lg px-3 py-2 text-sm">
-                <span className="text-gray-500">Total estimé : </span>
-                <span className="font-bold">{fmt(total)} FCFA</span>
-              </div>
-            )}
-            <div className="space-y-1">
-              <Label>Justification</Label>
-              <Textarea rows={2} value={justification} onChange={(e) => setJustification(e.target.value)} placeholder="Motif, contexte..." />
+              <Label>Justification / observations</Label>
+              <Textarea rows={2} value={justification} onChange={(e) => setJustification(e.target.value)} placeholder="Contexte, urgence, conditions de marché..." />
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowNew(false)}>Annuler</Button>
+            <Button variant="outline" onClick={resetNew}>Annuler</Button>
             <Button className="bg-[#0369A1] hover:bg-blue-700" disabled={loading} onClick={submitNew}>
-              Soumettre au DG
+              Soumettre au Directeur Général
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -247,42 +318,61 @@ export function PropositionsClient({
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div className="bg-gray-50 rounded-lg px-3 py-2">
-                    <p className="text-xs text-gray-400 mb-0.5">Produit</p>
-                    <p className="font-medium">{selected.fuel.name} ({selected.fuel.code})</p>
-                  </div>
-                  <div className="bg-gray-50 rounded-lg px-3 py-2">
                     <p className="text-xs text-gray-400 mb-0.5">Demandeur</p>
                     <p className="font-medium">{selected.user.name}</p>
                   </div>
                   <div className="bg-gray-50 rounded-lg px-3 py-2">
-                    <p className="text-xs text-gray-400 mb-0.5">Quantité M15</p>
-                    <p className="font-medium">{fmt(selected.quantityM15)} L</p>
-                  </div>
-                  <div className="bg-gray-50 rounded-lg px-3 py-2">
-                    <p className="text-xs text-gray-400 mb-0.5">Prix unitaire</p>
-                    <p className="font-medium">{fmt(selected.estimatedUnitPrice)} FCFA/L</p>
-                  </div>
-                  <div className="bg-gray-50 rounded-lg px-3 py-2 col-span-2">
-                    <p className="text-xs text-gray-400 mb-0.5">Montant total</p>
-                    <p className="font-bold text-lg">{fmt(selected.totalAmount)} FCFA</p>
+                    <p className="text-xs text-gray-400 mb-0.5">Budget DF disponible</p>
+                    <p className="font-medium">{fmt(selected.budgetAllocation.allocatedAmount)} FCFA</p>
                   </div>
                 </div>
+
+                {/* Tableau répartition produits */}
+                <div className="border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Produit</TableHead>
+                        <TableHead className="text-right">Qté M15 (L)</TableHead>
+                        <TableHead className="text-right">P.U. (FCFA)</TableHead>
+                        <TableHead className="text-right">Montant</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {selected.items.map((i) => (
+                        <TableRow key={i.id}>
+                          <TableCell className="font-medium">{i.fuel.name} <span className="text-gray-400 text-xs">({i.fuel.code})</span></TableCell>
+                          <TableCell className="text-right tabular-nums">{fmt(i.quantityM15)}</TableCell>
+                          <TableCell className="text-right tabular-nums">{fmt(i.estimatedUnitPrice)}</TableCell>
+                          <TableCell className="text-right tabular-nums">{fmt(i.totalAmount)} FCFA</TableCell>
+                        </TableRow>
+                      ))}
+                      <TableRow className="bg-gray-50">
+                        <TableCell colSpan={3} className="text-right font-bold text-sm">Total</TableCell>
+                        <TableCell className="text-right font-bold tabular-nums">{fmt(selected.totalAmount)} FCFA</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
+
                 {selected.justification && (
                   <div className="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 text-sm text-blue-800">
                     <p className="text-xs font-semibold text-blue-500 mb-1">Justification</p>
                     {selected.justification}
                   </div>
                 )}
+
                 {selected.status === "REJETE" && selected.rejectionReason && (
                   <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-700">
                     <p className="text-xs font-semibold text-red-500 mb-1">Motif de rejet</p>
                     {selected.rejectionReason}
                   </div>
                 )}
+
                 {(isDG || isAdmin) && selected.status === "EN_ATTENTE" && (
                   <div className="border-t pt-4 space-y-1">
                     <Label>Commentaire (optionnel)</Label>
-                    <Textarea rows={2} value={dgNote} onChange={(e) => setDgNote(e.target.value)} placeholder="Observations..." />
+                    <Textarea rows={2} value={dgNote} onChange={(e) => setDgNote(e.target.value)} placeholder="Observations du Directeur Général..." />
                   </div>
                 )}
               </div>

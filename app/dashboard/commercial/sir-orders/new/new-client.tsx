@@ -17,10 +17,9 @@ function fmt(n: any) { return Number(n || 0).toLocaleString("fr-CI", { maximumFr
 
 interface Proposal {
   id: string;
-  quantityM15: number;
-  estimatedUnitPrice: number;
+  number: string;
   totalAmount: number;
-  fuel: { id: string; name: string; code: string };
+  items: { fuelId?: string; quantityM15: number; estimatedUnitPrice: number; fuel: { id: string; name: string; code: string } }[];
   budgetAllocation: { allocatedAmount: number };
 }
 
@@ -50,8 +49,8 @@ export function NewSIROrderClient({
   function selectProposal(id: string) {
     setProposalId(id);
     const p = proposals.find((pr) => pr.id === id);
-    if (p) {
-      setItems([{ fuelId: p.fuel.id, quantityM15: String(p.quantityM15), unitPrice: String(p.estimatedUnitPrice) }]);
+    if (p && p.items.length > 0) {
+      setItems(p.items.map((i) => ({ fuelId: i.fuel.id, quantityM15: String(i.quantityM15), unitPrice: String(i.estimatedUnitPrice) })));
     }
   }
 
@@ -103,7 +102,7 @@ export function NewSIROrderClient({
                 <SelectContent>
                   {proposals.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
-                      {p.fuel.name} — {fmt(p.quantityM15)} M15 · Budget : {fmt(p.budgetAllocation.allocatedAmount)} FCFA
+                      {p.number} — {p.items.map((i) => i.fuel.code).join(", ")} · {fmt(p.totalAmount)} FCFA
                     </SelectItem>
                   ))}
                 </SelectContent>

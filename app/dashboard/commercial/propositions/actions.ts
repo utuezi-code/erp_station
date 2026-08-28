@@ -6,15 +6,15 @@ import { revalidatePath } from "next/cache";
 
 export async function createProposal(data: {
   budgetAllocationId: string;
-  fuelId: string;
-  quantityM15: number;
-  estimatedUnitPrice: number;
   justification?: string;
+  items: { fuelId: string; quantityM15: number; estimatedUnitPrice: number }[];
 }) {
   const session = await requireRole(["DIRECTION_COMMERCIALE", "ADMIN"]);
   const user = session.user as any;
 
-  const totalAmount = data.quantityM15 * data.estimatedUnitPrice;
+  if (!data.items.length) return { success: false, error: "Au moins un produit requis." };
+
+  const totalAmount = data.items.reduce((s, i) => s + i.quantityM15 * i.estimatedUnitPrice, 0);
   const count = await db.purchaseProposal.count();
   const number = `PP/${new Date().getFullYear()}/${String(count + 1).padStart(3, "0")}`;
 
@@ -23,11 +23,16 @@ export async function createProposal(data: {
       number,
       budgetAllocationId: data.budgetAllocationId,
       userId: user.id,
-      fuelId: data.fuelId,
-      quantityM15: data.quantityM15,
-      estimatedUnitPrice: data.estimatedUnitPrice,
       totalAmount,
       justification: data.justification || null,
+      items: {
+        create: data.items.map((i) => ({
+          fuelId: i.fuelId,
+          quantityM15: i.quantityM15,
+          estimatedUnitPrice: i.estimatedUnitPrice,
+          totalAmount: i.quantityM15 * i.estimatedUnitPrice,
+        })),
+      },
     },
   });
 

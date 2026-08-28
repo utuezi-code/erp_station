@@ -11,7 +11,7 @@ export default async function NewSIROrderPage({ searchParams }: { searchParams: 
     db.purchaseProposal.findMany({
       where: { status: "VALIDE", sirOrders: { none: { status: { not: "ANNULE" } } } },
       include: {
-        fuel: { select: { id: true, name: true, code: true } },
+        items: { include: { fuel: { select: { id: true, name: true, code: true } } } },
         budgetAllocation: { select: { allocatedAmount: true } },
       },
     }),
