@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle, FileText, CreditCard, Truck, Send } from "lucide-react";
+import { CheckCircle, FileText, CreditCard, Truck, Send, Download, Upload, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { sendSIROrder, recordSIROffer, recordSIRPayment, recordDeliveryOrder } from "../actions";
 import { useRouter } from "next/navigation";
@@ -39,7 +39,7 @@ interface SIROrder {
   offers: { id: string; offerNumber: string | null; pdfUrl: string | null; validFrom: string | null; validTo: string | null; totalAmount: number | null; note: string | null }[];
   payments: { id: string; beneficiary: string; checkNumber: string; bankName: string | null; amount: number; paidAt: string; note: string | null; user: { name: string } }[];
   deliveryOrders: {
-    id: string; reference: string | null; depotName: string | null; deliveryDate: string | null; note: string | null;
+    id: string; reference: string | null; depotName: string | null; deliveryDate: string | null; pdfUrl: string | null; note: string | null;
     gestociEntries: { id: string; quantityM15: number; fuel: { name: string; code: string } }[];
   }[];
 }
@@ -55,11 +55,15 @@ export function SIROrderDetailClient({ order, role }: { order: SIROrder; role: s
   const [showPayment, setShowPayment] = useState(false);
   const [showDelivery, setShowDelivery] = useState(false);
 
+  // Upload state
+  const [uploading, setUploading] = useState(false);
+
   // Offer form
   const [offerNum, setOfferNum] = useState("");
   const [offerValidFrom, setOfferValidFrom] = useState("");
   const [offerValidTo, setOfferValidTo] = useState("");
   const [offerTotal, setOfferTotal] = useState("");
+  const [offerPdfUrl, setOfferPdfUrl] = useState("");
   const [offerNote, setOfferNote] = useState("");
 
   // Payment form
@@ -71,6 +75,7 @@ export function SIROrderDetailClient({ order, role }: { order: SIROrder; role: s
   const [payNote, setPayNote] = useState("");
 
   // Delivery form
+  const [dlPdfUrl, setDlPdfUrl] = useState("");
   const [dlRef, setDlRef] = useState("");
   const [dlDepot, setDlDepot] = useState("GESTOCI");
   const [dlDate, setDlDate] = useState(new Date().toISOString().slice(0, 10));
@@ -81,6 +86,16 @@ export function SIROrderDetailClient({ order, role }: { order: SIROrder; role: s
 
   const total = order.items.reduce((s, i) => s + Number(i.totalAmount), 0);
   const paid = order.payments.reduce((s, p) => s + Number(p.amount), 0);
+
+  async function uploadFile(file: File, folder: string): Promise<string> {
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("folder", folder);
+    const res = await fetch("/api/upload", { method: "POST", body: fd });
+    if (!res.ok) throw new Error("Upload échoué");
+    const { url } = await res.json();
+    return url as string;
+  }
 
   async function doSend() {
     setLoading(true);
@@ -95,14 +110,19 @@ export function SIROrderDetailClient({ order, role }: { order: SIROrder; role: s
     const r = await recordSIROffer({
       sirOrderId: order.id,
       offerNumber: offerNum || undefined,
+      pdfUrl: offerPdfUrl || undefined,
       validFrom: offerValidFrom || undefined,
       validTo: offerValidTo || undefined,
       totalAmount: offerTotal ? Number(offerTotal) : undefined,
       note: offerNote || undefined,
     });
     setLoading(false);
-    if (r.success) { toast.success("Offre SIR enregistrée."); setShowOffer(false); router.refresh(); }
-    else toast.error("Erreur.");
+    if (r.success) {
+      toast.success("Offre SIR enregistrée.");
+      setShowOffer(false);
+      setOfferNum(""); setOfferPdfUrl(""); setOfferValidFrom(""); setOfferValidTo(""); setOfferTotal(""); setOfferNote("");
+      router.refresh();
+    } else toast.error("Erreur.");
   }
 
   async function doPayment() {
@@ -131,6 +151,7 @@ export function SIROrderDetailClient({ order, role }: { order: SIROrder; role: s
       reference: dlRef || undefined,
       depotName: dlDepot || undefined,
       deliveryDate: dlDate || undefined,
+      pdfUrl: dlPdfUrl || undefined,
       note: dlNote || undefined,
       entries,
     });
@@ -158,6 +179,11 @@ export function SIROrderDetailClient({ order, role }: { order: SIROrder; role: s
 
       {/* Actions rapides */}
       <div className="flex flex-wrap gap-2 mb-6">
+        <a href={`/api/sir-orders/${order.id}/pdf`} target="_blank" rel="noopener noreferrer">
+          <Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50">
+            <Download className="w-4 h-4 mr-2" /> Télécharger BC PDF
+          </Button>
+        </a>
         {(isDC || isAdmin) && order.status === "BROUILLON" && (
           <Button className="bg-blue-600 hover:bg-blue-700" disabled={loading} onClick={doSend}>
             <Send className="w-4 h-4 mr-2" /> Marquer envoyé à SIR
@@ -225,7 +251,14 @@ export function SIROrderDetailClient({ order, role }: { order: SIROrder; role: s
               <CardContent className="space-y-3">
                 {order.offers.map((o, idx) => (
                   <div key={o.id} className="bg-purple-50 border border-purple-100 rounded-lg px-3 py-2 text-sm">
-                    <p className="font-semibold text-purple-700">Offre {o.offerNumber ? `n°${o.offerNumber}` : `#${idx + 1}`}</p>
+                    <div className="flex items-center justify-between">
+                      <p className="font-semibold text-purple-700">Offre {o.offerNumber ? `n°${o.offerNumber}` : `#${idx + 1}`}</p>
+                      {o.pdfUrl && (
+                        <a href={o.pdfUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 font-medium">
+                          <FileText className="w-3.5 h-3.5" /> Voir PDF
+                        </a>
+                      )}
+                    </div>
                     {o.validFrom && o.validTo && (
                       <p className="text-purple-600 text-xs">Validité : {new Date(o.validFrom).toLocaleDateString("fr-CI")} → {new Date(o.validTo).toLocaleDateString("fr-CI")}</p>
                     )}
@@ -282,10 +315,17 @@ export function SIROrderDetailClient({ order, role }: { order: SIROrder; role: s
               <CardContent className="space-y-4">
                 {order.deliveryOrders.map((dl) => (
                   <div key={dl.id} className="border rounded-lg p-3 space-y-2">
-                    <div className="flex items-center gap-3 text-sm">
-                      <span className="font-semibold">Réf. {dl.reference || "—"}</span>
-                      <span className="text-gray-500">{dl.depotName}</span>
-                      {dl.deliveryDate && <span className="text-gray-400">{new Date(dl.deliveryDate).toLocaleDateString("fr-CI")}</span>}
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-3">
+                        <span className="font-semibold">Réf. {dl.reference || "—"}</span>
+                        <span className="text-gray-500">{dl.depotName}</span>
+                        {dl.deliveryDate && <span className="text-gray-400">{new Date(dl.deliveryDate).toLocaleDateString("fr-CI")}</span>}
+                      </div>
+                      {dl.pdfUrl && (
+                        <a href={dl.pdfUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-green-700 hover:text-green-900 font-medium">
+                          <FileText className="w-3.5 h-3.5" /> Bon de livraison
+                        </a>
+                      )}
                     </div>
                     <div className="space-y-1">
                       {dl.gestociEntries.map((e) => (
@@ -345,6 +385,33 @@ export function SIROrderDetailClient({ order, role }: { order: SIROrder; role: s
                 <Label>Valide au</Label>
                 <Input type="date" value={offerValidTo} onChange={(e) => setOfferValidTo(e.target.value)} />
               </div>
+            </div>
+            <div className="space-y-1">
+              <Label>Document offre SIR (PDF)</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  disabled={uploading}
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    if (!f) return;
+                    setUploading(true);
+                    try {
+                      const url = await uploadFile(f, "sir-offers");
+                      setOfferPdfUrl(url);
+                      toast.success("Fichier uploadé.");
+                    } catch { toast.error("Erreur upload."); }
+                    finally { setUploading(false); }
+                  }}
+                />
+                {offerPdfUrl && (
+                  <a href={offerPdfUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800">
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                )}
+              </div>
+              {uploading && <p className="text-xs text-gray-400">Upload en cours...</p>}
             </div>
             <div className="space-y-1">
               <Label>Note</Label>
@@ -441,6 +508,33 @@ export function SIROrderDetailClient({ order, role }: { order: SIROrder; role: s
                   </div>
                 );
               })}
+            </div>
+            <div className="space-y-1">
+              <Label>Bon de livraison SIR (PDF)</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  disabled={uploading}
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    if (!f) return;
+                    setUploading(true);
+                    try {
+                      const url = await uploadFile(f, "delivery-orders");
+                      setDlPdfUrl(url);
+                      toast.success("Bon de livraison uploadé.");
+                    } catch { toast.error("Erreur upload."); }
+                    finally { setUploading(false); }
+                  }}
+                />
+                {dlPdfUrl && (
+                  <a href={dlPdfUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800">
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                )}
+              </div>
+              {uploading && <p className="text-xs text-gray-400">Upload en cours...</p>}
             </div>
             <div className="space-y-1">
               <Label>Note</Label>
