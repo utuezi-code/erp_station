@@ -4,10 +4,7 @@ import { requireRole } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
-export async function createBudgetRequest(data: {
-  estimatedAmount?: number;
-  justification?: string;
-}) {
+export async function createBudgetRequest() {
   const session = await requireRole(["DIRECTION_COMMERCIALE", "ADMIN"]);
   const user = session.user as any;
 
@@ -15,12 +12,7 @@ export async function createBudgetRequest(data: {
   const number = `BR/${new Date().getFullYear()}/${String(count + 1).padStart(3, "0")}`;
 
   await db.budgetRequest.create({
-    data: {
-      number,
-      userId: user.id,
-      estimatedAmount: data.estimatedAmount || null,
-      justification: data.justification || null,
-    },
+    data: { number, userId: user.id },
   });
 
   revalidatePath("/dashboard/commercial/budget");

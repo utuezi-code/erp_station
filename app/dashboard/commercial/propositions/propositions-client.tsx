@@ -48,7 +48,7 @@ interface Proposal {
 interface Allocation {
   id: string;
   allocatedAmount: number;
-  budgetRequest: { number: string; estimatedAmount: number | null };
+  budgetRequest: { number: string };
 }
 
 export function PropositionsClient({

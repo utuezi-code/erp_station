@@ -25,8 +25,6 @@ interface BudgetRequest {
   id: string;
   number: string;
   status: string;
-  estimatedAmount: number | null;
-  justification: string | null;
   createdAt: string;
   user: { name: string };
   allocation: { allocatedAmount: number; note: string | null; user: { name: string } } | null;
@@ -44,34 +42,21 @@ export function BudgetClient({
   const isDF = role === "DIRECTION_FINANCIERE";
   const isAdmin = role === "ADMIN";
 
-  const [showNew, setShowNew] = useState(false);
+  const [confirmNew, setConfirmNew] = useState(false);
   const [selected, setSelected] = useState<BudgetRequest | null>(null);
   const [loading, setLoading] = useState(false);
-
-  // Nouveau formulaire demande (simple)
-  const [estimatedAmount, setEstimatedAmount] = useState("");
-  const [justification, setJustification] = useState("");
 
   // DF — communiquer le budget disponible
   const [availableAmount, setAvailableAmount] = useState("");
   const [dfNote, setDfNote] = useState("");
 
-  function resetNew() {
-    setShowNew(false);
-    setEstimatedAmount("");
-    setJustification("");
-  }
-
   async function submitNew() {
     setLoading(true);
-    const r = await createBudgetRequest({
-      estimatedAmount: estimatedAmount ? Number(estimatedAmount) : undefined,
-      justification: justification || undefined,
-    });
+    const r = await createBudgetRequest();
     setLoading(false);
     if (r.success) {
       toast.success("Demande de budget envoyée à la Direction Financière.");
-      resetNew();
+      setConfirmNew(false);
       router.refresh();
     } else {
       toast.error("Erreur.");
@@ -101,7 +86,7 @@ export function BudgetClient({
           <p className="text-gray-500 mt-1">{requests.length} demande(s)</p>
         </div>
         {(isDC || isAdmin) && (
-          <Button className="bg-[#0369A1] hover:bg-blue-700" onClick={() => setShowNew(true)}>
+          <Button className="bg-[#0369A1] hover:bg-blue-700" onClick={() => setConfirmNew(true)}>
             <Plus className="w-4 h-4 mr-2" /> Nouvelle demande
           </Button>
         )}
@@ -114,8 +99,7 @@ export function BudgetClient({
               <TableRow>
                 <TableHead>Numéro</TableHead>
                 <TableHead>Demandeur</TableHead>
-                <TableHead className="text-right">Montant estimé</TableHead>
-                <TableHead className="text-right">Budget communiqué</TableHead>
+                <TableHead className="text-right">Budget communiqué (DF)</TableHead>
                 <TableHead>Statut</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead></TableHead>
@@ -126,9 +110,6 @@ export function BudgetClient({
                 <TableRow key={r.id}>
                   <TableCell className="font-mono text-sm">{r.number}</TableCell>
                   <TableCell className="text-sm">{r.user.name}</TableCell>
-                  <TableCell className="text-right text-sm text-gray-500">
-                    {r.estimatedAmount ? `${fmt(r.estimatedAmount)} FCFA` : "—"}
-                  </TableCell>
                   <TableCell className="text-right">
                     {r.allocation
                       ? <span className="font-semibold text-green-700">{fmt(r.allocation.allocatedAmount)} FCFA</span>
@@ -154,7 +135,7 @@ export function BudgetClient({
               ))}
               {requests.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-gray-500 py-8">Aucune demande de budget.</TableCell>
+                  <TableCell colSpan={6} className="text-center text-gray-500 py-8">Aucune demande de budget.</TableCell>
                 </TableRow>
               )}
             </TableBody>
@@ -162,35 +143,17 @@ export function BudgetClient({
         </CardContent>
       </Card>
 
-      {/* Modal nouvelle demande (DC) — simple */}
-      <Dialog open={showNew} onOpenChange={(v) => { if (!v) resetNew(); }}>
-        <DialogContent className="max-w-md">
-          <DialogHeader><DialogTitle>Nouvelle demande de budget</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-1">
-              <Label>Montant estimé (FCFA)</Label>
-              <Input
-                type="number"
-                value={estimatedAmount}
-                onChange={(e) => setEstimatedAmount(e.target.value)}
-                placeholder="ex : 100 000 000 (optionnel)"
-              />
-              <p className="text-xs text-gray-400">Estimation indicative — la DF communiquera le montant disponible.</p>
-            </div>
-            <div className="space-y-1">
-              <Label>Justification / contexte</Label>
-              <Textarea
-                rows={3}
-                value={justification}
-                onChange={(e) => setJustification(e.target.value)}
-                placeholder="Motif de la demande, urgence, période concernée..."
-              />
-            </div>
-          </div>
+      {/* Confirmation envoi demande (DC) */}
+      <Dialog open={confirmNew} onOpenChange={setConfirmNew}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Confirmer la demande de budget</DialogTitle></DialogHeader>
+          <p className="text-sm text-gray-600">
+            Une demande de budget sera envoyée à la Direction Financière. Celle-ci vous communiquera le montant disponible.
+          </p>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={resetNew}>Annuler</Button>
+            <Button variant="outline" onClick={() => setConfirmNew(false)}>Annuler</Button>
             <Button className="bg-[#0369A1] hover:bg-blue-700" disabled={loading} onClick={submitNew}>
-              Envoyer à la Direction Financière
+              Envoyer la demande
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -217,20 +180,7 @@ export function BudgetClient({
                     <p className="text-xs text-gray-400 mb-0.5">Date</p>
                     <p className="font-medium">{new Date(selected.createdAt).toLocaleDateString("fr-CI")}</p>
                   </div>
-                  {selected.estimatedAmount && (
-                    <div className="bg-gray-50 rounded-lg px-3 py-2 col-span-2">
-                      <p className="text-xs text-gray-400 mb-0.5">Montant estimé par la DC</p>
-                      <p className="font-semibold">{fmt(selected.estimatedAmount)} FCFA</p>
-                    </div>
-                  )}
                 </div>
-
-                {selected.justification && (
-                  <div className="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 text-sm text-blue-800">
-                    <p className="text-xs font-semibold text-blue-500 mb-1">Justification</p>
-                    {selected.justification}
-                  </div>
-                )}
 
                 {selected.allocation && (
                   <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-sm">
