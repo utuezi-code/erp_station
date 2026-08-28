@@ -1,226 +1,664 @@
 import { requireAuth } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { Role } from "@prisma/client";
-import {
-  Building2, Users, AlertTriangle, Wallet, TrendingUp,
-  ArrowUpRight, Clock, Gauge, ArrowUpCircle, FileText, ShoppingCart,
-  Trophy, BarChart3, GitCompare, Fuel,
-} from "lucide-react";
 import Link from "next/link";
+import {
+  Building2, Users, AlertTriangle, Wallet, TrendingUp, ArrowUpRight,
+  Clock, Gauge, ArrowUpCircle, FileText, ShoppingCart, Trophy,
+  BarChart3, GitCompare, Fuel, Landmark, Warehouse, Truck, Package,
+  CheckCircle, Circle, MoreHorizontal, ChevronRight, Droplets,
+  PackageCheck, BadgeCheck, TriangleAlert,
+} from "lucide-react";
 
-async function getDashboardStats(role: Role, stationId?: string) {
-  const stationFilter = role === "GERANT" && stationId ? { id: stationId } : {};
+const fmt = (n: number) => n.toLocaleString("fr-CI", { maximumFractionDigits: 0 });
+const fmtM = (n: number) => n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)} M` : n >= 1_000 ? `${(n / 1_000).toFixed(0)} k` : String(n);
+
+async function getDashboardData(role: Role, userId: string, stationId?: string) {
   const today = new Date();
   const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  const isStation = role === "GERANT";
+  const stationFilter = isStation && stationId ? { stationId } : {};
 
-  const [stations, users, fuels, alerts, versements, recentAlerts] = await Promise.all([
-    db.station.count({ where: { status: "ACTIVE", ...stationFilter } }),
-    role === "ADMIN" ? db.user.count({ where: { active: true } }) : Promise.resolve(null),
-    db.fuel.count({ where: { active: true } }),
-    db.alert.count({ where: { read: false } }),
-    db.versement.count({ where: { status: "EN_ATTENTE" } }),
-    db.alert.findMany({
-      where: { read: false },
-      include: { station: { select: { name: true } } },
-      orderBy: { createdAt: "desc" },
-      take: 6,
-    }),
+  // ── Core counts (all roles) ───────────────────────────────────────────────
+  const [alertCount, versAttente] = await Promise.all([
+    db.alert.count({ where: { read: false, ...(stationId ? { stationId } : {}) } }),
+    db.versement.count({ where: { status: "EN_ATTENTE", ...stationFilter } }),
   ]);
 
-  return { stations, users, fuels, alerts, versements, recentAlerts };
+  // ── Station / Gerant ──────────────────────────────────────────────────────
+  let stationData: {
+    stationName: string;
+    todayIndexCount: number;
+    monthVersTotal: number;
+    versAttente: number;
+    lastAlert: { message: string; level: string } | null;
+  } | null = null;
+
+  if (isStation && stationId) {
+    const [station, todayIdx, monthVers, lastAlert] = await Promise.all([
+      db.station.findUnique({ where: { id: stationId }, select: { name: true } }),
+      db.dailyIndex.count({ where: { stationId, date: { gte: new Date(today.toDateString()) } } }),
+      db.versement.aggregate({
+        _sum: { amount: true },
+        where: { stationId, createdAt: { gte: startOfMonth } },
+      }),
+      db.alert.findFirst({
+        where: { stationId, read: false },
+        orderBy: { createdAt: "desc" },
+        select: { message: true, level: true },
+      }),
+    ]);
+    stationData = {
+      stationName: station?.name ?? "",
+      todayIndexCount: todayIdx,
+      monthVersTotal: Number(monthVers._sum.amount ?? 0),
+      versAttente,
+      lastAlert,
+    };
+  }
+
+  // ── Commercial pipeline (DC, DG, DF, Admin) ───────────────────────────────
+  let commercial: {
+    budgetPending: number;
+    proposalPendingDG: number;
+    bcBrouillon: number;
+    bcEnvoye: number;
+    bcOffreRecue: number;
+    bcPaye: number;
+    bcLivre: number;
+    bcTotal: number;
+    lastBCs: { id: string; number: string; status: string; createdAt: Date }[];
+  } | null = null;
+
+  if (["ADMIN", "DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"].includes(role)) {
+    const [bReq, prop, bcStats, lastBCs] = await Promise.all([
+      db.budgetRequest.count({ where: { status: "EN_ATTENTE" } }),
+      db.purchaseProposal.count({ where: { status: "EN_ATTENTE" } }),
+      db.sIROrder.groupBy({ by: ["status"], _count: { _all: true } }),
+      db.sIROrder.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 5,
+        select: { id: true, number: true, status: true, createdAt: true },
+      }),
+    ]);
+    const byStatus = Object.fromEntries(bcStats.map((s) => [s.status, s._count._all]));
+    commercial = {
+      budgetPending: bReq,
+      proposalPendingDG: prop,
+      bcBrouillon: byStatus["BROUILLON"] ?? 0,
+      bcEnvoye: byStatus["ENVOYE"] ?? 0,
+      bcOffreRecue: byStatus["OFFRE_RECUE"] ?? 0,
+      bcPaye: byStatus["PAYE"] ?? 0,
+      bcLivre: byStatus["LIVRE"] ?? 0,
+      bcTotal: Object.values(byStatus).reduce((a, b) => a + b, 0),
+      lastBCs,
+    };
+  }
+
+  // ── GESTOCI stock (DC, DG, Admin) ─────────────────────────────────────────
+  let gestoci: { fuel: { name: string; code: string }; balance: number }[] | null = null;
+
+  if (["ADMIN", "DIRECTION_COMMERCIALE", "DIRECTION_GENERALE"].includes(role)) {
+    const [fuels, entries, withdrawals] = await Promise.all([
+      db.fuel.findMany({ where: { active: true }, select: { id: true, name: true, code: true } }),
+      db.gESTOCIEntry.groupBy({ by: ["fuelId"], _sum: { quantityM15: true } }),
+      db.gESTOCIWithdrawalItem.groupBy({ by: ["fuelId"], _sum: { quantityM15: true } }),
+    ]);
+    const entered = Object.fromEntries(entries.map((e) => [e.fuelId, Number(e._sum.quantityM15 ?? 0)]));
+    const withdrawn = Object.fromEntries(withdrawals.map((w) => [w.fuelId, Number(w._sum.quantityM15 ?? 0)]));
+    gestoci = fuels.map((f) => ({
+      fuel: f,
+      balance: (entered[f.id] ?? 0) - (withdrawn[f.id] ?? 0),
+    })).filter((g) => g.balance !== 0 || (entered[g.fuel.id] ?? 0) > 0);
+  }
+
+  // ── Financial (DF, DG, Admin) ─────────────────────────────────────────────
+  let finance: {
+    monthVersTotal: number;
+    monthVersCount: number;
+    versAttente: number;
+    versByStation: { stationId: string; stationName: string; total: number }[];
+    sirPaymentsPending: { number: string; amount: number }[];
+  } | null = null;
+
+  if (["ADMIN", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"].includes(role)) {
+    const [monthVers, stationVers, alertsRecent] = await Promise.all([
+      db.versement.aggregate({
+        _sum: { amount: true },
+        _count: { _all: true },
+        where: { createdAt: { gte: startOfMonth } },
+      }),
+      db.versement.groupBy({
+        by: ["stationId"],
+        _sum: { amount: true },
+        where: { createdAt: { gte: startOfMonth } },
+        orderBy: { _sum: { amount: "desc" } },
+        take: 5,
+      }),
+      db.sIROrder.findMany({
+        where: { status: { in: ["ENVOYE", "OFFRE_RECUE"] } },
+        select: { number: true, items: { select: { totalAmount: true } } },
+        take: 5,
+      }),
+    ]);
+    const stationNames = await db.station.findMany({
+      where: { id: { in: stationVers.map((s) => s.stationId) } },
+      select: { id: true, name: true },
+    });
+    const nameMap = Object.fromEntries(stationNames.map((s) => [s.id, s.name]));
+    finance = {
+      monthVersTotal: Number(monthVers._sum.amount ?? 0),
+      monthVersCount: monthVers._count._all,
+      versAttente,
+      versByStation: stationVers.map((s) => ({
+        stationId: s.stationId,
+        stationName: nameMap[s.stationId] ?? "—",
+        total: Number(s._sum.amount ?? 0),
+      })),
+      sirPaymentsPending: alertsRecent.map((o) => ({
+        number: o.number,
+        amount: o.items.reduce((sum, i) => sum + Number(i.totalAmount), 0),
+      })),
+    };
+  }
+
+  // ── Admin global ──────────────────────────────────────────────────────────
+  let admin: { stationCount: number; userCount: number; fuelCount: number } | null = null;
+  if (role === "ADMIN") {
+    const [stationCount, userCount, fuelCount] = await Promise.all([
+      db.station.count({ where: { status: "ACTIVE" } }),
+      db.user.count({ where: { active: true } }),
+      db.fuel.count({ where: { active: true } }),
+    ]);
+    admin = { stationCount, userCount, fuelCount };
+  }
+
+  // ── Recent alerts ─────────────────────────────────────────────────────────
+  const recentAlerts = await db.alert.findMany({
+    where: { read: false, ...(stationId && isStation ? { stationId } : {}) },
+    include: { station: { select: { name: true } } },
+    orderBy: { createdAt: "desc" },
+    take: 5,
+  });
+
+  return { alertCount, versAttente, stationData, commercial, gestoci, finance, admin, recentAlerts };
 }
 
-const QUICK_ACTIONS: {
-  label: string; href: string; icon: React.ElementType;
-  desc: string; roles: Role[]; color: string;
-}[] = [
-  { label: "Saisir index", href: "/dashboard/gerant/index", icon: Gauge, desc: "Relevé pompes du jour", roles: ["ADMIN", "GERANT"], color: "blue" },
-  { label: "Versement", href: "/dashboard/gerant/versements", icon: ArrowUpCircle, desc: "Enregistrer un versement", roles: ["ADMIN", "GERANT", "DIRECTION_FINANCIERE"], color: "green" },
-  { label: "Stock cuves", href: "/dashboard/gerant/stocks", icon: Fuel, desc: "Mouvements de stocks", roles: ["ADMIN", "GERANT"], color: "orange" },
-  { label: "Rapports", href: "/dashboard/rapports", icon: FileText, desc: "Exporter les données", roles: ["ADMIN", "GERANT", "DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"], color: "violet" },
-  { label: "Suivi ventes", href: "/dashboard/direction-commerciale", icon: TrendingUp, desc: "CA et volumes", roles: ["ADMIN", "DIRECTION_COMMERCIALE"], color: "emerald" },
-  { label: "Suivi financier", href: "/dashboard/direction-financiere/versements", icon: BarChart3, desc: "Versements et écarts", roles: ["ADMIN", "DIRECTION_FINANCIERE"], color: "blue" },
-  { label: "Classement", href: "/dashboard/classement", icon: Trophy, desc: "Performance stations", roles: ["ADMIN", "DIRECTION_COMMERCIALE", "DIRECTION_GENERALE"], color: "amber" },
-  { label: "Achats", href: "/dashboard/achats", icon: ShoppingCart, desc: "Commandes et factures", roles: ["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"], color: "rose" },
-  { label: "Écarts", href: "/dashboard/ecarts", icon: GitCompare, desc: "Analyse des écarts", roles: ["ADMIN", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"], color: "red" },
-];
-
-const ACTION_COLORS: Record<string, { bg: string; icon: string; ring: string }> = {
-  blue:    { bg: "bg-blue-50",    icon: "text-blue-600",    ring: "ring-blue-100" },
-  green:   { bg: "bg-emerald-50", icon: "text-emerald-600", ring: "ring-emerald-100" },
-  orange:  { bg: "bg-amber-50",   icon: "text-amber-600",   ring: "ring-amber-100" },
-  violet:  { bg: "bg-violet-50",  icon: "text-violet-600",  ring: "ring-violet-100" },
-  emerald: { bg: "bg-emerald-50", icon: "text-emerald-600", ring: "ring-emerald-100" },
-  amber:   { bg: "bg-amber-50",   icon: "text-amber-600",   ring: "ring-amber-100" },
-  rose:    { bg: "bg-rose-50",    icon: "text-rose-600",    ring: "ring-rose-100" },
-  red:     { bg: "bg-red-50",     icon: "text-red-600",     ring: "ring-red-100" },
+const BC_STATUS: Record<string, { label: string; color: string; dot: string }> = {
+  BROUILLON:    { label: "Brouillon",     color: "text-slate-500",  dot: "bg-slate-400" },
+  ENVOYE:       { label: "Envoyé SIR",    color: "text-blue-600",   dot: "bg-blue-500" },
+  OFFRE_RECUE:  { label: "Offre reçue",   color: "text-violet-600", dot: "bg-violet-500" },
+  PAYE:         { label: "Payé",          color: "text-amber-600",  dot: "bg-amber-500" },
+  LIVRE:        { label: "Livré",         color: "text-emerald-600",dot: "bg-emerald-500" },
+  ANNULE:       { label: "Annulé",        color: "text-red-500",    dot: "bg-red-400" },
 };
 
 export default async function DashboardPage() {
   const session = await requireAuth();
   const user = session.user as any;
   const role: Role = user.role;
-  const stats = await getDashboardStats(role, user.stationId);
+  const data = await getDashboardData(role, user.id, user.stationId);
 
-  const isAdmin = role === "ADMIN";
   const isGerant = role === "GERANT";
-
-  const visibleActions = QUICK_ACTIONS.filter((a) => a.roles.includes(role));
+  const isDC = role === "DIRECTION_COMMERCIALE";
+  const isDF = role === "DIRECTION_FINANCIERE";
+  const isDG = role === "DIRECTION_GENERALE";
+  const isAdmin = role === "ADMIN";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
 
-      {/* KPI Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <KpiCard
-          title="Stations actives"
-          value={stats.stations}
-          icon={Building2}
-          color="blue"
-          href={isAdmin ? "/dashboard/admin/stations" : undefined}
-          suffix="stations"
-        />
-        {isAdmin && stats.users !== null && (
-          <KpiCard title="Utilisateurs" value={stats.users} icon={Users} color="violet" href="/dashboard/admin/users" suffix="comptes" />
-        )}
-        {isAdmin && (
-          <KpiCard title="Carburants" value={stats.fuels} icon={Fuel} color="orange" href="/dashboard/admin/fuels" suffix="produits" />
-        )}
-        <KpiCard
-          title="Alertes non lues"
-          value={stats.alerts}
-          icon={AlertTriangle}
-          color={stats.alerts > 0 ? "red" : "green"}
-          href="/dashboard/alertes"
-          suffix="alertes"
-        />
-        {(isAdmin || isGerant || role === "DIRECTION_FINANCIERE") && (
-          <KpiCard
-            title="En attente"
-            value={stats.versements}
-            icon={Wallet}
-            color={stats.versements > 0 ? "amber" : "green"}
-            href={isAdmin || role === "DIRECTION_FINANCIERE" ? "/dashboard/direction-financiere/versements" : "/dashboard/gerant/versements"}
-            suffix="versements"
-          />
-        )}
+      {/* ── Titre page ──────────────────────────────────────────────────────── */}
+      <div>
+        <h1 className="text-xl font-bold text-slate-900">
+          {isGerant && data.stationData ? `Station ${data.stationData.stationName}` : "Tableau de bord"}
+        </h1>
+        <p className="text-sm text-slate-400 mt-0.5">
+          {new Date().toLocaleDateString("fr-CI", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+        </p>
       </div>
 
-      {/* Bottom grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6">
-
-        {/* Recent alerts — 2/5 */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-50">
-            <div className="flex items-center gap-2.5">
-              <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-red-50">
-                <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
-              </span>
-              <h3 className="font-bold text-[#0F172A] text-sm tracking-tight">Alertes récentes</h3>
-            </div>
-            <Link href="/dashboard/alertes" className="text-xs text-[#0369A1] hover:text-blue-700 font-semibold flex items-center gap-0.5 transition-colors">
-              Voir tout <ArrowUpRight className="w-3 h-3" />
-            </Link>
+      {/* ══════════════════════════════════════════════════════════════════════
+          GÉRANT — vue station
+      ══════════════════════════════════════════════════════════════════════ */}
+      {isGerant && data.stationData && (
+        <>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <KpiCard title="Index saisis auj." value={data.stationData.todayIndexCount} suffix="relevés" icon={Gauge} color="blue" href="/dashboard/gerant/index" />
+            <KpiCard title="Versements (mois)" value={data.stationData.monthVersTotal} suffix="FCFA" icon={ArrowUpCircle} color="emerald" href="/dashboard/gerant/versements" money />
+            <KpiCard title="En attente valid." value={data.stationData.versAttente} suffix="versements" icon={Clock} color={data.stationData.versAttente > 0 ? "amber" : "emerald"} href="/dashboard/gerant/versements" />
+            <KpiCard title="Alertes actives" value={data.alertCount} suffix="alertes" icon={AlertTriangle} color={data.alertCount > 0 ? "red" : "emerald"} href="/dashboard/alertes" />
           </div>
-          <div className="flex-1 divide-y divide-slate-50">
-            {stats.recentAlerts.length === 0 ? (
-              <div className="px-5 py-10 text-center">
-                <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-2">
-                  <AlertTriangle className="w-5 h-5 text-green-400" />
-                </div>
-                <p className="text-sm text-slate-400">Aucune alerte non lue</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <QuickLink href="/dashboard/gerant/index" icon={Gauge} label="Saisir index" desc="Relevé pompes du jour" color="blue" />
+            <QuickLink href="/dashboard/gerant/stocks" icon={Droplets} label="Stocks cuves" desc="Mouvements carburant" color="orange" />
+            <QuickLink href="/dashboard/gerant/livraisons" icon={Package} label="Livraisons" desc="Réceptions carburant" color="violet" />
+          </div>
+        </>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          DIRECTION COMMERCIALE
+      ══════════════════════════════════════════════════════════════════════ */}
+      {isDC && data.commercial && (
+        <>
+          {/* Pipeline workflow */}
+          <Section title="Pipeline Commercial SIR" href="/dashboard/commercial/sir-orders" icon={ShoppingCart}>
+            <WorkflowStrip commercial={data.commercial} />
+          </Section>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Actions en attente */}
+            <Section title="Actions requises" icon={TriangleAlert}>
+              <div className="divide-y divide-slate-50">
+                <ActionRow
+                  href="/dashboard/commercial/budget"
+                  icon={Landmark}
+                  label={`${data.commercial.budgetPending} demande${data.commercial.budgetPending !== 1 ? "s" : ""} de budget en attente DF`}
+                  count={data.commercial.budgetPending}
+                  active={data.commercial.budgetPending > 0}
+                />
+                <ActionRow
+                  href="/dashboard/commercial/propositions"
+                  icon={FileText}
+                  label={`${data.commercial.proposalPendingDG} proposition${data.commercial.proposalPendingDG !== 1 ? "s" : ""} en attente DG`}
+                  count={data.commercial.proposalPendingDG}
+                  active={data.commercial.proposalPendingDG > 0}
+                />
+                <ActionRow
+                  href="/dashboard/commercial/sir-orders"
+                  icon={ShoppingCart}
+                  label={`${data.commercial.bcEnvoye} BC envoyé${data.commercial.bcEnvoye !== 1 ? "s" : ""} — en attente offre SIR`}
+                  count={data.commercial.bcEnvoye}
+                  active={data.commercial.bcEnvoye > 0}
+                />
+                <ActionRow
+                  href="/dashboard/commercial/sir-orders"
+                  icon={PackageCheck}
+                  label={`${data.commercial.bcOffreRecue} BC avec offre reçue — paiement à traiter`}
+                  count={data.commercial.bcOffreRecue}
+                  active={data.commercial.bcOffreRecue > 0}
+                />
               </div>
-            ) : (
-              stats.recentAlerts.map((alert) => (
-                <div key={alert.id} className="px-5 py-3 flex items-start gap-3 hover:bg-slate-50 transition-colors">
-                  <div className={`w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0 ${
-                    alert.level === "RED" ? "bg-red-500" : alert.level === "ORANGE" ? "bg-orange-400" : "bg-blue-400"
-                  }`} />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[13px] font-medium text-slate-700 truncate">{alert.message}</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">{alert.station?.name}</p>
-                  </div>
-                  <span className="text-[10px] text-slate-300 flex-shrink-0 flex items-center gap-1 mt-0.5">
-                    <Clock className="w-2.5 h-2.5" />
-                    {new Date(alert.createdAt).toLocaleDateString("fr-CI", { day: "numeric", month: "short" })}
-                  </span>
-                </div>
-              ))
+            </Section>
+
+            {/* GESTOCI stocks */}
+            {data.gestoci && (
+              <Section title="Stocks GESTOCI" href="/dashboard/commercial/gestoci" icon={Warehouse}>
+                <GESTOCIStockWidget stocks={data.gestoci} />
+              </Section>
             )}
           </div>
-        </div>
 
-        {/* Quick actions — 3/5 */}
-        <div className="lg:col-span-3 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-          <div className="flex items-center gap-2.5 px-5 py-4 border-b border-slate-50">
-            <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-blue-50">
-              <TrendingUp className="w-3.5 h-3.5 text-blue-600" />
-            </span>
-            <h3 className="font-bold text-[#0F172A] text-sm tracking-tight">Accès rapide</h3>
-          </div>
-          <div className="p-3 sm:p-4 grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
-            {visibleActions.slice(0, 6).map((action) => {
-              const Icon = action.icon;
-              const c = ACTION_COLORS[action.color] || ACTION_COLORS.blue;
-              return (
-                <Link
-                  key={action.href}
-                  href={action.href}
-                  className="flex flex-col gap-2 p-3 rounded-xl border border-slate-100 hover:border-slate-200 hover:shadow-sm active:scale-[0.97] transition-all group bg-slate-50/50 hover:bg-white touch-manipulation min-h-[80px]"
-                >
-                  <div className={`flex items-center justify-center w-9 h-9 rounded-lg ${c.bg} ring-1 ${c.ring} flex-shrink-0`}>
-                    <Icon className={`w-4.5 h-4.5 ${c.icon}`} />
-                  </div>
-                  <div>
-                    <p className="text-[12px] sm:text-[13px] font-semibold text-slate-700 group-hover:text-slate-900 transition-colors leading-tight">{action.label}</p>
-                    <p className="text-[10px] sm:text-[11px] text-slate-400 leading-tight mt-0.5 hidden sm:block">{action.desc}</p>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
+          {/* Derniers BCs */}
+          <Section title="Derniers bons de commande" href="/dashboard/commercial/sir-orders" icon={ShoppingCart}>
+            <RecentBCsTable bcs={data.commercial.lastBCs} />
+          </Section>
+        </>
+      )}
 
+      {/* ══════════════════════════════════════════════════════════════════════
+          DIRECTION FINANCIÈRE
+      ══════════════════════════════════════════════════════════════════════ */}
+      {isDF && data.finance && (
+        <>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <KpiCard title="CA du mois" value={data.finance.monthVersTotal} suffix="FCFA" icon={TrendingUp} color="emerald" href="/dashboard/direction-financiere/versements" money />
+            <KpiCard title="Versements (mois)" value={data.finance.monthVersCount} suffix="versements" icon={ArrowUpCircle} color="blue" href="/dashboard/direction-financiere/versements" />
+            <KpiCard title="En attente valid." value={data.finance.versAttente} suffix="à valider" icon={Clock} color={data.finance.versAttente > 0 ? "amber" : "emerald"} href="/dashboard/direction-financiere/versements" />
+            <KpiCard title="Alertes actives" value={data.alertCount} suffix="alertes" icon={AlertTriangle} color={data.alertCount > 0 ? "red" : "emerald"} href="/dashboard/alertes" />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <Section title="Versements par station (ce mois)" href="/dashboard/direction-financiere/versements" icon={BarChart3}>
+              <div className="divide-y divide-slate-50">
+                {data.finance.versByStation.length === 0 && (
+                  <p className="text-sm text-slate-400 py-6 text-center">Aucun versement ce mois.</p>
+                )}
+                {data.finance.versByStation.map((s) => (
+                  <div key={s.stationId} className="flex items-center justify-between py-3 px-4">
+                    <span className="text-sm text-slate-700 font-medium">{s.stationName}</span>
+                    <span className="text-sm font-semibold text-slate-900 tabular-nums">{fmt(s.total)} FCFA</span>
+                  </div>
+                ))}
+              </div>
+            </Section>
+
+            <Section title="Budgets à communiquer" href="/dashboard/commercial/budget" icon={Landmark}>
+              {data.commercial && (
+                <div className="divide-y divide-slate-50">
+                  <ActionRow
+                    href="/dashboard/commercial/budget"
+                    icon={Landmark}
+                    label={`${data.commercial.budgetPending} demande${data.commercial.budgetPending !== 1 ? "s" : ""} de budget DC en attente`}
+                    count={data.commercial.budgetPending}
+                    active={data.commercial.budgetPending > 0}
+                  />
+                  <ActionRow
+                    href="/dashboard/commercial/sir-orders"
+                    icon={ShoppingCart}
+                    label={`${data.commercial.bcPaye + data.commercial.bcLivre} BC clôturés (payés / livrés)`}
+                    count={data.commercial.bcPaye + data.commercial.bcLivre}
+                    active={false}
+                  />
+                </div>
+              )}
+            </Section>
+          </div>
+        </>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          DIRECTION GÉNÉRALE
+      ══════════════════════════════════════════════════════════════════════ */}
+      {isDG && data.commercial && data.finance && (
+        <>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <KpiCard title="CA du mois" value={data.finance.monthVersTotal} suffix="FCFA" icon={TrendingUp} color="emerald" href="/dashboard/direction-financiere" money />
+            <KpiCard title="Versements att." value={data.finance.versAttente} suffix="à valider" icon={Clock} color={data.finance.versAttente > 0 ? "amber" : "emerald"} href="/dashboard/direction-financiere/versements" />
+            <KpiCard title="Propositions" value={data.commercial.proposalPendingDG} suffix="à valider" icon={FileText} color={data.commercial.proposalPendingDG > 0 ? "violet" : "emerald"} href="/dashboard/commercial/propositions" />
+            <KpiCard title="Alertes" value={data.alertCount} suffix="non lues" icon={AlertTriangle} color={data.alertCount > 0 ? "red" : "emerald"} href="/dashboard/alertes" />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="lg:col-span-2">
+              <Section title="Pipeline Commercial" href="/dashboard/commercial/sir-orders" icon={ShoppingCart}>
+                <WorkflowStrip commercial={data.commercial} />
+              </Section>
+            </div>
+            {data.gestoci && (
+              <Section title="Stocks GESTOCI" href="/dashboard/commercial/gestoci" icon={Warehouse}>
+                <GESTOCIStockWidget stocks={data.gestoci} />
+              </Section>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <Section title="À valider — DG" icon={BadgeCheck}>
+              <div className="divide-y divide-slate-50">
+                <ActionRow href="/dashboard/commercial/propositions" icon={FileText} label={`${data.commercial.proposalPendingDG} proposition${data.commercial.proposalPendingDG !== 1 ? "s" : ""} d'achat en attente de validation`} count={data.commercial.proposalPendingDG} active={data.commercial.proposalPendingDG > 0} />
+                <ActionRow href="/dashboard/commercial/sir-orders" icon={ShoppingCart} label={`${data.commercial.bcEnvoye} BC envoyé${data.commercial.bcEnvoye !== 1 ? "s" : ""} à la SIR`} count={data.commercial.bcEnvoye} active={data.commercial.bcEnvoye > 0} />
+                <ActionRow href="/dashboard/direction-financiere/versements" icon={Wallet} label={`${data.finance.versAttente} versement${data.finance.versAttente !== 1 ? "s" : ""} en attente de validation`} count={data.finance.versAttente} active={data.finance.versAttente > 0} />
+              </div>
+            </Section>
+            <Section title="Versements par station (ce mois)" href="/dashboard/direction-financiere/versements" icon={BarChart3}>
+              <div className="divide-y divide-slate-50">
+                {data.finance.versByStation.map((s) => (
+                  <div key={s.stationId} className="flex items-center justify-between py-3 px-4">
+                    <span className="text-sm text-slate-700 font-medium">{s.stationName}</span>
+                    <span className="text-sm font-semibold tabular-nums">{fmt(s.total)} FCFA</span>
+                  </div>
+                ))}
+                {data.finance.versByStation.length === 0 && <p className="text-sm text-slate-400 py-6 text-center">Aucun versement ce mois.</p>}
+              </div>
+            </Section>
+          </div>
+        </>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          ADMIN — vue globale
+      ══════════════════════════════════════════════════════════════════════ */}
+      {isAdmin && data.admin && data.commercial && data.finance && (
+        <>
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+            <KpiCard title="Stations actives" value={data.admin.stationCount} suffix="stations" icon={Building2} color="blue" href="/dashboard/admin/stations" />
+            <KpiCard title="Utilisateurs" value={data.admin.userCount} suffix="comptes" icon={Users} color="violet" href="/dashboard/admin/users" />
+            <KpiCard title="CA du mois" value={data.finance.monthVersTotal} suffix="FCFA" icon={TrendingUp} color="emerald" href="/dashboard/direction-financiere" money />
+            <KpiCard title="Versements att." value={data.finance.versAttente} suffix="à valider" icon={Clock} color={data.finance.versAttente > 0 ? "amber" : "emerald"} href="/dashboard/direction-financiere/versements" />
+            <KpiCard title="Alertes" value={data.alertCount} suffix="non lues" icon={AlertTriangle} color={data.alertCount > 0 ? "red" : "emerald"} href="/dashboard/alertes" />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="lg:col-span-2">
+              <Section title="Pipeline Commercial SIR" href="/dashboard/commercial/sir-orders" icon={ShoppingCart}>
+                <WorkflowStrip commercial={data.commercial} />
+                <RecentBCsTable bcs={data.commercial.lastBCs} />
+              </Section>
+            </div>
+            <div className="space-y-4">
+              {data.gestoci && (
+                <Section title="Stocks GESTOCI" href="/dashboard/commercial/gestoci" icon={Warehouse}>
+                  <GESTOCIStockWidget stocks={data.gestoci} />
+                </Section>
+              )}
+              <Section title="À traiter" icon={TriangleAlert}>
+                <div className="divide-y divide-slate-50">
+                  <ActionRow href="/dashboard/commercial/budget" icon={Landmark} label={`${data.commercial.budgetPending} demande${data.commercial.budgetPending !== 1 ? "s" : ""} budget`} count={data.commercial.budgetPending} active={data.commercial.budgetPending > 0} />
+                  <ActionRow href="/dashboard/commercial/propositions" icon={FileText} label={`${data.commercial.proposalPendingDG} proposition${data.commercial.proposalPendingDG !== 1 ? "s" : ""} DG`} count={data.commercial.proposalPendingDG} active={data.commercial.proposalPendingDG > 0} />
+                  <ActionRow href="/dashboard/direction-financiere/versements" icon={Wallet} label={`${data.finance.versAttente} versement${data.finance.versAttente !== 1 ? "s" : ""} att.`} count={data.finance.versAttente} active={data.finance.versAttente > 0} />
+                </div>
+              </Section>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <Section title="Versements par station (ce mois)" href="/dashboard/direction-financiere/versements" icon={BarChart3}>
+              <div className="divide-y divide-slate-50">
+                {data.finance.versByStation.map((s) => (
+                  <div key={s.stationId} className="flex items-center justify-between py-3 px-4">
+                    <span className="text-sm text-slate-700 font-medium">{s.stationName}</span>
+                    <span className="text-sm font-semibold tabular-nums">{fmt(s.total)} FCFA</span>
+                  </div>
+                ))}
+                {data.finance.versByStation.length === 0 && <p className="text-sm text-slate-400 py-6 text-center">Aucun versement ce mois.</p>}
+              </div>
+            </Section>
+            <Section title="Alertes récentes" href="/dashboard/alertes" icon={AlertTriangle}>
+              <AlertsList alerts={data.recentAlerts} />
+            </Section>
+          </div>
+        </>
+      )}
+
+      {/* ── Alertes (commun pour non-admin) ────────────────────────────────── */}
+      {!isAdmin && data.recentAlerts.length > 0 && (
+        <Section title="Alertes récentes" href="/dashboard/alertes" icon={AlertTriangle}>
+          <AlertsList alerts={data.recentAlerts} />
+        </Section>
+      )}
+
+    </div>
+  );
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function Section({
+  title, href, icon: Icon, children,
+}: {
+  title: string; href?: string; icon: React.ElementType; children: React.ReactNode;
+}) {
+  return (
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+      <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-50">
+        <div className="flex items-center gap-2">
+          <Icon className="w-4 h-4 text-slate-400" />
+          <h3 className="text-sm font-bold text-slate-800">{title}</h3>
+        </div>
+        {href && (
+          <Link href={href} className="text-xs text-[#0369A1] font-semibold flex items-center gap-0.5 hover:underline">
+            Voir tout <ArrowUpRight className="w-3 h-3" />
+          </Link>
+        )}
       </div>
+      {children}
     </div>
   );
 }
 
 function KpiCard({
-  title, value, icon: Icon, color, href, suffix,
+  title, value, icon: Icon, color, href, suffix, money,
 }: {
-  title: string; value: number; icon: React.ElementType;
-  color: string; href?: string; suffix: string;
+  title: string; value: number; icon: React.ElementType; color: string;
+  href?: string; suffix: string; money?: boolean;
 }) {
-  const styles: Record<string, { bg: string; icon: string; border: string; accent: string }> = {
-    blue:   { bg: "bg-blue-50",    icon: "text-[#0369A1]",   border: "border-blue-100",    accent: "text-[#0369A1]" },
-    violet: { bg: "bg-violet-50",  icon: "text-violet-600",  border: "border-violet-100",  accent: "text-violet-600" },
-    orange: { bg: "bg-amber-50",   icon: "text-amber-600",   border: "border-amber-100",   accent: "text-amber-600" },
-    amber:  { bg: "bg-amber-50",   icon: "text-amber-600",   border: "border-amber-100",   accent: "text-amber-600" },
-    red:    { bg: "bg-red-50",     icon: "text-red-600",     border: "border-red-100",     accent: "text-red-600" },
-    green:  { bg: "bg-emerald-50", icon: "text-emerald-600", border: "border-emerald-100", accent: "text-emerald-600" },
+  const styles: Record<string, { bg: string; icon: string }> = {
+    blue:    { bg: "bg-blue-50",    icon: "text-blue-600" },
+    violet:  { bg: "bg-violet-50",  icon: "text-violet-600" },
+    orange:  { bg: "bg-amber-50",   icon: "text-amber-600" },
+    amber:   { bg: "bg-amber-50",   icon: "text-amber-600" },
+    red:     { bg: "bg-red-50",     icon: "text-red-600" },
+    emerald: { bg: "bg-emerald-50", icon: "text-emerald-600" },
   };
   const s = styles[color] || styles.blue;
+  const displayVal = money ? fmtM(value) : fmt(value);
 
-  const content = (
-    <div className={`bg-white rounded-2xl border shadow-sm p-4 sm:p-5 transition-all hover:shadow-md active:scale-[0.98] group ${href ? "cursor-pointer touch-manipulation" : ""} border-slate-100 min-h-[88px] flex flex-col justify-between`}>
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0 flex-1">
-          <p className="text-[10px] sm:text-[11px] font-semibold text-slate-400 uppercase tracking-[0.08em] truncate leading-tight">{title}</p>
-          <p className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#0F172A] mt-1.5 leading-none tabular-nums">{value}</p>
-          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1 font-medium">{suffix}</p>
-        </div>
-        <div className={`p-2 sm:p-2.5 rounded-xl flex-shrink-0 ${s.bg}`}>
-          <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${s.icon}`} />
+  const inner = (
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 flex flex-col gap-3 hover:shadow-md transition-shadow">
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider leading-tight">{title}</p>
+        <div className={`p-2 rounded-xl ${s.bg}`}>
+          <Icon className={`w-4 h-4 ${s.icon}`} />
         </div>
       </div>
-      {href && (
-        <div className={`mt-2 sm:mt-4 flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold ${s.accent} sm:opacity-0 sm:group-hover:opacity-100 transition-opacity`}>
-          Voir le détail <ArrowUpRight className="w-3 h-3" />
-        </div>
-      )}
+      <div>
+        <p className="text-2xl font-extrabold text-slate-900 tabular-nums leading-none">{displayVal}</p>
+        <p className="text-[11px] text-slate-400 mt-1">{suffix}</p>
+      </div>
     </div>
   );
+  return href ? <Link href={href}>{inner}</Link> : <div>{inner}</div>;
+}
 
-  return href ? <Link href={href}>{content}</Link> : <div>{content}</div>;
+function WorkflowStrip({ commercial }: { commercial: NonNullable<Awaited<ReturnType<typeof getDashboardData>>["commercial"]> }) {
+  const steps = [
+    { label: "Budget DC", count: commercial.budgetPending, href: "/dashboard/commercial/budget", color: "slate", active: commercial.budgetPending > 0 },
+    { label: "Prop. DG", count: commercial.proposalPendingDG, href: "/dashboard/commercial/propositions", color: "violet", active: commercial.proposalPendingDG > 0 },
+    { label: "BC Brouillon", count: commercial.bcBrouillon, href: "/dashboard/commercial/sir-orders", color: "slate", active: commercial.bcBrouillon > 0 },
+    { label: "Envoyé SIR", count: commercial.bcEnvoye, href: "/dashboard/commercial/sir-orders", color: "blue", active: commercial.bcEnvoye > 0 },
+    { label: "Offre reçue", count: commercial.bcOffreRecue, href: "/dashboard/commercial/sir-orders", color: "violet", active: commercial.bcOffreRecue > 0 },
+    { label: "Payé", count: commercial.bcPaye, href: "/dashboard/commercial/sir-orders", color: "amber", active: false },
+    { label: "Livré", count: commercial.bcLivre, href: "/dashboard/commercial/sir-orders", color: "emerald", active: false },
+  ];
+  const colorMap: Record<string, string> = {
+    slate: "bg-slate-100 text-slate-600",
+    blue: "bg-blue-100 text-blue-700",
+    violet: "bg-violet-100 text-violet-700",
+    amber: "bg-amber-100 text-amber-700",
+    emerald: "bg-emerald-100 text-emerald-700",
+  };
+  return (
+    <div className="flex gap-2 px-5 py-4 overflow-x-auto">
+      {steps.map((step, i) => (
+        <Link key={i} href={step.href} className={`flex flex-col items-center gap-1.5 min-w-[80px] px-3 py-2 rounded-xl border transition-all hover:shadow-sm ${step.active ? "border-current shadow-sm" : "border-slate-100"}`}>
+          <span className={`text-xl font-extrabold tabular-nums ${step.count > 0 ? colorMap[step.color].split(" ")[1] : "text-slate-300"}`}>
+            {step.count}
+          </span>
+          <span className="text-[10px] text-slate-500 text-center leading-tight font-medium">{step.label}</span>
+          {step.active && <span className="w-1.5 h-1.5 rounded-full bg-current" />}
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+function RecentBCsTable({ bcs }: { bcs: { id: string; number: string; status: string; createdAt: Date }[] }) {
+  return (
+    <div className="divide-y divide-slate-50">
+      {bcs.length === 0 && <p className="text-sm text-slate-400 py-6 text-center">Aucun bon de commande.</p>}
+      {bcs.map((bc) => {
+        const st = BC_STATUS[bc.status] ?? { label: bc.status, color: "text-slate-400", dot: "bg-slate-300" };
+        return (
+          <Link key={bc.id} href={`/dashboard/commercial/sir-orders/${bc.id}`} className="flex items-center justify-between px-5 py-3 hover:bg-slate-50 transition-colors">
+            <div className="flex items-center gap-3">
+              <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${st.dot}`} />
+              <span className="text-sm font-mono font-medium text-slate-700">{bc.number}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className={`text-xs font-medium ${st.color}`}>{st.label}</span>
+              <span className="text-[11px] text-slate-400">
+                {new Date(bc.createdAt).toLocaleDateString("fr-CI", { day: "2-digit", month: "short" })}
+              </span>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+            </div>
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
+function GESTOCIStockWidget({ stocks }: { stocks: { fuel: { name: string; code: string }; balance: number }[] }) {
+  if (stocks.length === 0) {
+    return <p className="text-sm text-slate-400 py-6 text-center px-4">Aucun stock enregistré.</p>;
+  }
+  return (
+    <div className="divide-y divide-slate-50">
+      {stocks.map((s, i) => {
+        const level = s.balance <= 0 ? "red" : s.balance < 20000 ? "amber" : "emerald";
+        const barPct = Math.min(100, Math.max(0, (s.balance / 500000) * 100));
+        return (
+          <div key={i} className="px-5 py-3 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded font-mono">{s.fuel.code}</span>
+                <span className="text-sm font-medium text-slate-700">{s.fuel.name}</span>
+              </div>
+              <span className={`text-sm font-bold tabular-nums ${level === "red" ? "text-red-600" : level === "amber" ? "text-amber-600" : "text-emerald-700"}`}>
+                {fmt(s.balance)} L
+              </span>
+            </div>
+            <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${level === "red" ? "bg-red-400" : level === "amber" ? "bg-amber-400" : "bg-emerald-400"}`}
+                style={{ width: `${barPct}%` }}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function ActionRow({
+  href, icon: Icon, label, count, active,
+}: { href: string; icon: React.ElementType; label: string; count: number; active: boolean }) {
+  return (
+    <Link href={href} className="flex items-center gap-3 px-5 py-3 hover:bg-slate-50 transition-colors">
+      <div className={`flex items-center justify-center w-7 h-7 rounded-lg flex-shrink-0 ${active ? "bg-amber-50" : "bg-slate-50"}`}>
+        <Icon className={`w-3.5 h-3.5 ${active ? "text-amber-600" : "text-slate-400"}`} />
+      </div>
+      <span className={`text-sm flex-1 ${active ? "font-semibold text-slate-800" : "text-slate-500"}`}>{label}</span>
+      {active && count > 0 && (
+        <span className="text-xs font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">{count}</span>
+      )}
+      <ChevronRight className="w-3.5 h-3.5 text-slate-300 flex-shrink-0" />
+    </Link>
+  );
+}
+
+function QuickLink({ href, icon: Icon, label, desc, color }: { href: string; icon: React.ElementType; label: string; desc: string; color: string }) {
+  const c: Record<string, string> = { blue: "bg-blue-50 text-blue-600", orange: "bg-amber-50 text-amber-600", violet: "bg-violet-50 text-violet-600", emerald: "bg-emerald-50 text-emerald-600" };
+  return (
+    <Link href={href} className="flex items-center gap-3 p-4 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+      <div className={`p-2.5 rounded-xl ${c[color]}`}><Icon className="w-5 h-5" /></div>
+      <div>
+        <p className="text-sm font-bold text-slate-800">{label}</p>
+        <p className="text-xs text-slate-400">{desc}</p>
+      </div>
+      <ChevronRight className="w-4 h-4 text-slate-300 ml-auto" />
+    </Link>
+  );
+}
+
+function AlertsList({ alerts }: { alerts: { id: string; message: string; level: string; createdAt: Date; station?: { name: string } | null }[] }) {
+  if (alerts.length === 0) return <p className="text-sm text-slate-400 py-6 text-center">Aucune alerte non lue.</p>;
+  return (
+    <div className="divide-y divide-slate-50">
+      {alerts.map((a) => (
+        <div key={a.id} className="flex items-start gap-3 px-5 py-3">
+          <span className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${a.level === "RED" ? "bg-red-500" : a.level === "ORANGE" ? "bg-orange-400" : "bg-blue-400"}`} />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-slate-700 truncate">{a.message}</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">{a.station?.name}</p>
+          </div>
+          <span className="text-[10px] text-slate-300 flex-shrink-0 mt-0.5">
+            {new Date(a.createdAt).toLocaleDateString("fr-CI", { day: "numeric", month: "short" })}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
 }
