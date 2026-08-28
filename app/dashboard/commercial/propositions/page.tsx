@@ -8,7 +8,7 @@ export default async function PropositionsPage() {
   const user = session.user as any;
   const role = user.role as string;
 
-  const [proposals, allocations, fuels] = await Promise.all([
+  const [proposals, rawAllocations, fuels] = await Promise.all([
     db.purchaseProposal.findMany({
       include: {
         user: { select: { name: true } },
@@ -20,16 +20,38 @@ export default async function PropositionsPage() {
       take: 50,
     }),
     db.budgetAllocation.findMany({
-      where: {
-        budgetRequest: { status: "ACCORDE" },
-        proposals: { none: { status: { in: ["EN_ATTENTE", "VALIDE"] } } },
-      },
+      where: { budgetRequest: { status: "ACCORDE" } },
       include: {
         budgetRequest: { select: { number: true } },
+        proposals: {
+          where: { status: { in: ["EN_ATTENTE", "VALIDE"] } },
+          select: { totalAmount: true },
+        },
       },
     }),
     db.fuel.findMany({ where: { active: true }, select: { id: true, name: true, code: true } }),
   ]);
 
-  return <PropositionsClient proposals={serialize(proposals)} allocations={serialize(allocations)} fuels={fuels} role={role} />;
+  // Calcul budget restant par allocation
+  const allocations = rawAllocations
+    .map((a) => {
+      const used = a.proposals.reduce((s, p) => s + Number(p.totalAmount), 0);
+      const remaining = Number(a.allocatedAmount) - used;
+      return {
+        id: a.id,
+        allocatedAmount: Number(a.allocatedAmount),
+        remainingAmount: remaining,
+        budgetRequest: a.budgetRequest,
+      };
+    })
+    .filter((a) => a.remainingAmount > 0); // masquer si budget épuisé
+
+  return (
+    <PropositionsClient
+      proposals={serialize(proposals)}
+      allocations={allocations}
+      fuels={fuels}
+      role={role}
+    />
+  );
 }

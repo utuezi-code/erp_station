@@ -48,6 +48,7 @@ interface Proposal {
 interface Allocation {
   id: string;
   allocatedAmount: number;
+  remainingAmount: number;
   budgetRequest: { number: string };
 }
 
@@ -83,6 +84,7 @@ export function PropositionsClient({
 
   const selectedAlloc = allocations.find((a) => a.id === allocId);
   const totalPropose = lines.reduce((s, l) => s + Number(l.qty || 0) * Number(l.unitPrice || 0), 0);
+  const budgetRef = selectedAlloc ? selectedAlloc.remainingAmount : 0;
 
   function addLine() { setLines([...lines, { fuelId: "", qty: "", unitPrice: "" }]); }
   function removeLine(idx: number) { setLines(lines.filter((_, i) => i !== idx)); }
@@ -214,13 +216,13 @@ export function PropositionsClient({
                 <option value="">Sélectionner un budget disponible</option>
                 {allocations.map((a) => (
                   <option key={a.id} value={a.id}>
-                    {a.budgetRequest.number} — {fmt(a.allocatedAmount)} FCFA disponibles
+                    {a.budgetRequest.number} — {fmt(a.remainingAmount)} FCFA restants (sur {fmt(a.allocatedAmount)} FCFA)
                   </option>
                 ))}
               </select>
               {selectedAlloc && (
                 <p className="text-xs text-green-700 font-medium mt-1">
-                  Budget disponible : {fmt(selectedAlloc.allocatedAmount)} FCFA
+                  Budget restant : {fmt(selectedAlloc.remainingAmount)} FCFA (alloué : {fmt(selectedAlloc.allocatedAmount)} FCFA)
                 </p>
               )}
             </div>
@@ -277,13 +279,13 @@ export function PropositionsClient({
 
               {totalPropose > 0 && (
                 <div className={`flex justify-end`}>
-                  <div className={`rounded-lg px-4 py-2 text-sm border ${selectedAlloc && totalPropose > Number(selectedAlloc.allocatedAmount) ? "bg-red-50 border-red-200" : "bg-white border-gray-200"}`}>
+                  <div className={`rounded-lg px-4 py-2 text-sm border ${totalPropose > budgetRef ? "bg-red-50 border-red-200" : "bg-white border-gray-200"}`}>
                     <span className="text-gray-500">Total proposé : </span>
-                    <span className={`font-bold ${selectedAlloc && totalPropose > Number(selectedAlloc.allocatedAmount) ? "text-red-600" : "text-gray-900"}`}>
+                    <span className={`font-bold ${totalPropose > budgetRef ? "text-red-600" : "text-gray-900"}`}>
                       {fmt(totalPropose)} FCFA
                     </span>
-                    {selectedAlloc && totalPropose > Number(selectedAlloc.allocatedAmount) && (
-                      <span className="ml-2 text-xs text-red-500">⚠ dépasse le budget disponible</span>
+                    {totalPropose > budgetRef && budgetRef > 0 && (
+                      <span className="ml-2 text-xs text-red-500">⚠ dépasse le budget restant ({fmt(budgetRef)} FCFA)</span>
                     )}
                   </div>
                 </div>

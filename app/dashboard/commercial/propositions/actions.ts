@@ -16,11 +16,21 @@ export async function createProposal(data: {
 
   const totalAmount = data.items.reduce((s, i) => s + i.quantityM15 * i.estimatedUnitPrice, 0);
 
-  // Vérifier que le total ne dépasse pas le budget DF disponible
-  const allocation = await db.budgetAllocation.findUnique({ where: { id: data.budgetAllocationId } });
+  // Vérifier que le total ne dépasse pas le budget restant (alloué − propositions actives)
+  const allocation = await db.budgetAllocation.findUnique({
+    where: { id: data.budgetAllocationId },
+    include: {
+      proposals: {
+        where: { status: { in: ["EN_ATTENTE", "VALIDE"] } },
+        select: { totalAmount: true },
+      },
+    },
+  });
   if (!allocation) return { success: false, error: "Budget introuvable." };
-  if (totalAmount > Number(allocation.allocatedAmount)) {
-    return { success: false, error: `Le total (${totalAmount.toLocaleString("fr-CI")} FCFA) dépasse le budget disponible (${Number(allocation.allocatedAmount).toLocaleString("fr-CI")} FCFA).` };
+  const used = allocation.proposals.reduce((s, p) => s + Number(p.totalAmount), 0);
+  const remaining = Number(allocation.allocatedAmount) - used;
+  if (totalAmount > remaining) {
+    return { success: false, error: `Le total (${totalAmount.toLocaleString("fr-CI")} FCFA) dépasse le budget restant (${remaining.toLocaleString("fr-CI")} FCFA).` };
   }
 
   const count = await db.purchaseProposal.count();
