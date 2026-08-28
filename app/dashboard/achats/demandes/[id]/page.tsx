@@ -19,13 +19,14 @@ const STATUS: Record<string, { label: string; color: string }> = {
   ANNULE: { label: "Annulé", color: "bg-gray-100 text-gray-600" },
 };
 
-export default async function DemandePage({ params }: { params: { id: string } }) {
+export default async function DemandePage({ params }: { params: Promise<{ id: string }> }) {
   const session = await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "GERANT", "DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
   const user = session.user as any;
   const role = user.role as string;
+  const { id } = await params;
 
   const request = await db.purchaseRequest.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       items: true,
       station: { select: { name: true } },

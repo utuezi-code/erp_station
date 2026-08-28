@@ -23,13 +23,14 @@ const STATUS: Record<string, { label: string; color: string }> = {
   ANNULE: { label: "Annulé", color: "bg-red-100 text-red-700" },
 };
 
-export default async function CommandePage({ params }: { params: { id: string } }) {
+export default async function CommandePage({ params }: { params: Promise<{ id: string }> }) {
   const session = await requireRole(["ADMIN", "RESPONSABLE_SERVICE", "DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
   const user = session.user as any;
   const canEdit = ["RESPONSABLE_SERVICE", "DIRECTION_FINANCIERE"].includes(user.role);
+  const { id } = await params;
 
   const order = await db.purchaseOrder.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       supplier: true,
       items: true,

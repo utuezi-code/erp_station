@@ -4,13 +4,14 @@ import { notFound } from "next/navigation";
 import { serialize } from "@/lib/serialize";
 import { SIROrderDetailClient } from "./detail-client";
 
-export default async function SIROrderDetailPage({ params }: { params: { id: string } }) {
+export default async function SIROrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await requireRole(["DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE", "ADMIN"]);
   const user = session.user as any;
   const role = user.role as string;
+  const { id } = await params;
 
   const order = await db.sIROrder.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       user: { select: { name: true } },
       supplier: { select: { name: true, email: true } },
