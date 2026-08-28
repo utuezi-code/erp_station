@@ -18,7 +18,7 @@ export default async function SIROrderDetailPage({ params }: { params: Promise<{
       items: { include: { fuel: { select: { id: true, name: true, code: true } } } },
       offers: true,
       payments: { include: { user: { select: { name: true } } } },
-      deliveryOrders: { include: { gestociEntries: { include: { fuel: { select: { name: true, code: true } } } } }, select: { id: true, reference: true, depotName: true, deliveryDate: true, pdfUrl: true, note: true, gestociEntries: { include: { fuel: { select: { name: true, code: true } } } } } },
+      deliveryOrders: { select: { id: true, reference: true, depotName: true, deliveryDate: true, pdfUrl: true, note: true, gestociEntries: { include: { fuel: { select: { name: true, code: true } } } } } },
     },
   });
 

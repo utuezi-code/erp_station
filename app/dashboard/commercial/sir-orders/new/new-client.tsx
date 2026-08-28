@@ -44,6 +44,7 @@ export function NewSIROrderClient({
   ]);
 
   const selectedProposal = proposals.find((p) => p.id === proposalId);
+  const fromProposal = selectedProposal && selectedProposal.items.length > 0;
 
   // Pre-fill items when proposal changes
   function selectProposal(id: string) {
@@ -51,14 +52,18 @@ export function NewSIROrderClient({
     const p = proposals.find((pr) => pr.id === id);
     if (p && p.items.length > 0) {
       setItems(p.items.map((i) => ({ fuelId: i.fuel.id, quantityM15: String(i.quantityM15), unitPrice: String(i.estimatedUnitPrice) })));
+    } else {
+      setItems([{ fuelId: "", quantityM15: "", unitPrice: "" }]);
     }
   }
 
   function addLine() {
+    if (fromProposal) return;
     setItems([...items, { fuelId: "", quantityM15: "", unitPrice: "" }]);
   }
 
   function removeLine(idx: number) {
+    if (fromProposal) return;
     setItems(items.filter((_, i) => i !== idx));
   }
 
@@ -132,47 +137,71 @@ export function NewSIROrderClient({
           <CardHeader>
             <CardTitle className="text-sm flex items-center justify-between">
               Articles
-              <Button variant="outline" size="sm" onClick={addLine}><Plus className="w-3 h-3 mr-1" /> Ligne</Button>
+              {!fromProposal && (
+                <Button variant="outline" size="sm" onClick={addLine}><Plus className="w-3 h-3 mr-1" /> Ligne</Button>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
+            {fromProposal && (
+              <p className="text-xs text-blue-600 bg-blue-50 px-4 py-2 border-b border-blue-100">
+                Quantités et prix repris de la proposition DG validée — non modifiables.
+              </p>
+            )}
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Produit *</TableHead>
-                  <TableHead className="text-right">Qté M15 *</TableHead>
-                  <TableHead className="text-right">P.U. (FCFA/L) *</TableHead>
+                  <TableHead>Produit</TableHead>
+                  <TableHead className="text-right">Qté M15</TableHead>
+                  <TableHead className="text-right">P.U. (FCFA/L)</TableHead>
                   <TableHead className="text-right">Total</TableHead>
-                  <TableHead></TableHead>
+                  {!fromProposal && <TableHead></TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {items.map((item, idx) => (
+                {items.map((item, idx) => {
+                  const fuelObj = fuels.find((f) => f.id === item.fuelId);
+                  return (
                   <TableRow key={idx}>
                     <TableCell>
-                      <Select value={item.fuelId} onValueChange={(v) => { const n = [...items]; n[idx] = { ...n[idx], fuelId: v ?? "" }; setItems(n); }}>
-                        <SelectTrigger className="h-8"><SelectValue placeholder="Carburant" /></SelectTrigger>
-                        <SelectContent>
-                          {fuels.map((f) => <SelectItem key={f.id} value={f.id}>{f.name} ({f.code})</SelectItem>)}
-                        </SelectContent>
-                      </Select>
+                      {fromProposal ? (
+                        <span className="text-sm font-medium">{fuelObj ? `${fuelObj.name} (${fuelObj.code})` : item.fuelId}</span>
+                      ) : (
+                        <Select value={item.fuelId} onValueChange={(v) => { const n = [...items]; n[idx] = { ...n[idx], fuelId: v ?? "" }; setItems(n); }}>
+                          <SelectTrigger className="h-8"><SelectValue placeholder="Carburant" /></SelectTrigger>
+                          <SelectContent>
+                            {fuels.map((f) => <SelectItem key={f.id} value={f.id}>{f.name} ({f.code})</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      )}
                     </TableCell>
-                    <TableCell>
-                      <Input className="h-8 text-right" type="number" value={item.quantityM15} onChange={(e) => { const n = [...items]; n[idx] = { ...n[idx], quantityM15: e.target.value }; setItems(n); }} />
+                    <TableCell className="text-right">
+                      {fromProposal ? (
+                        <span className="text-sm">{fmt(item.quantityM15)} L</span>
+                      ) : (
+                        <Input className="h-8 text-right" type="number" value={item.quantityM15} onChange={(e) => { const n = [...items]; n[idx] = { ...n[idx], quantityM15: e.target.value }; setItems(n); }} />
+                      )}
                     </TableCell>
-                    <TableCell>
-                      <Input className="h-8 text-right" type="number" value={item.unitPrice} onChange={(e) => { const n = [...items]; n[idx] = { ...n[idx], unitPrice: e.target.value }; setItems(n); }} />
+                    <TableCell className="text-right">
+                      {fromProposal ? (
+                        <span className="text-sm">{fmt(item.unitPrice)}</span>
+                      ) : (
+                        <Input className="h-8 text-right" type="number" value={item.unitPrice} onChange={(e) => { const n = [...items]; n[idx] = { ...n[idx], unitPrice: e.target.value }; setItems(n); }} />
+                      )}
                     </TableCell>
                     <TableCell className="text-right text-sm font-medium">
                       {item.quantityM15 && item.unitPrice ? `${fmt(Number(item.quantityM15) * Number(item.unitPrice))} FCFA` : "—"}
                     </TableCell>
-                    <TableCell>
-                      {items.length > 1 && (
-                        <Button variant="ghost" size="sm" onClick={() => removeLine(idx)}><Trash2 className="w-3 h-3 text-red-400" /></Button>
-                      )}
-                    </TableCell>
+                    {!fromProposal && (
+                      <TableCell>
+                        {items.length > 1 && (
+                          <Button variant="ghost" size="sm" onClick={() => removeLine(idx)}><Trash2 className="w-3 h-3 text-red-400" /></Button>
+                        )}
+                      </TableCell>
+                    )}
                   </TableRow>
-                ))}
+                  );
+                })}
                 {total > 0 && (
                   <TableRow>
                     <TableCell colSpan={3} className="text-right font-bold">Total</TableCell>
