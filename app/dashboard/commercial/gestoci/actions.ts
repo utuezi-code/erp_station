@@ -3,6 +3,7 @@
 import { requireRole } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { writeAuditLog } from "@/lib/audit";
 
 export async function createWithdrawal(data: {
   date: string;
@@ -29,7 +30,7 @@ export async function createWithdrawal(data: {
   const count = await db.gESTOCIWithdrawal.count();
   const number = `BL/IVORY/${new Date().getFullYear()}/${String(count + 1).padStart(3, "0")}`;
 
-  await db.gESTOCIWithdrawal.create({
+  const withdrawal = await db.gESTOCIWithdrawal.create({
     data: {
       number,
       userId: user.id,
@@ -55,6 +56,8 @@ export async function createWithdrawal(data: {
     },
   });
 
+  await writeAuditLog({ userId: user.id, entity: "GESTOCIWithdrawal", entityId: withdrawal.id, action: "CREATE", meta: { number, destination: data.destination, blNumber: data.blNumber } });
+
   revalidatePath("/dashboard/commercial/gestoci");
   return { success: true };
 }
@@ -67,7 +70,7 @@ export async function recordStockReading(data: {
   const session = await requireRole(["DIRECTION_COMMERCIALE", "ADMIN"]);
   const user = session.user as any;
 
-  await db.$transaction(
+  const records = await db.$transaction(
     data.readings.map((r) =>
       db.gESTOCIStockReading.create({
         data: {
@@ -80,6 +83,10 @@ export async function recordStockReading(data: {
       })
     )
   );
+
+  if (records[0]) {
+    await writeAuditLog({ userId: user.id, entity: "GESTOCIStockReading", entityId: records[0].id, action: "RECORD_READING", meta: { date: data.date, count: data.readings.length } });
+  }
 
   revalidatePath("/dashboard/commercial/gestoci");
   return { success: true };

@@ -7,7 +7,7 @@ import {
   Clock, Gauge, ArrowUpCircle, FileText, ShoppingCart, Trophy,
   BarChart3, GitCompare, Fuel, Landmark, Warehouse, Truck, Package,
   CheckCircle, Circle, MoreHorizontal, ChevronRight, Droplets,
-  PackageCheck, BadgeCheck, TriangleAlert,
+  PackageCheck, BadgeCheck, TriangleAlert, Activity,
 } from "lucide-react";
 
 const fmt = (n: number) => n.toLocaleString("fr-CI", { maximumFractionDigits: 0 });
@@ -181,7 +181,17 @@ async function getDashboardData(role: Role, userId: string, stationId?: string) 
     take: 5,
   });
 
-  return { alertCount, versAttente, stationData, commercial, gestoci, finance, admin, recentAlerts };
+  // ── Recent audit logs (DG, Admin) ─────────────────────────────────────────
+  let recentActivity: { id: string; createdAt: Date; action: string; entity: string; after: any; user: { name: string; role: string } | null }[] = [];
+  if (["ADMIN", "DIRECTION_GENERALE"].includes(role)) {
+    recentActivity = await db.auditLog.findMany({
+      include: { user: { select: { name: true, role: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 8,
+    }) as any;
+  }
+
+  return { alertCount, versAttente, stationData, commercial, gestoci, finance, admin, recentAlerts, recentActivity };
 }
 
 const BC_STATUS: Record<string, { label: string; color: string; dot: string }> = {
@@ -393,6 +403,10 @@ export default async function DashboardPage() {
               </div>
             </Section>
           </div>
+
+          <Section title="Activité récente des collaborateurs" href="/dashboard/direction-generale/activite" icon={Activity}>
+            <RecentActivityList logs={data.recentActivity} />
+          </Section>
         </>
       )}
 
@@ -448,6 +462,10 @@ export default async function DashboardPage() {
               <AlertsList alerts={data.recentAlerts} />
             </Section>
           </div>
+
+          <Section title="Activité récente des collaborateurs" href="/dashboard/direction-generale/activite" icon={Activity}>
+            <RecentActivityList logs={data.recentActivity} />
+          </Section>
         </>
       )}
 
@@ -640,6 +658,54 @@ function QuickLink({ href, icon: Icon, label, desc, color }: { href: string; ico
       </div>
       <ChevronRight className="w-4 h-4 text-slate-300 ml-auto" />
     </Link>
+  );
+}
+
+const ACTION_DISPLAY: Record<string, { label: string; color: string }> = {
+  CREATE: { label: "Créé", color: "text-blue-600 bg-blue-50" },
+  UPDATE: { label: "Modifié", color: "text-amber-600 bg-amber-50" },
+  DELETE: { label: "Supprimé", color: "text-red-600 bg-red-50" },
+  VALIDATE: { label: "Validé", color: "text-emerald-600 bg-emerald-50" },
+  REJECT: { label: "Rejeté", color: "text-red-600 bg-red-50" },
+  SEND: { label: "Envoyé", color: "text-purple-600 bg-purple-50" },
+  RECORD_OFFER: { label: "Offre saisie", color: "text-indigo-600 bg-indigo-50" },
+  RECORD_PAYMENT: { label: "Paiement", color: "text-emerald-600 bg-emerald-50" },
+  RECORD_DELIVERY: { label: "Livraison", color: "text-teal-600 bg-teal-50" },
+  RECORD_READING: { label: "Relevé GESTOCI", color: "text-violet-600 bg-violet-50" },
+};
+const ENTITY_SHORT: Record<string, string> = {
+  BudgetRequest: "Demande budget", BudgetAllocation: "Budget accordé",
+  PurchaseProposal: "Proposition", SIROrder: "BC", SIROffer: "Offre SIR",
+  SIRPayment: "Paiement", SIRDeliveryOrder: "Livraison SIR",
+  GESTOCIWithdrawal: "BL IVORY", GESTOCIStockReading: "Relevé GESTOCI",
+};
+const ROLE_SHORT: Record<string, string> = {
+  ADMIN: "Admin", DIRECTION_COMMERCIALE: "DC", DIRECTION_FINANCIERE: "DF",
+  DIRECTION_GENERALE: "DG", GERANT: "Gérant",
+};
+
+function RecentActivityList({ logs }: { logs: { id: string; createdAt: Date; action: string; entity: string; after: any; user: { name: string; role: string } | null }[] }) {
+  if (logs.length === 0) return <p className="text-sm text-slate-400 py-6 text-center">Aucune activité enregistrée.</p>;
+  return (
+    <div className="divide-y divide-slate-50">
+      {logs.map((log) => {
+        const ad = ACTION_DISPLAY[log.action] ?? { label: log.action, color: "text-slate-600 bg-slate-50" };
+        const meta = log.after?.number || log.after?.blNumber || log.after?.reference || "";
+        return (
+          <div key={log.id} className="flex items-center gap-3 px-5 py-3">
+            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded flex-shrink-0 ${ad.color}`}>{ad.label}</span>
+            <div className="flex-1 min-w-0">
+              <span className="text-sm text-slate-700">{ENTITY_SHORT[log.entity] ?? log.entity}</span>
+              {meta && <span className="text-xs text-slate-400 ml-1 font-mono">{meta}</span>}
+            </div>
+            <div className="text-right flex-shrink-0">
+              <p className="text-xs font-medium text-slate-600">{log.user?.name ?? "Système"}</p>
+              <p className="text-[10px] text-slate-400">{ROLE_SHORT[log.user?.role ?? ""] ?? ""} · {new Date(log.createdAt).toLocaleTimeString("fr-CI", { hour: "2-digit", minute: "2-digit" })}</p>
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 

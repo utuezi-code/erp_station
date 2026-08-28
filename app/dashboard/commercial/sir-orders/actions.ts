@@ -3,6 +3,7 @@
 import { requireRole } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { writeAuditLog } from "@/lib/audit";
 
 export async function createSIROrder(data: {
   proposalId: string;
@@ -35,17 +36,24 @@ export async function createSIROrder(data: {
     },
   });
 
+  await writeAuditLog({ userId: user.id, entity: "SIROrder", entityId: order.id, action: "CREATE", meta: { number } });
+
   revalidatePath("/dashboard/commercial/sir-orders");
   return { success: true, id: order.id };
 }
 
 export async function sendSIROrder(id: string) {
-  await requireRole(["DIRECTION_COMMERCIALE", "ADMIN"]);
+  const session = await requireRole(["DIRECTION_COMMERCIALE", "ADMIN"]);
+  const user = session.user as any;
+
+  const order = await db.sIROrder.findUnique({ where: { id }, select: { number: true } });
 
   await db.sIROrder.update({
     where: { id },
     data: { status: "ENVOYE", sentAt: new Date() },
   });
+
+  await writeAuditLog({ userId: user.id, entity: "SIROrder", entityId: id, action: "SEND", meta: { number: order?.number } });
 
   revalidatePath("/dashboard/commercial/sir-orders");
   revalidatePath(`/dashboard/commercial/sir-orders/${id}`);
@@ -61,9 +69,10 @@ export async function recordSIROffer(data: {
   totalAmount?: number;
   note?: string;
 }) {
-  await requireRole(["DIRECTION_COMMERCIALE", "ADMIN"]);
+  const session = await requireRole(["DIRECTION_COMMERCIALE", "ADMIN"]);
+  const user = session.user as any;
 
-  await db.$transaction([
+  const [offer] = await db.$transaction([
     db.sIROffer.create({
       data: {
         sirOrderId: data.sirOrderId,
@@ -80,6 +89,8 @@ export async function recordSIROffer(data: {
       data: { status: "OFFRE_RECUE" },
     }),
   ]);
+
+  await writeAuditLog({ userId: user.id, entity: "SIROffer", entityId: offer.id, action: "RECORD_OFFER", meta: { sirOrderId: data.sirOrderId, offerNumber: data.offerNumber } });
 
   revalidatePath("/dashboard/commercial/sir-orders");
   revalidatePath(`/dashboard/commercial/sir-orders/${data.sirOrderId}`);
@@ -98,7 +109,7 @@ export async function recordSIRPayment(data: {
   const session = await requireRole(["DIRECTION_FINANCIERE", "ADMIN"]);
   const user = session.user as any;
 
-  await db.sIRPayment.create({
+  const payment = await db.sIRPayment.create({
     data: {
       sirOrderId: data.sirOrderId,
       beneficiary: data.beneficiary,
@@ -111,7 +122,8 @@ export async function recordSIRPayment(data: {
     },
   });
 
-  // Check if total paid covers order total
+  await writeAuditLog({ userId: user.id, entity: "SIRPayment", entityId: payment.id, action: "RECORD_PAYMENT", meta: { sirOrderId: data.sirOrderId, amount: data.amount, checkNumber: data.checkNumber } });
+
   const order = await db.sIROrder.findUnique({
     where: { id: data.sirOrderId },
     include: { items: true, payments: true },
@@ -138,7 +150,8 @@ export async function recordDeliveryOrder(data: {
   note?: string;
   entries: { fuelId: string; quantityM15: number }[];
 }) {
-  await requireRole(["DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE", "ADMIN"]);
+  const session = await requireRole(["DIRECTION_COMMERCIALE", "DIRECTION_FINANCIERE", "ADMIN"]);
+  const user = session.user as any;
 
   const deliveryOrder = await db.sIRDeliveryOrder.create({
     data: {
@@ -157,6 +170,8 @@ export async function recordDeliveryOrder(data: {
       },
     },
   });
+
+  await writeAuditLog({ userId: user.id, entity: "SIRDeliveryOrder", entityId: deliveryOrder.id, action: "RECORD_DELIVERY", meta: { sirOrderId: data.sirOrderId, reference: data.reference } });
 
   await db.sIROrder.update({ where: { id: data.sirOrderId }, data: { status: "LIVRE" } });
 

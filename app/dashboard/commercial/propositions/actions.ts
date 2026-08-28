@@ -3,6 +3,7 @@
 import { requireRole } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { writeAuditLog } from "@/lib/audit";
 
 export async function createProposal(data: {
   budgetAllocationId: string;
@@ -16,7 +17,6 @@ export async function createProposal(data: {
 
   const totalAmount = data.items.reduce((s, i) => s + i.quantityM15 * i.estimatedUnitPrice, 0);
 
-  // Vérifier que le total ne dépasse pas le budget restant (alloué − propositions actives)
   const allocation = await db.budgetAllocation.findUnique({
     where: { id: data.budgetAllocationId },
     include: {
@@ -36,7 +36,7 @@ export async function createProposal(data: {
   const count = await db.purchaseProposal.count();
   const number = `PP/${new Date().getFullYear()}/${String(count + 1).padStart(3, "0")}`;
 
-  await db.purchaseProposal.create({
+  const proposal = await db.purchaseProposal.create({
     data: {
       number,
       budgetAllocationId: data.budgetAllocationId,
@@ -53,6 +53,8 @@ export async function createProposal(data: {
       },
     },
   });
+
+  await writeAuditLog({ userId: user.id, entity: "PurchaseProposal", entityId: proposal.id, action: "CREATE", meta: { number, totalAmount } });
 
   revalidatePath("/dashboard/commercial/propositions");
   return { success: true };
@@ -74,6 +76,8 @@ export async function validateProposal(id: string, approved: boolean, reason?: s
       validatedBy: user.id,
     },
   });
+
+  await writeAuditLog({ userId: user.id, entity: "PurchaseProposal", entityId: id, action: approved ? "VALIDATE" : "REJECT", meta: { number: proposal.number, reason } });
 
   revalidatePath("/dashboard/commercial/propositions");
   return { success: true };
