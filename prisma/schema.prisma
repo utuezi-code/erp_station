@@ -896,15 +896,15 @@ model SIRDeliveryOrder {
 
 // 9. Entrée en stock GESTOCI (suite ordre de livraison SIR)
 model GESTOCIEntry {
-  id              String           @id @default(cuid())
-  deliveryOrderId String
-  deliveryOrder   SIRDeliveryOrder @relation(fields: [deliveryOrderId], references: [id])
+  id              String            @id @default(cuid())
+  deliveryOrderId String?
+  deliveryOrder   SIRDeliveryOrder? @relation(fields: [deliveryOrderId], references: [id])
   fuelId          String
-  fuel            Fuel             @relation("GESTOCIEntryFuel", fields: [fuelId], references: [id])
-  quantityM15     Decimal          @db.Decimal(14, 3) // volume à 15°C (référence GESTOCI)
-  date            DateTime         @db.Date
+  fuel            Fuel              @relation("GESTOCIEntryFuel", fields: [fuelId], references: [id])
+  quantityM15     Decimal           @db.Decimal(14, 3)
+  date            DateTime          @db.Date
   note            String?
-  createdAt       DateTime         @default(now())
+  createdAt       DateTime          @default(now())
 
   @@index([fuelId])
 }
@@ -941,8 +941,8 @@ model GESTOCIWithdrawalItem {
   withdrawal       GESTOCIWithdrawal @relation(fields: [withdrawalId], references: [id], onDelete: Cascade)
   fuelId           String
   fuel             Fuel              @relation("GESTOCIWithdrawalItemFuel", fields: [fuelId], references: [id])
-  stationId        String
-  station          Station           @relation("GESTOCIWithdrawalItemStation", fields: [stationId], references: [id])
+  stationId        String?
+  station          Station?          @relation("GESTOCIWithdrawalItemStation", fields: [stationId], references: [id])
   quantityM15      Decimal           @db.Decimal(14, 3) // volume BL à 15°C (GESTOCI)
   quantityReel     Decimal           @db.Decimal(14, 3) // volume ambiant à charger (citerne)
   correctionFactor Decimal?          @db.Decimal(6, 4) // facteur de correction (ex: 0.9813)

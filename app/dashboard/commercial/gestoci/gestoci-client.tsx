@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Truck, Plus, Trash2, BarChart2, ClipboardList, AlertTriangle, ArrowDownCircle, ArrowUpCircle } from "lucide-react";
+import { Truck, Plus, Trash2, BarChart2, ClipboardList, AlertTriangle, ArrowDownCircle, ArrowUpCircle, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { createWithdrawal, recordStockReading } from "./actions";
 import { useRouter } from "next/navigation";
@@ -103,6 +103,8 @@ export function GESTOCIStockClient({
 }) {
   const router = useRouter();
   const isDC = role === "DIRECTION_COMMERCIALE" || role === "ADMIN";
+  const isAdmin = role === "ADMIN";
+  const [importing, setImporting] = useState(false);
 
   const [showNewBL, setShowNewBL] = useState(false);
   const [showReading, setShowReading] = useState(false);
@@ -146,6 +148,26 @@ export function GESTOCIStockClient({
 
   function addLine() { setLines([...lines, { fuelId: "", stationId: "", quantityReel: "", correctionFactor: "", quantityM15: "", unitPrice: "" }]); }
   function removeLine(idx: number) { if (lines.length > 1) setLines(lines.filter((_, i) => i !== idx)); }
+
+  async function runImport() {
+    if (!confirm("Importer les 418 BLs + 61 achats + 6 relevés historiques 2026 depuis le fichier Excel ? Cette action ne peut pas être annulée.")) return;
+    setImporting(true);
+    try {
+      const res = await fetch("/api/admin/import-gestoci", { method: "POST" });
+      const json = await res.json();
+      if (json.success) {
+        toast.success(`Import réussi : ${json.stats.purchases} achats, ${json.stats.bls} BLs (${json.stats.blItems} lignes), ${json.stats.readings} relevés.`);
+        if (json.stats.errors?.length > 0) toast.warning(`${json.stats.errors.length} erreurs : ${json.stats.errors.slice(0,3).join(", ")}`);
+        router.refresh();
+      } else {
+        toast.error(json.error || "Erreur lors de l'import.");
+      }
+    } catch {
+      toast.error("Erreur réseau lors de l'import.");
+    } finally {
+      setImporting(false);
+    }
+  }
 
   async function submitBL() {
     const validLines = lines.filter((l) => l.fuelId && l.stationId && Number(l.quantityM15) > 0);
@@ -251,16 +273,23 @@ export function GESTOCIStockClient({
           <h1 className="text-2xl font-bold text-gray-900">Suivi stock GESTOCI — IVORY ENERGIES CI 2026</h1>
           <p className="text-gray-500 mt-1 text-sm">Contrôle des stocks à 15°C (M15)</p>
         </div>
-        {isDC && (
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setShowReading(true)}>
-              <ClipboardList className="w-4 h-4 mr-2" /> Relevé GESTOCI
+        <div className="flex gap-2 flex-wrap">
+          {isAdmin && (
+            <Button variant="outline" className="border-amber-300 text-amber-700 hover:bg-amber-50" disabled={importing} onClick={runImport}>
+              <Upload className="w-4 h-4 mr-2" /> {importing ? "Import en cours…" : "Importer Excel 2026"}
             </Button>
-            <Button className="bg-[#0369A1] hover:bg-blue-700" onClick={() => setShowNewBL(true)}>
-              <Truck className="w-4 h-4 mr-2" /> Saisir BL IVORY
-            </Button>
-          </div>
-        )}
+          )}
+          {isDC && (
+            <>
+              <Button variant="outline" onClick={() => setShowReading(true)}>
+                <ClipboardList className="w-4 h-4 mr-2" /> Relevé GESTOCI
+              </Button>
+              <Button className="bg-[#0369A1] hover:bg-blue-700" onClick={() => setShowNewBL(true)}>
+                <Truck className="w-4 h-4 mr-2" /> Saisir BL IVORY
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Stock cards */}
