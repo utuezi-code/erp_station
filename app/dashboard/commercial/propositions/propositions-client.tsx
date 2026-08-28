@@ -48,7 +48,7 @@ interface Proposal {
 interface Allocation {
   id: string;
   allocatedAmount: number;
-  budgetRequest: { items: { fuel: { name: string; code: string } }[] };
+  budgetRequest: { number: string; estimatedAmount: number | null };
 }
 
 export function PropositionsClient({
@@ -214,7 +214,7 @@ export function PropositionsClient({
                 <option value="">Sélectionner un budget disponible</option>
                 {allocations.map((a) => (
                   <option key={a.id} value={a.id}>
-                    {a.budgetRequest.items.map((i) => i.fuel.code).join(", ")} — {fmt(a.allocatedAmount)} FCFA disponibles
+                    {a.budgetRequest.number} — {fmt(a.allocatedAmount)} FCFA disponibles
                   </option>
                 ))}
               </select>

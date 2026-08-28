@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Send } from "lucide-react";
+import { Plus, Send } from "lucide-react";
 import { toast } from "sonner";
 import { createBudgetRequest, communicateBudget } from "./actions";
 import { useRouter } from "next/navigation";
@@ -21,32 +21,22 @@ const STATUS: Record<string, { label: string; color: string }> = {
   ACCORDE: { label: "Budget communiqué", color: "bg-green-100 text-green-700" },
 };
 
-interface BudgetItem {
-  id: string;
-  estimatedQty: number;
-  estimatedAmount: number;
-  fuel: { name: string; code: string };
-}
-
 interface BudgetRequest {
   id: string;
   number: string;
   status: string;
+  estimatedAmount: number | null;
   justification: string | null;
-  rejectionReason: string | null;
   createdAt: string;
   user: { name: string };
-  items: BudgetItem[];
   allocation: { allocatedAmount: number; note: string | null; user: { name: string } } | null;
 }
 
 export function BudgetClient({
   requests,
-  fuels,
   role,
 }: {
   requests: BudgetRequest[];
-  fuels: { id: string; name: string; code: string }[];
   role: string;
 }) {
   const router = useRouter();
@@ -58,34 +48,25 @@ export function BudgetClient({
   const [selected, setSelected] = useState<BudgetRequest | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // New request form — multi-lignes produits
+  // Nouveau formulaire demande (simple)
+  const [estimatedAmount, setEstimatedAmount] = useState("");
   const [justification, setJustification] = useState("");
-  const [lines, setLines] = useState<{ fuelId: string; qty: string; amount: string }[]>([
-    { fuelId: "", qty: "", amount: "" },
-  ]);
 
   // DF — communiquer le budget disponible
   const [availableAmount, setAvailableAmount] = useState("");
   const [dfNote, setDfNote] = useState("");
 
-  function addLine() { setLines([...lines, { fuelId: "", qty: "", amount: "" }]); }
-  function removeLine(idx: number) { setLines(lines.filter((_, i) => i !== idx)); }
-
-  const totalDemande = lines.reduce((s, l) => s + Number(l.amount || 0), 0);
-
   function resetNew() {
     setShowNew(false);
+    setEstimatedAmount("");
     setJustification("");
-    setLines([{ fuelId: "", qty: "", amount: "" }]);
   }
 
   async function submitNew() {
-    const valid = lines.filter((l) => l.fuelId && Number(l.qty) > 0 && Number(l.amount) > 0);
-    if (valid.length === 0) { toast.error("Au moins un produit avec quantité et montant requis."); return; }
     setLoading(true);
     const r = await createBudgetRequest({
+      estimatedAmount: estimatedAmount ? Number(estimatedAmount) : undefined,
       justification: justification || undefined,
-      items: valid.map((l) => ({ fuelId: l.fuelId, estimatedQty: Number(l.qty), estimatedAmount: Number(l.amount) })),
     });
     setLoading(false);
     if (r.success) {
@@ -93,7 +74,7 @@ export function BudgetClient({
       resetNew();
       router.refresh();
     } else {
-      toast.error(r.error || "Erreur.");
+      toast.error("Erreur.");
     }
   }
 
@@ -132,131 +113,78 @@ export function BudgetClient({
             <TableHeader>
               <TableRow>
                 <TableHead>Numéro</TableHead>
-                <TableHead>Produits demandés</TableHead>
-                <TableHead className="text-right">Total estimé</TableHead>
-                <TableHead className="text-right">Budget accordé</TableHead>
+                <TableHead>Demandeur</TableHead>
+                <TableHead className="text-right">Montant estimé</TableHead>
+                <TableHead className="text-right">Budget communiqué</TableHead>
                 <TableHead>Statut</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {requests.map((r) => {
-                const total = r.items.reduce((s, i) => s + Number(i.estimatedAmount), 0);
-                return (
-                  <TableRow key={r.id}>
-                    <TableCell className="font-mono text-sm">{r.number}</TableCell>
-                    <TableCell className="text-sm text-gray-600">
-                      {r.items.map((i) => `${i.fuel.code} (${fmt(i.estimatedQty)} M15)`).join(" · ")}
-                    </TableCell>
-                    <TableCell className="text-right">{fmt(total)} FCFA</TableCell>
-                    <TableCell className="text-right">
-                      {r.allocation
-                        ? <span className="font-semibold text-green-700">{fmt(r.allocation.allocatedAmount)} FCFA</span>
-                        : "—"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={STATUS[r.status]?.color ?? "bg-gray-100 text-gray-600"}>
-                        {STATUS[r.status]?.label ?? r.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-gray-400">{new Date(r.createdAt).toLocaleDateString("fr-CI")}</TableCell>
-                    <TableCell>
-                      {(isDF || isAdmin) && r.status === "EN_ATTENTE" ? (
-                        <Button size="sm" className="bg-orange-500 hover:bg-orange-600 text-white"
-                          onClick={() => { setSelected(r); setAvailableAmount(""); setDfNote(""); }}>
-                          Communiquer
-                        </Button>
-                      ) : (
-                        <Button variant="ghost" size="sm" onClick={() => setSelected(r)}>Voir</Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+              {requests.map((r) => (
+                <TableRow key={r.id}>
+                  <TableCell className="font-mono text-sm">{r.number}</TableCell>
+                  <TableCell className="text-sm">{r.user.name}</TableCell>
+                  <TableCell className="text-right text-sm text-gray-500">
+                    {r.estimatedAmount ? `${fmt(r.estimatedAmount)} FCFA` : "—"}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {r.allocation
+                      ? <span className="font-semibold text-green-700">{fmt(r.allocation.allocatedAmount)} FCFA</span>
+                      : "—"}
+                  </TableCell>
+                  <TableCell>
+                    <Badge className={STATUS[r.status]?.color ?? "bg-gray-100 text-gray-600"}>
+                      {STATUS[r.status]?.label ?? r.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-sm text-gray-400">{new Date(r.createdAt).toLocaleDateString("fr-CI")}</TableCell>
+                  <TableCell>
+                    {(isDF || isAdmin) && r.status === "EN_ATTENTE" ? (
+                      <Button size="sm" className="bg-orange-500 hover:bg-orange-600 text-white"
+                        onClick={() => { setSelected(r); setAvailableAmount(""); setDfNote(""); }}>
+                        Communiquer
+                      </Button>
+                    ) : (
+                      <Button variant="ghost" size="sm" onClick={() => setSelected(r)}>Voir</Button>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
               {requests.length === 0 && (
-                <TableRow><TableCell colSpan={7} className="text-center text-gray-500 py-8">Aucune demande de budget.</TableCell></TableRow>
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center text-gray-500 py-8">Aucune demande de budget.</TableCell>
+                </TableRow>
               )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
 
-      {/* Modal nouvelle demande (DC) */}
+      {/* Modal nouvelle demande (DC) — simple */}
       <Dialog open={showNew} onOpenChange={(v) => { if (!v) resetNew(); }}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader><DialogTitle>Nouvelle demande de budget SIR</DialogTitle></DialogHeader>
-          <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
-
-            {/* Lignes produits */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-sm font-semibold text-gray-700">Produits demandés</Label>
-                <Button variant="outline" size="sm" onClick={addLine}>
-                  <Plus className="w-3 h-3 mr-1" /> Ajouter un produit
-                </Button>
-              </div>
-
-              {lines.map((l, idx) => (
-                <div key={idx} className="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-gray-500">Produit {idx + 1}</span>
-                    {lines.length > 1 && (
-                      <button onClick={() => removeLine(idx)} className="text-red-400 hover:text-red-600 transition-colors">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-gray-600">Carburant *</Label>
-                    <select
-                      value={l.fuelId}
-                      onChange={(e) => { const n = [...lines]; n[idx] = { ...n[idx], fuelId: e.target.value }; setLines(n); }}
-                      className="w-full h-9 rounded-md border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Sélectionner un carburant</option>
-                      {fuels.map((f) => (
-                        <option key={f.id} value={f.id}>{f.name} ({f.code})</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <Label className="text-xs text-gray-600">Quantité estimée (M15) *</Label>
-                      <Input
-                        type="number"
-                        placeholder="ex : 100 000"
-                        value={l.qty}
-                        onChange={(e) => { const n = [...lines]; n[idx] = { ...n[idx], qty: e.target.value }; setLines(n); }}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs text-gray-600">Montant estimé (FCFA) *</Label>
-                      <Input
-                        type="number"
-                        placeholder="ex : 73 000 000"
-                        value={l.amount}
-                        onChange={(e) => { const n = [...lines]; n[idx] = { ...n[idx], amount: e.target.value }; setLines(n); }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-
-              {totalDemande > 0 && (
-                <div className="flex justify-end">
-                  <div className="bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm">
-                    <span className="text-gray-500">Total demandé : </span>
-                    <span className="font-bold text-gray-900">{fmt(totalDemande)} FCFA</span>
-                  </div>
-                </div>
-              )}
-            </div>
-
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Nouvelle demande de budget</DialogTitle></DialogHeader>
+          <div className="space-y-4">
             <div className="space-y-1">
-              <Label>Justification</Label>
-              <Textarea rows={3} value={justification} onChange={(e) => setJustification(e.target.value)}
-                placeholder="Motif de la demande, contexte marché, urgence..." />
+              <Label>Montant estimé (FCFA)</Label>
+              <Input
+                type="number"
+                value={estimatedAmount}
+                onChange={(e) => setEstimatedAmount(e.target.value)}
+                placeholder="ex : 100 000 000 (optionnel)"
+              />
+              <p className="text-xs text-gray-400">Estimation indicative — la DF communiquera le montant disponible.</p>
+            </div>
+            <div className="space-y-1">
+              <Label>Justification / contexte</Label>
+              <Textarea
+                rows={3}
+                value={justification}
+                onChange={(e) => setJustification(e.target.value)}
+                placeholder="Motif de la demande, urgence, période concernée..."
+              />
             </div>
           </div>
           <DialogFooter className="gap-2">
@@ -270,7 +198,7 @@ export function BudgetClient({
 
       {/* Modal détail / réponse DF */}
       <Dialog open={!!selected} onOpenChange={(v) => { if (!v) { setSelected(null); setAvailableAmount(""); setDfNote(""); } }}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-md">
           {selected && (
             <>
               <DialogHeader>
@@ -289,34 +217,12 @@ export function BudgetClient({
                     <p className="text-xs text-gray-400 mb-0.5">Date</p>
                     <p className="font-medium">{new Date(selected.createdAt).toLocaleDateString("fr-CI")}</p>
                   </div>
-                </div>
-
-                {/* Détail des produits */}
-                <div className="border rounded-lg overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Produit</TableHead>
-                        <TableHead className="text-right">Qté M15</TableHead>
-                        <TableHead className="text-right">Montant estimé</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {selected.items.map((i) => (
-                        <TableRow key={i.id}>
-                          <TableCell className="font-medium">{i.fuel.name} ({i.fuel.code})</TableCell>
-                          <TableCell className="text-right">{fmt(i.estimatedQty)}</TableCell>
-                          <TableCell className="text-right">{fmt(i.estimatedAmount)} FCFA</TableCell>
-                        </TableRow>
-                      ))}
-                      <TableRow>
-                        <TableCell colSpan={2} className="text-right font-bold">Total</TableCell>
-                        <TableCell className="text-right font-bold">
-                          {fmt(selected.items.reduce((s, i) => s + Number(i.estimatedAmount), 0))} FCFA
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
+                  {selected.estimatedAmount && (
+                    <div className="bg-gray-50 rounded-lg px-3 py-2 col-span-2">
+                      <p className="text-xs text-gray-400 mb-0.5">Montant estimé par la DC</p>
+                      <p className="font-semibold">{fmt(selected.estimatedAmount)} FCFA</p>
+                    </div>
+                  )}
                 </div>
 
                 {selected.justification && (
@@ -328,7 +234,7 @@ export function BudgetClient({
 
                 {selected.allocation && (
                   <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-sm">
-                    <p className="text-xs font-semibold text-green-600 mb-1">Budget disponible communiqué par {selected.allocation.user.name}</p>
+                    <p className="text-xs font-semibold text-green-600 mb-1">Budget communiqué par {selected.allocation.user.name}</p>
                     <p className="font-bold text-green-700 text-base">{fmt(selected.allocation.allocatedAmount)} FCFA</p>
                     {selected.allocation.note && <p className="text-green-700 mt-1">{selected.allocation.note}</p>}
                   </div>
@@ -338,7 +244,12 @@ export function BudgetClient({
                   <div className="border-t pt-4 space-y-3">
                     <div className="space-y-1">
                       <Label>Montant disponible (FCFA) *</Label>
-                      <Input type="number" value={availableAmount} onChange={(e) => setAvailableAmount(e.target.value)} placeholder="ex : 95 000 000" />
+                      <Input
+                        type="number"
+                        value={availableAmount}
+                        onChange={(e) => setAvailableAmount(e.target.value)}
+                        placeholder="ex : 95 000 000"
+                      />
                     </div>
                     <div className="space-y-1">
                       <Label>Note (optionnel)</Label>
@@ -347,7 +258,7 @@ export function BudgetClient({
                   </div>
                 )}
               </div>
-              <DialogFooter className="gap-2 flex-wrap">
+              <DialogFooter className="gap-2">
                 <Button variant="outline" onClick={() => { setSelected(null); setAvailableAmount(""); setDfNote(""); }}>Fermer</Button>
                 {(isDF || isAdmin) && selected.status === "EN_ATTENTE" && (
                   <Button className="bg-orange-500 hover:bg-orange-600" disabled={loading} onClick={doCommunicate}>

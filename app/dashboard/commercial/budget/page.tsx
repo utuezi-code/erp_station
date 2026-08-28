@@ -8,18 +8,14 @@ export default async function BudgetPage() {
   const user = session.user as any;
   const role = user.role as string;
 
-  const [requests, fuels] = await Promise.all([
-    db.budgetRequest.findMany({
-      include: {
-        user: { select: { name: true } },
-        items: { include: { fuel: { select: { name: true, code: true } } } },
-        allocation: { include: { user: { select: { name: true } } } },
-      },
-      orderBy: { createdAt: "desc" },
-      take: 50,
-    }),
-    db.fuel.findMany({ where: { active: true }, select: { id: true, name: true, code: true } }),
-  ]);
+  const requests = await db.budgetRequest.findMany({
+    include: {
+      user: { select: { name: true } },
+      allocation: { include: { user: { select: { name: true } } } },
+    },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+  });
 
-  return <BudgetClient requests={serialize(requests)} fuels={fuels} role={role} />;
+  return <BudgetClient requests={serialize(requests)} role={role} />;
 }
