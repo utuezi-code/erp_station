@@ -9,17 +9,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, CheckCircle, XCircle } from "lucide-react";
+import { Plus, Trash2, Send } from "lucide-react";
 import { toast } from "sonner";
-import { createBudgetRequest, respondBudgetRequest } from "./actions";
+import { createBudgetRequest, communicateBudget } from "./actions";
 import { useRouter } from "next/navigation";
 
 function fmt(n: any) { return Number(n || 0).toLocaleString("fr-CI", { maximumFractionDigits: 0 }); }
 
 const STATUS: Record<string, { label: string; color: string }> = {
   EN_ATTENTE: { label: "En attente DF", color: "bg-blue-100 text-blue-700" },
-  ACCORDE: { label: "Budget accordé", color: "bg-green-100 text-green-700" },
-  REJETE: { label: "Rejeté", color: "bg-red-100 text-red-700" },
+  ACCORDE: { label: "Budget communiqué", color: "bg-green-100 text-green-700" },
 };
 
 interface BudgetItem {
@@ -65,8 +64,8 @@ export function BudgetClient({
     { fuelId: "", qty: "", amount: "" },
   ]);
 
-  // DF response
-  const [allocAmount, setAllocAmount] = useState("");
+  // DF — communiquer le budget disponible
+  const [availableAmount, setAvailableAmount] = useState("");
   const [dfNote, setDfNote] = useState("");
 
   function addLine() { setLines([...lines, { fuelId: "", qty: "", amount: "" }]); }
@@ -98,15 +97,15 @@ export function BudgetClient({
     }
   }
 
-  async function respond(approved: boolean) {
+  async function doCommunicate() {
     if (!selected) return;
-    if (approved && (!allocAmount || Number(allocAmount) <= 0)) { toast.error("Entrez le montant accordé."); return; }
+    if (!availableAmount || Number(availableAmount) <= 0) { toast.error("Entrez le montant disponible."); return; }
     setLoading(true);
-    const r = await respondBudgetRequest(selected.id, approved, approved ? Number(allocAmount) : undefined, dfNote || undefined);
+    const r = await communicateBudget(selected.id, Number(availableAmount), dfNote || undefined);
     setLoading(false);
     if (r.success) {
-      toast.success(approved ? "Budget accordé." : "Demande rejetée.");
-      setSelected(null); setAllocAmount(""); setDfNote("");
+      toast.success("Budget disponible communiqué à la Direction Commerciale.");
+      setSelected(null); setAvailableAmount(""); setDfNote("");
       router.refresh();
     } else {
       toast.error(r.error || "Erreur.");
@@ -165,8 +164,8 @@ export function BudgetClient({
                     <TableCell>
                       {(isDF || isAdmin) && r.status === "EN_ATTENTE" ? (
                         <Button size="sm" className="bg-orange-500 hover:bg-orange-600 text-white"
-                          onClick={() => { setSelected(r); setAllocAmount(String(r.items.reduce((s, i) => s + Number(i.estimatedAmount), 0))); setDfNote(""); }}>
-                          Répondre
+                          onClick={() => { setSelected(r); setAvailableAmount(""); setDfNote(""); }}>
+                          Communiquer
                         </Button>
                       ) : (
                         <Button variant="ghost" size="sm" onClick={() => setSelected(r)}>Voir</Button>
@@ -270,7 +269,7 @@ export function BudgetClient({
       </Dialog>
 
       {/* Modal détail / réponse DF */}
-      <Dialog open={!!selected} onOpenChange={(v) => { if (!v) { setSelected(null); setAllocAmount(""); setDfNote(""); } }}>
+      <Dialog open={!!selected} onOpenChange={(v) => { if (!v) { setSelected(null); setAvailableAmount(""); setDfNote(""); } }}>
         <DialogContent className="max-w-lg">
           {selected && (
             <>
@@ -329,24 +328,17 @@ export function BudgetClient({
 
                 {selected.allocation && (
                   <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-sm">
-                    <p className="text-xs font-semibold text-green-600 mb-1">Budget accordé par {selected.allocation.user.name}</p>
+                    <p className="text-xs font-semibold text-green-600 mb-1">Budget disponible communiqué par {selected.allocation.user.name}</p>
                     <p className="font-bold text-green-700 text-base">{fmt(selected.allocation.allocatedAmount)} FCFA</p>
                     {selected.allocation.note && <p className="text-green-700 mt-1">{selected.allocation.note}</p>}
-                  </div>
-                )}
-
-                {selected.status === "REJETE" && selected.rejectionReason && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-700">
-                    <p className="text-xs font-semibold text-red-500 mb-1">Motif de rejet</p>
-                    {selected.rejectionReason}
                   </div>
                 )}
 
                 {(isDF || isAdmin) && selected.status === "EN_ATTENTE" && (
                   <div className="border-t pt-4 space-y-3">
                     <div className="space-y-1">
-                      <Label>Montant accordé (FCFA) *</Label>
-                      <Input type="number" value={allocAmount} onChange={(e) => setAllocAmount(e.target.value)} />
+                      <Label>Montant disponible (FCFA) *</Label>
+                      <Input type="number" value={availableAmount} onChange={(e) => setAvailableAmount(e.target.value)} placeholder="ex : 95 000 000" />
                     </div>
                     <div className="space-y-1">
                       <Label>Note (optionnel)</Label>
@@ -356,16 +348,11 @@ export function BudgetClient({
                 )}
               </div>
               <DialogFooter className="gap-2 flex-wrap">
-                <Button variant="outline" onClick={() => { setSelected(null); setAllocAmount(""); setDfNote(""); }}>Fermer</Button>
+                <Button variant="outline" onClick={() => { setSelected(null); setAvailableAmount(""); setDfNote(""); }}>Fermer</Button>
                 {(isDF || isAdmin) && selected.status === "EN_ATTENTE" && (
-                  <>
-                    <Button variant="outline" className="border-red-300 text-red-600 hover:bg-red-50" disabled={loading} onClick={() => respond(false)}>
-                      <XCircle className="w-4 h-4 mr-2" /> Rejeter
-                    </Button>
-                    <Button className="bg-green-600 hover:bg-green-700" disabled={loading} onClick={() => respond(true)}>
-                      <CheckCircle className="w-4 h-4 mr-2" /> Accorder le budget
-                    </Button>
-                  </>
+                  <Button className="bg-orange-500 hover:bg-orange-600" disabled={loading} onClick={doCommunicate}>
+                    <Send className="w-4 h-4 mr-2" /> Communiquer le budget disponible
+                  </Button>
                 )}
               </DialogFooter>
             </>

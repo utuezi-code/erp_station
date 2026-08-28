@@ -35,10 +35,9 @@ export async function createBudgetRequest(data: {
   return { success: true };
 }
 
-export async function respondBudgetRequest(
+export async function communicateBudget(
   id: string,
-  approved: boolean,
-  allocatedAmount?: number,
+  availableAmount: number,
   note?: string
 ) {
   const session = await requireRole(["DIRECTION_FINANCIERE", "ADMIN"]);
@@ -46,17 +45,7 @@ export async function respondBudgetRequest(
 
   const br = await db.budgetRequest.findUnique({ where: { id } });
   if (!br || br.status !== "EN_ATTENTE") return { success: false, error: "Demande introuvable ou déjà traitée." };
-
-  if (!approved) {
-    await db.budgetRequest.update({
-      where: { id },
-      data: { status: "REJETE", rejectionReason: note || null },
-    });
-    revalidatePath("/dashboard/commercial/budget");
-    return { success: true };
-  }
-
-  if (!allocatedAmount || allocatedAmount <= 0) return { success: false, error: "Montant accordé requis." };
+  if (!availableAmount || availableAmount <= 0) return { success: false, error: "Montant disponible requis." };
 
   await db.$transaction([
     db.budgetRequest.update({ where: { id }, data: { status: "ACCORDE" } }),
@@ -64,7 +53,7 @@ export async function respondBudgetRequest(
       data: {
         budgetRequestId: id,
         userId: user.id,
-        allocatedAmount,
+        allocatedAmount: availableAmount,
         note: note || null,
       },
     }),
