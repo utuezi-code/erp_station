@@ -274,6 +274,10 @@ export function GESTOCIStockClient({
           <p className="text-gray-500 mt-1 text-sm">Contrôle des stocks à 15°C (M15)</p>
         </div>
         <div className="flex gap-2 flex-wrap">
+          <a href="/dashboard/commercial/gestoci/suivi" className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="3"/></svg>
+            Tableau de suivi
+          </a>
           {isAdmin && (
             <Button variant="outline" className="border-amber-300 text-amber-700 hover:bg-amber-50" disabled={importing} onClick={runImport}>
               <Upload className="w-4 h-4 mr-2" /> {importing ? "Import en cours…" : "Importer Excel 2026"}
