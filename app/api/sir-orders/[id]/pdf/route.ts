@@ -70,7 +70,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const pageW = doc.page.width - margin * 2;
 
     // ── Letterhead ────────────────────────────────────────────────────────────
-    let y = addLetterhead(doc) + 18;
+    let y = addLetterhead(doc) + 50;
 
     // ── Titre BC ──────────────────────────────────────────────────────────────
     doc.rect(margin, y, pageW, 26).fill("#0369A1");
