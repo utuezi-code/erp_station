@@ -583,7 +583,7 @@ export function GESTOCIStockClient({
 
       {/* ─── Modal : Saisir BL IVORY ─────────────────────────────────────────── */}
       <Dialog open={showNewBL} onOpenChange={(v) => { if (!v) { setShowNewBL(false); resetBL(); } }}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Saisir un BL IVORY — Retrait GESTOCI</DialogTitle>
           </DialogHeader>
@@ -638,7 +638,7 @@ export function GESTOCIStockClient({
                 Saisir la quantité ambiante (citerne) et le facteur de correction. Le volume M15 est calculé automatiquement.
               </div>
               {lines.map((l, idx) => (
-                <div key={idx} className="grid grid-cols-7 gap-2 items-end border rounded-lg p-3 mb-2">
+                <div key={idx} className="grid grid-cols-[1.4fr_1.6fr_1.2fr_1fr_1fr_1fr_auto] gap-3 items-end border rounded-lg p-3 mb-2">
                   <div className="space-y-1">
                     <Label className="text-xs">Produit *</Label>
                     <Select value={l.fuelId} onValueChange={(v) => updateLine(idx, "fuelId", v ?? "")}>
