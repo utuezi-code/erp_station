@@ -194,3 +194,35 @@ export async function recordDeliveryOrder(data: {
   revalidatePath("/dashboard/commercial/gestoci");
   return { success: true };
 }
+
+export async function uploadCorrectionFile(data: {
+  sirOrderId: string;
+  pdfUrl: string;
+  facteurSuper?: number;
+  facteurGasoil?: number;
+  note?: string;
+}) {
+  const session = await requireRole(["DIRECTION_COMMERCIALE", "ADMIN"]);
+  const user = session.user as any;
+
+  const file = await db.sIRCorrectionFile.create({
+    data: {
+      sirOrderId: data.sirOrderId,
+      pdfUrl: data.pdfUrl,
+      facteurSuper: data.facteurSuper ?? null,
+      facteurGasoil: data.facteurGasoil ?? null,
+      note: data.note ?? null,
+    },
+  });
+
+  await writeAuditLog({
+    userId: user.id,
+    entity: "SIRCorrectionFile",
+    entityId: file.id,
+    action: "CREATE",
+    meta: { sirOrderId: data.sirOrderId },
+  });
+
+  revalidatePath(`/dashboard/commercial/sir-orders/${data.sirOrderId}`);
+  return { success: true, fileId: file.id };
+}

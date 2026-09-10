@@ -826,10 +826,11 @@ model SIROrder {
   createdAt  DateTime         @default(now())
   updatedAt  DateTime         @updatedAt
 
-  items          SIROrderItem[]
-  offers         SIROffer[]
-  payments       SIRPayment[]
-  deliveryOrders SIRDeliveryOrder[]
+  items              SIROrderItem[]
+  offers             SIROffer[]
+  payments           SIRPayment[]
+  deliveryOrders     SIRDeliveryOrder[]
+  correctionFiles    SIRCorrectionFile[]
 
   @@index([status])
 }
@@ -845,6 +846,20 @@ model SIROrderItem {
   unitPrice   Decimal  @db.Decimal(10, 2)
   totalAmount Decimal  @db.Decimal(16, 2)
   note        String?
+}
+
+// 6b. Fichier facteurs de correction transmis par SIR avant livraison
+model SIRCorrectionFile {
+  id              String    @id @default(cuid())
+  sirOrderId      String
+  sirOrder        SIROrder  @relation(fields: [sirOrderId], references: [id])
+  pdfUrl          String    // URL du fichier uploadé
+  facteurSuper    Decimal?  @db.Decimal(8, 6) // ex: 0.998200
+  facteurGasoil   Decimal?  @db.Decimal(8, 6) // ex: 0.995500
+  note            String?
+  uploadedAt      DateTime  @default(now())
+
+  @@index([sirOrderId])
 }
 
 // 6. Offre SIR reçue par email (PDF uploadé)
