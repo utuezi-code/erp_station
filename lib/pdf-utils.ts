@@ -21,6 +21,15 @@ function logoBuffer(): Buffer | null {
   }
 }
 
+function symboleBuffer(): Buffer | null {
+  try {
+    const p = path.join(process.cwd(), "public", "symbole-1.png");
+    return fs.readFileSync(p);
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Draw the Ivory Energies CI letterhead (header + footer) on the current page.
  * Returns the Y coordinate where document content should start.
@@ -45,19 +54,20 @@ export function addLetterhead(doc: InstanceType<typeof PDFDocument>): number {
 
   // ── Footer ────────────────────────────────────────────────────────────────
   const footerTop = pageH - 78;
-  const logoSmall = 36;
+  const symbole = symboleBuffer();
+  const symSize = 36;
 
-  if (logo) {
-    doc.image(logo, margin, footerTop, { width: logoSmall, height: logoSmall });
+  if (symbole) {
+    doc.image(symbole, margin, footerTop, { width: symSize, height: symSize });
   }
 
-  // Orange separator line
-  const lineX = margin + (logo ? logoSmall + 10 : 0);
+  // Blue separator line
+  const lineX = margin + (symbole ? symSize + 10 : 0);
   doc
     .moveTo(lineX, footerTop + 2)
     .lineTo(pageW - margin, footerTop + 2)
     .lineWidth(1.5)
-    .strokeColor("#c0760a")
+    .strokeColor("#0369A1")
     .stroke();
 
   // Legal info

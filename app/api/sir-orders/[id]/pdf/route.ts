@@ -166,11 +166,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     // ── Zone signature ────────────────────────────────────────────────────────
-    const sigY = Math.max(y + 20, doc.page.height - 160);
+    const sigY = y + 14;
     doc.font("Helvetica-Bold").fontSize(9).fillColor("#1a1a1a")
       .text("Signature et cachet", margin, sigY)
       .text("Direction Générale", margin, sigY + 12);
-    doc.rect(margin, sigY + 26, 160, 50).strokeColor("#1a1a1a").lineWidth(0.5).stroke();
+    doc.rect(margin, sigY + 26, 160, 45).strokeColor("#1a1a1a").lineWidth(0.5).stroke();
 
     doc.end();
   });
