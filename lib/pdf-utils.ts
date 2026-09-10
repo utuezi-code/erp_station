@@ -154,7 +154,7 @@ export async function generatePDF(
       const bg = rowIdx % 2 === 0 ? "#f8fafc" : "#ffffff";
       doc.fillColor(bg).rect(margin, y, pageW, rowH).fill();
       row.forEach((cell, i) => {
-        const text = typeof cell === "number" ? cell.toLocaleString("fr-CI") : String(cell);
+        const text = typeof cell === "number" ? Math.round(cell).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") : String(cell);
         doc
           .font("Helvetica")
           .fontSize(8)

@@ -5,7 +5,7 @@ import { addLetterhead } from "@/lib/pdf-utils";
 import PDFDocument from "pdfkit";
 
 function fmt(n: any) {
-  return Number(n || 0).toLocaleString("fr-FR", { maximumFractionDigits: 0 });
+  return Math.round(Number(n || 0)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 }
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -137,7 +137,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const sigY = Math.max(y + 20, doc.page.height - 160);
     doc.font("Helvetica-Bold").fontSize(9).fillColor("#1a1a1a")
       .text("Signature et cachet", margin, sigY)
-      .text("Direction Commerciale", margin, sigY + 12);
+      .text("Direction Générale", margin, sigY + 12);
     doc.rect(margin, sigY + 26, 160, 50).strokeColor("#1a1a1a").lineWidth(0.5).stroke();
 
     doc.end();
