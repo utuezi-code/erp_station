@@ -34,7 +34,7 @@ export function addLetterhead(doc: InstanceType<typeof PDFDocument>): number {
   // ── Header ────────────────────────────────────────────────────────────────
   // Full logo contains the symbol + company name + tagline
   if (logo) {
-    doc.image(logo, margin, 18, { width: 160, height: 90 });
+    doc.image(logo, margin, 14, { width: 130 });
   } else {
     doc
       .font("Helvetica-Bold")
