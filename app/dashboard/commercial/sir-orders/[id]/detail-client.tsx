@@ -63,7 +63,13 @@ export function SIROrderDetailClient({ order, role }: { order: SIROrder; role: s
   const [offerBep, setOfferBep] = useState("");
   const [offerValidFrom, setOfferValidFrom] = useState("");
   const [offerValidTo, setOfferValidTo] = useState("");
+  const [offerQtySuper, setOfferQtySuper] = useState("");
+  const [offerQtyGasoil, setOfferQtyGasoil] = useState("");
+  const [offerPuSuper, setOfferPuSuper] = useState("");
+  const [offerPuGasoil, setOfferPuGasoil] = useState("");
   const [offerTotal, setOfferTotal] = useState("");
+  const [offerAmtSIR, setOfferAmtSIR] = useState("");
+  const [offerAmtCNQ, setOfferAmtCNQ] = useState("");
   const [offerPdfUrl, setOfferPdfUrl] = useState("");
   const [offerNote, setOfferNote] = useState("");
 
@@ -115,14 +121,22 @@ export function SIROrderDetailClient({ order, role }: { order: SIROrder; role: s
       pdfUrl: offerPdfUrl || undefined,
       validFrom: offerValidFrom || undefined,
       validTo: offerValidTo || undefined,
+      qtyM15Super: offerQtySuper ? Number(offerQtySuper) : undefined,
+      qtyM15Gasoil: offerQtyGasoil ? Number(offerQtyGasoil) : undefined,
+      unitPriceSuper: offerPuSuper ? Number(offerPuSuper) : undefined,
+      unitPriceGasoil: offerPuGasoil ? Number(offerPuGasoil) : undefined,
       totalAmount: offerTotal ? Number(offerTotal) : undefined,
+      amountSIR: offerAmtSIR ? Number(offerAmtSIR) : undefined,
+      amountCNQ: offerAmtCNQ ? Number(offerAmtCNQ) : undefined,
       note: offerNote || undefined,
     });
     setLoading(false);
     if (r.success) {
       toast.success("Offre SIR enregistrée.");
       setShowOffer(false);
-      setOfferNum(""); setOfferBep(""); setOfferPdfUrl(""); setOfferValidFrom(""); setOfferValidTo(""); setOfferTotal(""); setOfferNote("");
+      setOfferNum(""); setOfferBep(""); setOfferPdfUrl(""); setOfferValidFrom(""); setOfferValidTo("");
+      setOfferQtySuper(""); setOfferQtyGasoil(""); setOfferPuSuper(""); setOfferPuGasoil("");
+      setOfferTotal(""); setOfferAmtSIR(""); setOfferAmtCNQ(""); setOfferNote("");
       router.refresh();
     } else toast.error("Erreur.");
   }
@@ -367,9 +381,10 @@ export function SIROrderDetailClient({ order, role }: { order: SIROrder; role: s
 
       {/* Modal Offre SIR */}
       <Dialog open={showOffer} onOpenChange={(v) => { if (!v) setShowOffer(false); }}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-xl">
           <DialogHeader><DialogTitle>Enregistrer offre SIR</DialogTitle></DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
+            {/* Références */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label>N° Offre SIR</Label>
@@ -380,16 +395,54 @@ export function SIROrderDetailClient({ order, role }: { order: SIROrder; role: s
                 <Input value={offerBep} onChange={(e) => setOfferBep(e.target.value)} placeholder="ex: BEP-2026-001" />
               </div>
               <div className="space-y-1">
-                <Label>Montant total offre (FCFA)</Label>
-                <Input type="number" value={offerTotal} onChange={(e) => setOfferTotal(e.target.value)} />
-              </div>
-              <div className="space-y-1">
                 <Label>Valide du</Label>
                 <Input type="date" value={offerValidFrom} onChange={(e) => setOfferValidFrom(e.target.value)} />
               </div>
               <div className="space-y-1">
                 <Label>Valide au</Label>
                 <Input type="date" value={offerValidTo} onChange={(e) => setOfferValidTo(e.target.value)} />
+              </div>
+            </div>
+
+            {/* Quantités et prix par produit */}
+            <div>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Quantités & Prix (M15)</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label>Qté Super (L M15)</Label>
+                  <Input type="number" value={offerQtySuper} onChange={(e) => setOfferQtySuper(e.target.value)} placeholder="ex: 100000" />
+                </div>
+                <div className="space-y-1">
+                  <Label>P.U. Super (FCFA/L)</Label>
+                  <Input type="number" value={offerPuSuper} onChange={(e) => setOfferPuSuper(e.target.value)} placeholder="ex: 730.717" />
+                </div>
+                <div className="space-y-1">
+                  <Label>Qté Gasoil (L M15)</Label>
+                  <Input type="number" value={offerQtyGasoil} onChange={(e) => setOfferQtyGasoil(e.target.value)} placeholder="ex: 50000" />
+                </div>
+                <div className="space-y-1">
+                  <Label>P.U. Gasoil (FCFA/L)</Label>
+                  <Input type="number" value={offerPuGasoil} onChange={(e) => setOfferPuGasoil(e.target.value)} placeholder="ex: 610.728" />
+                </div>
+              </div>
+            </div>
+
+            {/* Montants */}
+            <div>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Montants (FCFA)</p>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label>Total brut</Label>
+                  <Input type="number" value={offerTotal} onChange={(e) => setOfferTotal(e.target.value)} placeholder="103608100" />
+                </div>
+                <div className="space-y-1">
+                  <Label>Part SIR</Label>
+                  <Input type="number" value={offerAmtSIR} onChange={(e) => setOfferAmtSIR(e.target.value)} placeholder="101316250" />
+                </div>
+                <div className="space-y-1">
+                  <Label>Part CNQ</Label>
+                  <Input type="number" value={offerAmtCNQ} onChange={(e) => setOfferAmtCNQ(e.target.value)} placeholder="2291850" />
+                </div>
               </div>
             </div>
             <div className="space-y-1">

@@ -67,7 +67,13 @@ export async function recordSIROffer(data: {
   pdfUrl?: string;
   validFrom?: string;
   validTo?: string;
+  qtyM15Super?: number;
+  qtyM15Gasoil?: number;
+  unitPriceSuper?: number;
+  unitPriceGasoil?: number;
   totalAmount?: number;
+  amountSIR?: number;
+  amountCNQ?: number;
   note?: string;
 }) {
   const session = await requireRole(["DIRECTION_COMMERCIALE", "ADMIN"]);
@@ -82,7 +88,13 @@ export async function recordSIROffer(data: {
         pdfUrl: data.pdfUrl || null,
         validFrom: data.validFrom ? new Date(data.validFrom) : null,
         validTo: data.validTo ? new Date(data.validTo) : null,
+        qtyM15Super: data.qtyM15Super || null,
+        qtyM15Gasoil: data.qtyM15Gasoil || null,
+        unitPriceSuper: data.unitPriceSuper || null,
+        unitPriceGasoil: data.unitPriceGasoil || null,
         totalAmount: data.totalAmount || null,
+        amountSIR: data.amountSIR || null,
+        amountCNQ: data.amountCNQ || null,
         note: data.note || null,
       },
     }),

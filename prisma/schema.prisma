@@ -849,17 +849,25 @@ model SIROrderItem {
 
 // 6. Offre SIR reçue par email (PDF uploadé)
 model SIROffer {
-  id          String    @id @default(cuid())
-  sirOrderId  String
-  sirOrder    SIROrder  @relation(fields: [sirOrderId], references: [id])
-  offerNumber String? // ex: 20017668
-  bepNumber   String? // N° BEP (ex: BEP-2026-001)
-  pdfUrl      String? // URL stockage PDF uploadé
-  validFrom   DateTime? @db.Date
-  validTo     DateTime? @db.Date
-  totalAmount Decimal?  @db.Decimal(16, 2)
-  receivedAt  DateTime  @default(now())
-  note        String?
+  id              String    @id @default(cuid())
+  sirOrderId      String
+  sirOrder        SIROrder  @relation(fields: [sirOrderId], references: [id])
+  offerNumber     String?   // ex: 20017668
+  bepNumber       String?   // N° BEP
+  pdfUrl          String?
+  validFrom       DateTime? @db.Date
+  validTo         DateTime? @db.Date
+  // Quantités et prix par produit (de l'offre SIR)
+  qtyM15Super     Decimal?  @db.Decimal(16, 3)
+  qtyM15Gasoil    Decimal?  @db.Decimal(16, 3)
+  unitPriceSuper  Decimal?  @db.Decimal(16, 3)
+  unitPriceGasoil Decimal?  @db.Decimal(16, 3)
+  // Ventilation du montant total
+  totalAmount     Decimal?  @db.Decimal(16, 2) // total brut
+  amountSIR       Decimal?  @db.Decimal(16, 2) // part SIR
+  amountCNQ       Decimal?  @db.Decimal(16, 2) // part CNQ
+  receivedAt      DateTime  @default(now())
+  note            String?
 }
 
 // 7. Paiement par chèque (SIR ou CNQ, un BC peut avoir plusieurs chèques)
