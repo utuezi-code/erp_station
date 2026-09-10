@@ -9,9 +9,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle, FileText, CreditCard, Truck, Send, Download, Upload, ExternalLink } from "lucide-react";
+import { CheckCircle, FileText, CreditCard, Truck, Send, Download, Upload, ExternalLink, FilePlus2 } from "lucide-react";
 import { toast } from "sonner";
-import { sendSIROrder, recordSIROffer, recordSIRPayment, recordDeliveryOrder } from "../actions";
+import { sendSIROrder, recordSIROffer, recordSIRPayment, recordDeliveryOrder, uploadCorrectionFile } from "../actions";
 import { useRouter } from "next/navigation";
 
 function fmt(n: any) { return Number(n || 0).toLocaleString("fr-CI", { maximumFractionDigits: 0 }); }
@@ -42,6 +42,7 @@ interface SIROrder {
     id: string; reference: string | null; depotName: string | null; deliveryDate: string | null; pdfUrl: string | null; note: string | null;
     gestociEntries: { id: string; quantityM15: number; fuel: { name: string; code: string } }[];
   }[];
+  correctionFiles: { id: string; pdfUrl: string; facteurSuper: number | null; facteurGasoil: number | null; note: string | null; uploadedAt: string }[];
 }
 
 export function SIROrderDetailClient({ order, role }: { order: SIROrder; role: string }) {
@@ -54,9 +55,16 @@ export function SIROrderDetailClient({ order, role }: { order: SIROrder; role: s
   const [showOffer, setShowOffer] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
   const [showDelivery, setShowDelivery] = useState(false);
+  const [showCorrection, setShowCorrection] = useState(false);
 
   // Upload state
   const [uploading, setUploading] = useState(false);
+
+  // Correction file form
+  const [corrPdfUrl, setCorrPdfUrl] = useState("");
+  const [corrFacteurSuper, setCorrFacteurSuper] = useState("");
+  const [corrFacteurGasoil, setCorrFacteurGasoil] = useState("");
+  const [corrNote, setCorrNote] = useState("");
 
   // Offer form
   const [offerNum, setOfferNum] = useState("");
@@ -176,6 +184,25 @@ export function SIROrderDetailClient({ order, role }: { order: SIROrder; role: s
     else toast.error("Erreur.");
   }
 
+  async function doCorrection() {
+    if (!corrPdfUrl) { toast.error("Veuillez uploader le fichier PDF de correction."); return; }
+    setLoading(true);
+    const r = await uploadCorrectionFile({
+      sirOrderId: order.id,
+      pdfUrl: corrPdfUrl,
+      facteurSuper: corrFacteurSuper ? Number(corrFacteurSuper) : undefined,
+      facteurGasoil: corrFacteurGasoil ? Number(corrFacteurGasoil) : undefined,
+      note: corrNote || undefined,
+    });
+    setLoading(false);
+    if (r.success) {
+      toast.success("Fichier de correction enregistré.");
+      setShowCorrection(false);
+      setCorrPdfUrl(""); setCorrFacteurSuper(""); setCorrFacteurGasoil(""); setCorrNote("");
+      router.refresh();
+    } else toast.error("Erreur.");
+  }
+
   return (
     <div>
       <div className="mb-6 flex items-start justify-between">
@@ -223,6 +250,11 @@ export function SIROrderDetailClient({ order, role }: { order: SIROrder; role: s
         {(isDC || isAdmin) && ["PAYE", "OFFRE_RECUE"].includes(order.status) && (
           <Button className="bg-green-600 hover:bg-green-700" onClick={() => setShowDelivery(true)}>
             <Truck className="w-4 h-4 mr-2" /> Enregistrer ordre de livraison
+          </Button>
+        )}
+        {(isDC || isAdmin) && ["OFFRE_RECUE", "PAYE", "LIVRE"].includes(order.status) && (
+          <Button variant="outline" className="border-orange-300 text-orange-700 hover:bg-orange-50" onClick={() => setShowCorrection(true)}>
+            <FilePlus2 className="w-4 h-4 mr-2" /> Fiche de correction SIR
           </Button>
         )}
       </div>
@@ -351,6 +383,29 @@ export function SIROrderDetailClient({ order, role }: { order: SIROrder; role: s
                         </div>
                       ))}
                     </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+          {/* Fiches de correction SIR */}
+          {order.correctionFiles.length > 0 && (
+            <Card>
+              <CardHeader><CardTitle className="text-sm flex items-center gap-2"><FilePlus2 className="w-4 h-4 text-orange-500" />Fiches de correction SIR</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
+                {order.correctionFiles.map((cf, idx) => (
+                  <div key={cf.id} className="bg-orange-50 border border-orange-100 rounded-lg px-3 py-2 text-sm">
+                    <div className="flex items-center justify-between">
+                      <p className="font-semibold text-orange-700">Fiche #{idx + 1} — {new Date(cf.uploadedAt).toLocaleDateString("fr-CI")}</p>
+                      <a href={cf.pdfUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-orange-600 hover:text-orange-800 font-medium">
+                        <FileText className="w-3.5 h-3.5" /> Voir PDF
+                      </a>
+                    </div>
+                    <div className="flex gap-4 mt-1 text-xs text-orange-700">
+                      {cf.facteurSuper != null && <span>Facteur Super : <strong>{cf.facteurSuper}</strong></span>}
+                      {cf.facteurGasoil != null && <span>Facteur Gasoil : <strong>{cf.facteurGasoil}</strong></span>}
+                    </div>
+                    {cf.note && <p className="text-gray-500 mt-1">{cf.note}</p>}
                   </div>
                 ))}
               </CardContent>
@@ -604,6 +659,61 @@ export function SIROrderDetailClient({ order, role }: { order: SIROrder; role: s
             <Button variant="outline" onClick={() => setShowDelivery(false)}>Annuler</Button>
             <Button className="bg-green-600 hover:bg-green-700" disabled={loading} onClick={doDelivery}>
               <Truck className="w-4 h-4 mr-2" /> Confirmer livraison GESTOCI
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Modal Fiche de correction SIR */}
+      <Dialog open={showCorrection} onOpenChange={(v) => { if (!v) setShowCorrection(false); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Fiche de correction SIR</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <Label>Fichier PDF *</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="file"
+                  accept=".pdf"
+                  disabled={uploading}
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    if (!f) return;
+                    setUploading(true);
+                    try {
+                      const url = await uploadFile(f, "sir-corrections");
+                      setCorrPdfUrl(url);
+                      toast.success("Fichier uploadé.");
+                    } catch { toast.error("Erreur upload."); }
+                    finally { setUploading(false); }
+                  }}
+                />
+                {corrPdfUrl && (
+                  <a href={corrPdfUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800">
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                )}
+              </div>
+              {uploading && <p className="text-xs text-gray-400">Upload en cours...</p>}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label>Facteur Super</Label>
+                <Input type="number" step="0.000001" value={corrFacteurSuper} onChange={(e) => setCorrFacteurSuper(e.target.value)} placeholder="ex: 0.994820" />
+              </div>
+              <div className="space-y-1">
+                <Label>Facteur Gasoil</Label>
+                <Input type="number" step="0.000001" value={corrFacteurGasoil} onChange={(e) => setCorrFacteurGasoil(e.target.value)} placeholder="ex: 0.997340" />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label>Note</Label>
+              <Textarea rows={2} value={corrNote} onChange={(e) => setCorrNote(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowCorrection(false)}>Annuler</Button>
+            <Button className="bg-orange-600 hover:bg-orange-700" disabled={loading || uploading || !corrPdfUrl} onClick={doCorrection}>
+              <FilePlus2 className="w-4 h-4 mr-2" /> Enregistrer
             </Button>
           </DialogFooter>
         </DialogContent>
