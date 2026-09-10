@@ -166,7 +166,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     // ── Zone signature (gauche) ───────────────────────────────────────────────
-    const sigY = y + 24;
+    const sigY = y + 200;
     doc.font("Helvetica-Bold").fontSize(9).fillColor("#1a1a1a")
       .text("Signature et cachet :", margin, sigY)
       .text("Direction Générale", margin, sigY + 12);
