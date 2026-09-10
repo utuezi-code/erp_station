@@ -14,6 +14,16 @@ const FOOTER_LINES = [
 
 function logoBuffer(): Buffer | null {
   try {
+    const p = path.join(process.cwd(), "public", "Logo_IVORY_CI.png");
+    return fs.readFileSync(p);
+  } catch {
+    return null;
+  }
+}
+
+function symbolBuffer(): Buffer | null {
+  try {
+    // Fallback small symbol extracted from old PDF
     const p = path.join(process.cwd(), "public", "ivory-logo-0.png");
     return fs.readFileSync(p);
   } catch {
@@ -32,34 +42,28 @@ export function addLetterhead(doc: InstanceType<typeof PDFDocument>): number {
   const margin = 50;
 
   // ── Header ────────────────────────────────────────────────────────────────
-  const logoSize = 72;
+  // Full logo contains the symbol + company name + tagline
   if (logo) {
-    doc.image(logo, margin, 28, { width: logoSize, height: logoSize });
+    doc.image(logo, margin, 18, { width: 160, height: 90 });
+  } else {
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(13)
+      .fillColor("#1a1a1a")
+      .text("IVORY ENERGIES CI", margin, 42, { lineBreak: false });
   }
-
-  // Company name + tagline beside logo
-  doc
-    .font("Helvetica-Bold")
-    .fontSize(13)
-    .fillColor("#1a1a1a")
-    .text("IVORY ENERGIES CI", margin + (logo ? logoSize + 10 : 0), 42, { lineBreak: false });
-
-  doc
-    .font("Helvetica-Oblique")
-    .fontSize(8.5)
-    .fillColor("#c0392b")
-    .text("La qualité au-delà de vos espérances", margin + (logo ? logoSize + 10 : 0), 59, { lineBreak: false });
 
   // ── Footer ────────────────────────────────────────────────────────────────
   const footerTop = pageH - 78;
+  const symbol = symbolBuffer();
   const logoSmall = 36;
 
-  if (logo) {
-    doc.image(logo, margin, footerTop, { width: logoSmall, height: logoSmall });
+  if (symbol) {
+    doc.image(symbol, margin, footerTop, { width: logoSmall, height: logoSmall });
   }
 
   // Orange separator line
-  const lineX = margin + (logo ? logoSmall + 10 : 0);
+  const lineX = margin + (symbol ? logoSmall + 10 : 0);
   doc
     .moveTo(lineX, footerTop + 2)
     .lineTo(pageW - margin, footerTop + 2)
