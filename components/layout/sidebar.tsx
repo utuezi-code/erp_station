@@ -155,8 +155,8 @@ export function Sidebar({ userRole, userName, collapsed, onCollapse, onClose }: 
         collapsed ? "lg:justify-center" : "justify-between"
       )}>
         <div className="flex items-center gap-3 min-w-0">
-          <div className="flex items-center justify-center w-9 h-9 flex-shrink-0">
-            <img src="/symbole.svg" alt="Ivory Energies CI" className="w-9 h-9 object-contain" />
+          <div className="flex items-center justify-center w-9 h-9 flex-shrink-0 bg-white rounded-lg p-0.5">
+            <img src="/symbole.svg" alt="Ivory Energies CI" className="w-full h-full object-contain" />
           </div>
           <div className={cn("min-w-0", collapsed ? "lg:hidden" : "")}>
             <p className="text-[13px] font-bold text-white tracking-wide truncate leading-tight">IVORY ENERGIES</p>

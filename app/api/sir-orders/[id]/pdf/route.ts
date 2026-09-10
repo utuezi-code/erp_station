@@ -70,7 +70,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const pageW = doc.page.width - margin * 2;
 
     // ── Letterhead ────────────────────────────────────────────────────────────
-    let y = addLetterhead(doc);
+    let y = addLetterhead(doc) + 18;
 
     // ── Titre BC ──────────────────────────────────────────────────────────────
     doc.rect(margin, y, pageW, 26).fill("#0369A1");
@@ -165,12 +165,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       y += 30;
     }
 
-    // ── Zone signature ────────────────────────────────────────────────────────
-    const sigY = y + 14;
+    // ── Zone signature (gauche) ───────────────────────────────────────────────
+    const sigY = y + 24;
     doc.font("Helvetica-Bold").fontSize(9).fillColor("#1a1a1a")
-      .text("Signature et cachet", margin, sigY)
+      .text("Signature et cachet :", margin, sigY)
       .text("Direction Générale", margin, sigY + 12);
-    doc.rect(margin, sigY + 26, 160, 45).strokeColor("#1a1a1a").lineWidth(0.5).stroke();
+    doc.rect(margin, sigY + 26, 180, 50).strokeColor("#1a1a1a").lineWidth(0.5).stroke();
 
     doc.end();
   });
