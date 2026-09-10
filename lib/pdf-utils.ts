@@ -54,15 +54,9 @@ export function addLetterhead(doc: InstanceType<typeof PDFDocument>): number {
 
   // ── Footer ────────────────────────────────────────────────────────────────
   const footerTop = pageH - 78;
-  const symbole = symboleBuffer();
-  const symSize = 36;
-
-  if (symbole) {
-    doc.image(symbole, margin, footerTop, { width: symSize, height: symSize });
-  }
 
   // Blue separator line
-  const lineX = margin + (symbole ? symSize + 10 : 0);
+  const lineX = margin;
   doc
     .moveTo(lineX, footerTop + 2)
     .lineTo(pageW - margin, footerTop + 2)
