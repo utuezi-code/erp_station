@@ -60,6 +60,7 @@ export function SIROrderDetailClient({ order, role }: { order: SIROrder; role: s
 
   // Offer form
   const [offerNum, setOfferNum] = useState("");
+  const [offerBep, setOfferBep] = useState("");
   const [offerValidFrom, setOfferValidFrom] = useState("");
   const [offerValidTo, setOfferValidTo] = useState("");
   const [offerTotal, setOfferTotal] = useState("");
@@ -110,6 +111,7 @@ export function SIROrderDetailClient({ order, role }: { order: SIROrder; role: s
     const r = await recordSIROffer({
       sirOrderId: order.id,
       offerNumber: offerNum || undefined,
+      bepNumber: offerBep || undefined,
       pdfUrl: offerPdfUrl || undefined,
       validFrom: offerValidFrom || undefined,
       validTo: offerValidTo || undefined,
@@ -120,7 +122,7 @@ export function SIROrderDetailClient({ order, role }: { order: SIROrder; role: s
     if (r.success) {
       toast.success("Offre SIR enregistrée.");
       setShowOffer(false);
-      setOfferNum(""); setOfferPdfUrl(""); setOfferValidFrom(""); setOfferValidTo(""); setOfferTotal(""); setOfferNote("");
+      setOfferNum(""); setOfferBep(""); setOfferPdfUrl(""); setOfferValidFrom(""); setOfferValidTo(""); setOfferTotal(""); setOfferNote("");
       router.refresh();
     } else toast.error("Erreur.");
   }
@@ -372,6 +374,10 @@ export function SIROrderDetailClient({ order, role }: { order: SIROrder; role: s
               <div className="space-y-1">
                 <Label>N° Offre SIR</Label>
                 <Input value={offerNum} onChange={(e) => setOfferNum(e.target.value)} placeholder="ex: 20017668" />
+              </div>
+              <div className="space-y-1">
+                <Label>N° BEP</Label>
+                <Input value={offerBep} onChange={(e) => setOfferBep(e.target.value)} placeholder="ex: BEP-2026-001" />
               </div>
               <div className="space-y-1">
                 <Label>Montant total offre (FCFA)</Label>

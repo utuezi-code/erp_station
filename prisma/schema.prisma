@@ -853,6 +853,7 @@ model SIROffer {
   sirOrderId  String
   sirOrder    SIROrder  @relation(fields: [sirOrderId], references: [id])
   offerNumber String? // ex: 20017668
+  bepNumber   String? // N° BEP (ex: BEP-2026-001)
   pdfUrl      String? // URL stockage PDF uploadé
   validFrom   DateTime? @db.Date
   validTo     DateTime? @db.Date

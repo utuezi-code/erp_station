@@ -63,6 +63,7 @@ export async function sendSIROrder(id: string) {
 export async function recordSIROffer(data: {
   sirOrderId: string;
   offerNumber?: string;
+  bepNumber?: string;
   pdfUrl?: string;
   validFrom?: string;
   validTo?: string;
@@ -77,6 +78,7 @@ export async function recordSIROffer(data: {
       data: {
         sirOrderId: data.sirOrderId,
         offerNumber: data.offerNumber || null,
+        bepNumber: data.bepNumber || null,
         pdfUrl: data.pdfUrl || null,
         validFrom: data.validFrom ? new Date(data.validFrom) : null,
         validTo: data.validTo ? new Date(data.validTo) : null,
