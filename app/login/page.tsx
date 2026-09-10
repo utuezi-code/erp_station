@@ -48,8 +48,8 @@ export default function LoginPage() {
 
         {/* Logo */}
         <div className="relative flex items-center gap-3">
-          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#0369A1] shadow-lg shadow-blue-900/40">
-            <Fuel className="w-5 h-5 text-white" />
+          <div className="flex items-center justify-center w-10 h-10">
+            <img src="/symbole.svg" alt="Ivory Energies CI" className="w-10 h-10 object-contain" />
           </div>
           <div>
             <p className="text-white font-bold text-lg tracking-wide">IVORY ENERGIES CI</p>
@@ -89,8 +89,8 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           {/* Mobile logo */}
           <div className="flex lg:hidden items-center gap-3 mb-8">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#0369A1]">
-              <Fuel className="w-5 h-5 text-white" />
+            <div className="flex items-center justify-center w-10 h-10">
+              <img src="/symbole.svg" alt="Ivory Energies CI" className="w-10 h-10 object-contain" />
             </div>
             <div>
               <p className="font-bold text-[#0F172A]">IVORY ENERGIES CI</p>

@@ -129,8 +129,8 @@ export function Topbar({ onMenuClick, userRole, userName }: TopbarProps) {
 
         {/* Logo — mobile only, shown next to hamburger */}
         <div className="flex lg:hidden items-center gap-2">
-          <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#0369A1]">
-            <Fuel className="w-3.5 h-3.5 text-white" />
+          <div className="flex items-center justify-center w-7 h-7">
+            <img src="/symbole.svg" alt="Ivory Energies CI" className="w-7 h-7 object-contain" />
           </div>
         </div>
 
