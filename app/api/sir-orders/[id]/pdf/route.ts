@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/rbac";
+import { addLetterhead } from "@/lib/pdf-utils";
 import PDFDocument from "pdfkit";
 
 function fmt(n: any) {
@@ -37,94 +38,107 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     doc.on("end", resolve);
     doc.on("error", reject);
 
-    const pageW = doc.page.width - 100;
+    const margin = 50;
+    const pageW = doc.page.width - margin * 2;
 
-    // ── En-tête société ──────────────────────────────────────────────────────
-    doc.fontSize(18).font("Helvetica-Bold").text("IVORY ENERGIES CI", 50, 50);
-    doc.fontSize(9).font("Helvetica").fillColor("#555555")
-      .text("Gestion des stations-service", 50, 73);
+    // ── Letterhead ────────────────────────────────────────────────────────────
+    let y = addLetterhead(doc);
 
-    // ── Titre BC ─────────────────────────────────────────────────────────────
-    doc.rect(50, 95, pageW, 28).fill("#0369A1");
-    doc.fillColor("#ffffff").fontSize(13).font("Helvetica-Bold")
-      .text("BON DE COMMANDE SIR", 50, 102, { width: pageW, align: "center" });
-    doc.fillColor("#000000");
+    // ── Titre BC ──────────────────────────────────────────────────────────────
+    doc.rect(margin, y, pageW, 26).fill("#0369A1");
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(12)
+      .fillColor("#ffffff")
+      .text("BON DE COMMANDE SIR", margin, y + 7, { width: pageW, align: "center" });
+    y += 34;
 
-    doc.moveDown(0.5);
-    const y1 = 135;
-    doc.fontSize(9).font("Helvetica")
-      .text(`N° : ${order.number}`, 50, y1)
-      .text(`Date : ${new Date(order.createdAt).toLocaleDateString("fr-FR")}`, 50, y1 + 14)
-      .text(`Émetteur : ${order.user.name}`, 50, y1 + 28);
-
+    // ── Références ────────────────────────────────────────────────────────────
+    doc.font("Helvetica-Bold").fontSize(9).fillColor("#1a1a1a").text(`N° : `, margin, y, { continued: true });
+    doc.font("Helvetica").text(order.number);
+    y += 13;
+    doc.font("Helvetica-Bold").text(`Date : `, margin, y, { continued: true });
+    doc.font("Helvetica").text(new Date(order.createdAt).toLocaleDateString("fr-FR"));
+    y += 13;
+    doc.font("Helvetica-Bold").text(`Émetteur : `, margin, y, { continued: true });
+    doc.font("Helvetica").text(order.user.name);
+    y += 13;
     if (order.proposal?.budgetAllocation?.budgetRequest) {
-      doc.text(`Réf. demande budget : ${order.proposal.budgetAllocation.budgetRequest.number}`, 50, y1 + 42);
+      doc.font("Helvetica-Bold").text(`Réf. demande budget : `, margin, y, { continued: true });
+      doc.font("Helvetica").text(order.proposal.budgetAllocation.budgetRequest.number);
+      y += 13;
     }
+    y += 8;
 
-    // ── Fournisseur ───────────────────────────────────────────────────────────
-    const fy = y1 + 70;
-    doc.fontSize(10).font("Helvetica-Bold").text("DESTINATAIRE :", 50, fy);
-    doc.fontSize(9).font("Helvetica")
-      .text(order.supplier?.name ?? "SIR — Société Ivoirienne de Raffinage", 50, fy + 14);
-    if (order.supplier?.address) doc.text(order.supplier.address, 50, fy + 26);
-    if (order.supplier?.email) doc.text(`E-mail : ${order.supplier.email}`, 50, fy + 38);
+    // ── Destinataire ──────────────────────────────────────────────────────────
+    doc.font("Helvetica-Bold").fontSize(10).fillColor("#0369A1").text("DESTINATAIRE :", margin, y);
+    y += 15;
+    doc.font("Helvetica").fontSize(9).fillColor("#1a1a1a")
+      .text(order.supplier?.name ?? "SIR — Société Ivoirienne de Raffinage", margin, y);
+    y += 13;
+    if (order.supplier?.address) { doc.text(order.supplier.address, margin, y); y += 13; }
+    if (order.supplier?.email) { doc.text(`E-mail : ${order.supplier.email}`, margin, y); y += 13; }
+    y += 10;
 
     // ── Tableau articles ──────────────────────────────────────────────────────
-    const ty = fy + 70;
-    const cols = { produit: 50, code: 220, qty: 280, pu: 360, total: 450 };
+    const cols = { produit: margin, code: margin + 170, qty: margin + 240, pu: margin + 320, total: margin + 400 };
+    const rowH = 18;
 
     // En-tête tableau
-    doc.rect(50, ty, pageW, 18).fill("#e0f2fe");
-    doc.fillColor("#000000").fontSize(9).font("Helvetica-Bold");
-    doc.text("Produit", cols.produit, ty + 4);
-    doc.text("Code", cols.code, ty + 4);
-    doc.text("Qté M15 (L)", cols.qty, ty + 4);
-    doc.text("P.U. FCFA", cols.pu, ty + 4);
-    doc.text("Total FCFA", cols.total, ty + 4);
+    doc.rect(margin, y, pageW, rowH).fill("#dbeafe");
+    doc.font("Helvetica-Bold").fontSize(9).fillColor("#1e3a5f");
+    doc.text("Produit", cols.produit + 4, y + 4);
+    doc.text("Code", cols.code, y + 4);
+    doc.text("Qté M15 (L)", cols.qty, y + 4);
+    doc.text("P.U. FCFA", cols.pu, y + 4);
+    doc.text("Total FCFA", cols.total, y + 4);
+    y += rowH;
 
     // Lignes
-    let cy = ty + 18;
     doc.font("Helvetica").fontSize(9);
     let total = 0;
-    for (const item of order.items) {
+    order.items.forEach((item, idx) => {
       const t = Number(item.totalAmount);
       total += t;
-      doc.fillColor(cy % 2 === 0 ? "#f8fafc" : "#ffffff");
-      doc.rect(50, cy, pageW, 16).fill();
-      doc.fillColor("#000000");
-      doc.text(item.fuel.name, cols.produit, cy + 3, { width: 160 });
-      doc.text(item.fuel.code, cols.code, cy + 3);
-      doc.text(fmt(item.quantityM15), cols.qty, cy + 3);
-      doc.text(fmt(item.unitPrice), cols.pu, cy + 3);
-      doc.text(fmt(t), cols.total, cy + 3);
-      cy += 16;
-    }
+      doc.fillColor(idx % 2 === 0 ? "#f8fafc" : "#ffffff").rect(margin, y, pageW, rowH).fill();
+      doc.fillColor("#1a1a1a");
+      doc.text(item.fuel.name, cols.produit + 4, y + 3, { width: 160, lineBreak: false });
+      doc.text(item.fuel.code, cols.code, y + 3);
+      doc.text(fmt(item.quantityM15), cols.qty, y + 3);
+      doc.text(fmt(item.unitPrice), cols.pu, y + 3);
+      doc.text(fmt(t), cols.total, y + 3);
+      y += rowH;
+    });
 
     // Total
-    cy += 4;
-    doc.rect(50, cy, pageW, 18).fill("#0369A1");
-    doc.fillColor("#ffffff").font("Helvetica-Bold")
-      .text("TOTAL GÉNÉRAL", cols.produit, cy + 4)
-      .text(`${fmt(total)} FCFA`, cols.total, cy + 4);
-    doc.fillColor("#000000");
+    y += 2;
+    doc.rect(margin, y, pageW, rowH + 2).fill("#0369A1");
+    doc.font("Helvetica-Bold").fontSize(9).fillColor("#ffffff")
+      .text("TOTAL GÉNÉRAL", cols.produit + 4, y + 5)
+      .text(`${fmt(total)} FCFA`, cols.total, y + 5);
+    doc.fillColor("#1a1a1a");
+    y += rowH + 10;
 
-    // ── Note ─────────────────────────────────────────────────────────────────
+    // Table border
+    doc.strokeColor("#93c5fd").lineWidth(0.5)
+      .rect(margin, y - (order.items.length * rowH + rowH * 2 + 14), pageW, order.items.length * rowH + rowH * 2 + 14)
+      .stroke();
+
+    // ── Note ──────────────────────────────────────────────────────────────────
     if (order.note) {
-      const ny = cy + 36;
-      doc.fontSize(9).font("Helvetica-Bold").text("Observations :", 50, ny);
-      doc.font("Helvetica").text(order.note, 50, ny + 14, { width: pageW });
+      y += 6;
+      doc.font("Helvetica-Bold").fontSize(9).fillColor("#1a1a1a").text("Observations :", margin, y);
+      y += 14;
+      doc.font("Helvetica").text(order.note, margin, y, { width: pageW });
+      y += 30;
     }
 
-    // ── Signature ─────────────────────────────────────────────────────────────
-    const sy = doc.page.height - 120;
-    doc.fontSize(9).font("Helvetica")
-      .text("Signature et cachet", 50, sy)
-      .text("Direction Commerciale", 50, sy + 12);
-    doc.rect(50, sy + 28, 160, 50).stroke();
-
-    // ── Pied de page ──────────────────────────────────────────────────────────
-    doc.fontSize(7).fillColor("#aaaaaa")
-      .text(`Document généré le ${new Date().toLocaleDateString("fr-FR")} — IVORY ENERGIES CI`, 50, doc.page.height - 40, { width: pageW, align: "center" });
+    // ── Zone signature ────────────────────────────────────────────────────────
+    const sigY = Math.max(y + 20, doc.page.height - 160);
+    doc.font("Helvetica-Bold").fontSize(9).fillColor("#1a1a1a")
+      .text("Signature et cachet", margin, sigY)
+      .text("Direction Commerciale", margin, sigY + 12);
+    doc.rect(margin, sigY + 26, 160, 50).strokeColor("#1a1a1a").lineWidth(0.5).stroke();
 
     doc.end();
   });
