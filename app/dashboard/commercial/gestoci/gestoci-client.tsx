@@ -583,113 +583,190 @@ export function GESTOCIStockClient({
 
       {/* ─── Modal : Saisir BL IVORY ─────────────────────────────────────────── */}
       <Dialog open={showNewBL} onOpenChange={(v) => { if (!v) { setShowNewBL(false); resetBL(); } }}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Saisir un BL IVORY — Retrait GESTOCI</DialogTitle>
           </DialogHeader>
           <div className="space-y-5">
-            {/* Dates & BL info */}
+
+            {/* ── Dates ─────────────────────────────────────────────────────── */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label>Date d'émission BL *</Label>
-                <Input type="date" value={blDate} onChange={(e) => setBlDate(e.target.value)} />
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-gray-600">Date d'émission BL *</Label>
+                <Input type="date" value={blDate} onChange={(e) => setBlDate(e.target.value)} className="h-10" />
               </div>
-              <div className="space-y-1">
-                <Label>Date de chargement</Label>
-                <Input type="date" value={blLoadingDate} onChange={(e) => setBlLoadingDate(e.target.value)} />
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="space-y-1">
-                <Label>N° BL IVORY</Label>
-                <Input value={blNumber} onChange={(e) => setBlNumber(e.target.value)} placeholder="ex: 393" />
-              </div>
-              <div className="space-y-1">
-                <Label>N° BEP</Label>
-                <Input value={bepNumber} onChange={(e) => setBepNumber(e.target.value)} placeholder="ex: 1037" />
-              </div>
-              <div className="space-y-1">
-                <Label>Destination / Client</Label>
-                <Input value={destination} onChange={(e) => setDestination(e.target.value)} placeholder="ex: SARHALA" />
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="space-y-1">
-                <Label>N° Tracteur</Label>
-                <Input value={truckRef} onChange={(e) => setTruckRef(e.target.value)} placeholder="ex: 46991WWCI01" />
-              </div>
-              <div className="space-y-1">
-                <Label>N° Citerne</Label>
-                <Input value={citerneRef} onChange={(e) => setCiterneRef(e.target.value)} placeholder="ex: AA 498 SG 02" />
-              </div>
-              <div className="space-y-1">
-                <Label>Chauffeur</Label>
-                <Input value={driverName} onChange={(e) => setDriverName(e.target.value)} />
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-gray-600">Date de chargement</Label>
+                <Input type="date" value={blLoadingDate} onChange={(e) => setBlLoadingDate(e.target.value)} className="h-10" />
               </div>
             </div>
 
-            {/* Lignes produits */}
+            {/* ── Références ────────────────────────────────────────────────── */}
+            <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Références du BL</p>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-gray-600">N° BL IVORY</Label>
+                  <Input value={blNumber} onChange={(e) => setBlNumber(e.target.value)} placeholder="ex: 393" className="h-10 bg-white" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-gray-600">N° BEP</Label>
+                  <Input value={bepNumber} onChange={(e) => setBepNumber(e.target.value)} placeholder="ex: 1037" className="h-10 bg-white" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-gray-600">Destination / Client</Label>
+                  <Input value={destination} onChange={(e) => setDestination(e.target.value)} placeholder="ex: SARHALA" className="h-10 bg-white" />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-gray-600">N° Tracteur</Label>
+                  <Input value={truckRef} onChange={(e) => setTruckRef(e.target.value)} placeholder="ex: 46991WWCI01" className="h-10 bg-white" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-gray-600">N° Citerne</Label>
+                  <Input value={citerneRef} onChange={(e) => setCiterneRef(e.target.value)} placeholder="ex: AA 498 SG 02" className="h-10 bg-white" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-gray-600">Chauffeur</Label>
+                  <Input value={driverName} onChange={(e) => setDriverName(e.target.value)} className="h-10 bg-white" />
+                </div>
+              </div>
+            </div>
+
+            {/* ── Lignes de chargement ──────────────────────────────────────── */}
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <Label className="text-xs font-semibold uppercase tracking-wide">Lignes de chargement</Label>
-                <Button variant="outline" size="sm" onClick={addLine}><Plus className="w-3 h-3 mr-1" /> Ligne</Button>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Lignes de chargement</p>
+                <Button variant="outline" size="sm" onClick={addLine} className="h-8 text-xs">
+                  <Plus className="w-3 h-3 mr-1" /> Ajouter une ligne
+                </Button>
               </div>
-              <div className="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 text-xs text-blue-700 mb-3">
-                Saisir la quantité ambiante (citerne) et le facteur de correction. Le volume M15 est calculé automatiquement.
+
+              <div className="space-y-3">
+                {lines.map((l, idx) => {
+                  const reelVal = Number(l.quantityReel) || 0;
+                  const factorVal = Number(l.correctionFactor) || 0;
+                  const m15Computed = reelVal > 0 && factorVal > 0 ? reelVal * factorVal : null;
+                  const m15Display = Number(l.quantityM15) || 0;
+                  const puVal = Number(l.unitPrice) || 0;
+                  const lineTotal = m15Display * puVal;
+
+                  return (
+                    <div key={idx} className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                      {/* Header de la ligne */}
+                      <div className="flex items-center justify-between px-4 py-2 bg-[#0369A1]/5 border-b border-gray-100">
+                        <span className="text-xs font-semibold text-[#0369A1]">Ligne {idx + 1}</span>
+                        {lineTotal > 0 && (
+                          <span className="text-xs font-bold text-gray-700 tabular-nums">
+                            {fmt(lineTotal)} FCFA
+                          </span>
+                        )}
+                        {lines.length > 1 && (
+                          <button onClick={() => removeLine(idx)} className="ml-3 text-red-400 hover:text-red-600 transition-colors">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="p-4 space-y-3">
+                        {/* Produit + Station */}
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1.5">
+                            <Label className="text-xs font-medium text-gray-600">Produit *</Label>
+                            <Select value={l.fuelId} onValueChange={(v) => updateLine(idx, "fuelId", v ?? "")}>
+                              <SelectTrigger className="h-10"><SelectValue placeholder="Sélectionner..." /></SelectTrigger>
+                              <SelectContent>{fuels.map((f) => <SelectItem key={f.id} value={f.id}>{f.name} ({f.code})</SelectItem>)}</SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs font-medium text-gray-600">Station *</Label>
+                            <Select value={l.stationId} onValueChange={(v) => updateLine(idx, "stationId", v ?? "")}>
+                              <SelectTrigger className="h-10"><SelectValue placeholder="Sélectionner..." /></SelectTrigger>
+                              <SelectContent>{stations.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+
+                        {/* Quantités + Facteur */}
+                        <div className="grid grid-cols-3 gap-3">
+                          <div className="space-y-1.5">
+                            <Label className="text-xs font-medium text-gray-600">Qté ambiante (L)</Label>
+                            <Input className="h-10 text-right font-mono" type="number" placeholder="0" value={l.quantityReel}
+                              onChange={(e) => updateLine(idx, "quantityReel", e.target.value)} />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs font-medium text-gray-600">Facteur corr.</Label>
+                            <Input className="h-10 text-right font-mono" type="number" step="0.000001" placeholder="0.981300" value={l.correctionFactor}
+                              onChange={(e) => updateLine(idx, "correctionFactor", e.target.value)} />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs font-medium text-gray-600 flex items-center gap-1">
+                              Qté M15 (BL) *
+                              {m15Computed !== null && Math.abs(m15Computed - m15Display) > 1 && (
+                                <span className="text-orange-500 text-[10px]">≈ {fmt(m15Computed)} L</span>
+                              )}
+                            </Label>
+                            <div className="relative">
+                              <Input
+                                className="h-10 text-right font-mono pr-8 bg-blue-50 border-blue-200 font-semibold text-blue-800 focus:bg-white focus:border-blue-400"
+                                type="number" placeholder="calculé auto"
+                                value={l.quantityM15}
+                                onChange={(e) => updateLine(idx, "quantityM15", e.target.value)}
+                              />
+                              {m15Computed !== null && Math.abs(m15Computed - Number(l.quantityM15 || 0)) < 1 && (
+                                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-blue-400 text-xs">✓</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Prix unitaire + total calculé */}
+                        <div className="grid grid-cols-2 gap-3 items-end">
+                          <div className="space-y-1.5">
+                            <Label className="text-xs font-medium text-gray-600">P.U. (FCFA/L)</Label>
+                            <Input className="h-10 text-right font-mono" type="number" placeholder="0" value={l.unitPrice}
+                              onChange={(e) => updateLine(idx, "unitPrice", e.target.value)} />
+                          </div>
+                          {lineTotal > 0 && (
+                            <div className="rounded-lg bg-gray-50 border border-gray-200 px-4 py-2.5 text-right">
+                              <p className="text-[10px] text-gray-400 uppercase tracking-wide">Montant ligne</p>
+                              <p className="text-sm font-bold text-gray-800 tabular-nums">{fmt(lineTotal)} FCFA</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-              {lines.map((l, idx) => (
-                <div key={idx} className="grid grid-cols-[1.4fr_1.6fr_1.2fr_1fr_1fr_1fr_auto] gap-3 items-end border rounded-lg p-3 mb-2">
-                  <div className="space-y-1">
-                    <Label className="text-xs">Produit *</Label>
-                    <Select value={l.fuelId} onValueChange={(v) => updateLine(idx, "fuelId", v ?? "")}>
-                      <SelectTrigger className="h-8"><SelectValue placeholder="—" /></SelectTrigger>
-                      <SelectContent>{fuels.map((f) => <SelectItem key={f.id} value={f.id}>{f.code}</SelectItem>)}</SelectContent>
-                    </Select>
+
+              {/* Total général */}
+              {lines.some((l) => Number(l.quantityM15) > 0 && Number(l.unitPrice) > 0) && (
+                <div className="mt-3 rounded-xl bg-[#0369A1] text-white px-5 py-3 flex justify-between items-center">
+                  <div>
+                    <p className="text-xs opacity-75 uppercase tracking-wide">Total M15</p>
+                    <p className="text-lg font-bold tabular-nums">
+                      {fmt(lines.reduce((s, l) => s + (Number(l.quantityM15) || 0), 0))} L
+                    </p>
                   </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Station *</Label>
-                    <Select value={l.stationId} onValueChange={(v) => updateLine(idx, "stationId", v ?? "")}>
-                      <SelectTrigger className="h-8"><SelectValue placeholder="—" /></SelectTrigger>
-                      <SelectContent>{stations.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Qté ambiant (L)</Label>
-                    <Input className="h-8 text-right" type="number" placeholder="0" value={l.quantityReel}
-                      onChange={(e) => updateLine(idx, "quantityReel", e.target.value)} />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Facteur corr.</Label>
-                    <Input className="h-8 text-right" type="number" step="0.0001" placeholder="0.9813" value={l.correctionFactor}
-                      onChange={(e) => updateLine(idx, "correctionFactor", e.target.value)} />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Qté M15 (BL) *</Label>
-                    <Input className="h-8 text-right bg-blue-50 font-medium" type="number" placeholder="calculé" value={l.quantityM15}
-                      onChange={(e) => updateLine(idx, "quantityM15", e.target.value)} />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">P.U. (FCFA)</Label>
-                    <Input className="h-8 text-right" type="number" placeholder="0" value={l.unitPrice}
-                      onChange={(e) => updateLine(idx, "unitPrice", e.target.value)} />
-                  </div>
-                  <div className="flex items-end pb-0.5">
-                    {lines.length > 1 && (
-                      <Button variant="ghost" size="sm" className="h-8" onClick={() => removeLine(idx)}>
-                        <Trash2 className="w-3 h-3 text-red-400" />
-                      </Button>
-                    )}
+                  <div className="text-right">
+                    <p className="text-xs opacity-75 uppercase tracking-wide">Montant total</p>
+                    <p className="text-lg font-bold tabular-nums">
+                      {fmt(lines.reduce((s, l) => s + (Number(l.quantityM15) || 0) * (Number(l.unitPrice) || 0), 0))} FCFA
+                    </p>
                   </div>
                 </div>
-              ))}
+              )}
             </div>
 
-            <div className="space-y-1">
-              <Label>Note</Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-gray-600">Note</Label>
               <Textarea rows={2} value={blNote} onChange={(e) => setBlNote(e.target.value)} placeholder="Observations..." />
             </div>
           </div>
-          <DialogFooter className="gap-2 mt-4">
+
+          <DialogFooter className="gap-2 mt-4 pt-4 border-t">
             <Button variant="outline" onClick={() => { setShowNewBL(false); resetBL(); }}>Annuler</Button>
             <Button className="bg-[#0369A1] hover:bg-blue-700" disabled={loading} onClick={submitBL}>
               <Truck className="w-4 h-4 mr-2" /> Enregistrer le BL
