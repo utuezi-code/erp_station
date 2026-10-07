@@ -152,7 +152,9 @@ export function StationsCompteClient({
           <button onClick={() => navigate(1)} className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm hover:bg-gray-50">›</button>
           <Select value={stationId || "__all__"} onValueChange={(v) => selectStation(v === "__all__" ? "" : (v ?? ""))}>
             <SelectTrigger className="w-48 h-9">
-              <SelectValue placeholder="Toutes les stations" />
+              <SelectValue>
+                {stationId ? (stations.find((s) => s.id === stationId)?.name ?? stationId) : "Toutes les stations"}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="__all__">Toutes les stations</SelectItem>
