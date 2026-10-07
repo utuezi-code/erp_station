@@ -150,7 +150,7 @@ export function StationsCompteClient({
           <button onClick={() => navigate(-1)} className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm hover:bg-gray-50">‹</button>
           <span className="px-4 py-1.5 rounded-lg bg-gray-100 text-sm font-medium">{moisLabel}</span>
           <button onClick={() => navigate(1)} className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm hover:bg-gray-50">›</button>
-          <Select value={stationId || "__all__"} onValueChange={(v) => selectStation(v === "__all__" ? "" : v)}>
+          <Select value={stationId || "__all__"} onValueChange={(v) => selectStation(v === "__all__" ? "" : (v ?? ""))}>
             <SelectTrigger className="w-48 h-9">
               <SelectValue placeholder="Toutes les stations" />
             </SelectTrigger>
