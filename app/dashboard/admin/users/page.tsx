@@ -8,7 +8,10 @@ export default async function UsersPage() {
 
   const [users, stations] = await Promise.all([
     db.user.findMany({
-      include: { station: { select: { id: true, name: true } } },
+      include: {
+        station: { select: { id: true, name: true } },
+        _count: { select: { auditLogs: true } },
+      },
       orderBy: { createdAt: "desc" },
     }),
     db.station.findMany({
@@ -20,10 +23,6 @@ export default async function UsersPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Gestion des utilisateurs</h1>
-        <p className="text-gray-500 mt-1">{users.length} utilisateur(s) enregistré(s)</p>
-      </div>
       <UsersClientPage users={serialize(users)} stations={stations} />
     </div>
   );
