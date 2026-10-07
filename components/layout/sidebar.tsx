@@ -10,7 +10,7 @@ import {
   BarChart3, Bell, FileText, ShoppingCart, Settings, LogOut,
   GitCompare, Calculator, ChevronLeft, ChevronRight, Landmark,
   Shield, UserCircle, Trophy, HardHat, CreditCard, FlaskConical,
-  Warehouse, Truck, PackageCheck, X,
+  Warehouse, Truck, PackageCheck, X, BookOpen, LineChart,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 
@@ -64,6 +64,8 @@ const navGroups: NavGroup[] = [
       { label: "Propositions d'achat", href: "/dashboard/commercial/propositions", icon: FileText, roles: [DC, DG, "ADMIN"] },
       { label: "Bons de commande SIR", href: "/dashboard/commercial/sir-orders", icon: ShoppingCart, roles: [DC, DF, DG, "ADMIN"] },
       { label: "Stock GESTOCI", href: "/dashboard/commercial/gestoci", icon: Warehouse, roles: [DC, DF, DG, "ADMIN"] },
+      { label: "Comptes par station", href: "/dashboard/commercial/stations", icon: BookOpen, roles: [DC, DF, DG, "ADMIN"] },
+      { label: "Suivi ADV", href: "/dashboard/commercial/adv", icon: LineChart, roles: [DC, DF, DG, "ADMIN"] },
       { label: "Mises à disposition", href: "/dashboard/approvisionnement/mises-a-disposition", icon: Truck, roles: ["ADMIN", "RESPONSABLE_SERVICE", DC, DF, DG, "GERANT"] },
     ],
   },
