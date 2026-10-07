@@ -129,7 +129,7 @@ export function ADVClient({
           <button onClick={() => navigate("annee", String(annee - 1))} className="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50">‹ {annee - 1}</button>
           <span className="px-4 py-1.5 rounded-lg bg-gray-100 text-sm font-bold">{annee}</span>
           <button onClick={() => navigate("annee", String(annee + 1))} className="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50">{annee + 1} ›</button>
-          <Select value={moisFilter || "__all__"} onValueChange={(v) => navigate("mois", v === "__all__" ? "" : v)}>
+          <Select value={moisFilter || "__all__"} onValueChange={(v) => navigate("mois", v === "__all__" ? "" : (v ?? ""))}>
             <SelectTrigger className="w-40 h-9"><SelectValue /></SelectTrigger>
             <SelectContent>{MOIS_OPTS.map((m) => <SelectItem key={m.value || "__all__"} value={m.value || "__all__"}>{m.label}</SelectItem>)}</SelectContent>
           </Select>
