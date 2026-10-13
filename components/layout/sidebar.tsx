@@ -44,21 +44,32 @@ const navGroups: NavGroup[] = [
 
   // ── 2. STATION (gérant) ───────────────────────────────────────────────────
   {
-    label: "Station",
+    label: "Ma station",
     items: [
       { label: "Index pompes", href: "/dashboard/gerant/index", icon: Gauge, roles: ["GERANT"] },
       { label: "Stocks cuves", href: "/dashboard/gerant/stocks", icon: Droplets, roles: ["GERANT"] },
       { label: "Encaissements", href: "/dashboard/gerant/encaissements", icon: Wallet, roles: ["GERANT"] },
-      { label: "Versements", href: "/dashboard/gerant/versements", icon: ArrowUpCircle, roles: ["GERANT", DF] },
+      { label: "Versements", href: "/dashboard/gerant/versements", icon: ArrowUpCircle, roles: ["GERANT"] },
       { label: "Livraisons", href: "/dashboard/gerant/livraisons", icon: Package, roles: ["GERANT"] },
       { label: "Pompistes", href: "/dashboard/pompistes", icon: HardHat, roles: ["GERANT"] },
     ],
   },
 
-  // ── 3. MODULE COMMERCIAL (workflow DC — priorité) ─────────────────────────
-  // Étapes dans l'ordre : budget → proposition → BC SIR → stock → retrait → station
+  // ── 3. TRÉSORERIE (DF — quotidien) ────────────────────────────────────────
   {
-    label: "Commercial SIR",
+    label: "Trésorerie",
+    items: [
+      { label: "Versements stations", href: "/dashboard/direction-financiere/versements", icon: ArrowUpCircle, roles: [DF, DG, "ADMIN"] },
+      { label: "Comptes par station", href: "/dashboard/commercial/stations", icon: BookOpen, roles: [DF, DG, "ADMIN"] },
+      { label: "Clients crédit", href: "/dashboard/commercial/clients-credit", icon: Users, roles: [DF, DG, "ADMIN"] },
+      { label: "Suivi ADV", href: "/dashboard/commercial/adv", icon: LineChart, roles: [DF, DG, "ADMIN"] },
+      { label: "Tableau financier", href: "/dashboard/direction-financiere", icon: BarChart3, roles: [DF, DG, "ADMIN"] },
+    ],
+  },
+
+  // ── 4. APPROVISIONNEMENT SIR (DC opérationnel, DF valide/paie) ────────────
+  {
+    label: "Approvisionnement",
     items: [
       { label: "Demandes de budget", href: "/dashboard/commercial/budget", icon: Landmark, roles: [DC, DF, DG, "ADMIN"] },
       { label: "Propositions d'achat", href: "/dashboard/commercial/propositions", icon: FileText, roles: [DC, DG, "ADMIN"] },
@@ -68,19 +79,9 @@ const navGroups: NavGroup[] = [
     ],
   },
 
-  // ── 4. SUIVI FINANCIER (DF uniquement) ───────────────────────────────────────
+  // ── 5. ACHATS & COMPTABILITÉ ──────────────────────────────────────────────
   {
-    label: "Suivi financier",
-    items: [
-      { label: "Comptes par station", href: "/dashboard/commercial/stations", icon: BookOpen, roles: [DF, DG, "ADMIN"] },
-      { label: "Clients crédit", href: "/dashboard/commercial/clients-credit", icon: Users, roles: [DF, DG, "ADMIN"] },
-      { label: "Suivi ADV", href: "/dashboard/commercial/adv", icon: LineChart, roles: [DF, DG, "ADMIN"] },
-    ],
-  },
-
-  // ── 5. ACHATS INTERNES (DA gérant/RS → DC → DF → DG → BC fournisseur) ──── (DA gérant/RS → DC → DF → DG → BC fournisseur) ────
-  {
-    label: "Achats internes",
+    label: "Achats & Comptabilité",
     items: [
       { label: "Demandes d'achat", href: "/dashboard/achats/demandes", icon: FileText, roles: ["ADMIN", "RESPONSABLE_SERVICE", "GERANT", DC, DF, DG] },
       { label: "Bons de commande", href: "/dashboard/achats/commandes", icon: Package, roles: ["ADMIN", "RESPONSABLE_SERVICE", DC, DF, DG] },
@@ -91,25 +92,38 @@ const navGroups: NavGroup[] = [
     ],
   },
 
-  // ── 5. ANALYSE & PILOTAGE ─────────────────────────────────────────────────
+  // ── 6. COMMERCIAL (DC — analyse des ventes) ───────────────────────────────
   {
-    label: "Analyse & Pilotage",
+    label: "Commercial",
     items: [
       { label: "Ventes", href: "/dashboard/direction-commerciale", icon: TrendingUp, roles: ["ADMIN", DC, DG] },
       { label: "Classement stations", href: "/dashboard/classement", icon: Trophy, roles: ["ADMIN", DC, DG] },
-      { label: "Tableau financier", href: "/dashboard/direction-financiere", icon: BarChart3, roles: ["ADMIN", DF, DG] },
-      { label: "Suivi versements", href: "/dashboard/direction-financiere/versements", icon: ArrowUpCircle, roles: ["ADMIN", DF, DG] },
-      { label: "Direction Générale", href: "/dashboard/direction-generale", icon: LayoutDashboard, roles: ["ADMIN", DG] },
-      { label: "Prix carburants", href: "/dashboard/prix-carburants", icon: Fuel, roles: ["ADMIN", DG] },
+      { label: "Cartes carburant", href: "/dashboard/cartes-carburant", icon: CreditCard, roles: ["ADMIN", DC, DG] },
+    ],
+  },
+
+  // ── 7. CONTRÔLE DE GESTION ────────────────────────────────────────────────
+  {
+    label: "Contrôle de gestion",
+    items: [
       { label: "Écarts", href: "/dashboard/ecarts", icon: GitCompare, roles: ["ADMIN", "GERANT", DF, DG] },
       { label: "Exploitation", href: "/dashboard/exploitation", icon: Calculator, roles: ["ADMIN", "GERANT", DF, DG] },
       { label: "Réconciliation cuves", href: "/dashboard/reconciliation", icon: FlaskConical, roles: ["ADMIN", "GERANT", DF, DG] },
-      { label: "Cartes carburant", href: "/dashboard/cartes-carburant", icon: CreditCard, roles: ["ADMIN", "GERANT", DC, DF, DG] },
+      { label: "Cartes carburant", href: "/dashboard/cartes-carburant", icon: CreditCard, roles: ["ADMIN", "GERANT", DF] },
       { label: "Rapports", href: "/dashboard/rapports", icon: FileText, roles: ["ADMIN", "GERANT", DC, DF, DG] },
     ],
   },
 
-  // ── 6. ADMINISTRATION ─────────────────────────────────────────────────────
+  // ── 8. DIRECTION GÉNÉRALE ─────────────────────────────────────────────────
+  {
+    label: "Direction Générale",
+    items: [
+      { label: "Vue d'ensemble", href: "/dashboard/direction-generale", icon: LayoutDashboard, roles: ["ADMIN", DG] },
+      { label: "Prix carburants", href: "/dashboard/prix-carburants", icon: Fuel, roles: ["ADMIN", DG] },
+    ],
+  },
+
+  // ── 9. ADMINISTRATION ─────────────────────────────────────────────────────
   {
     label: "Administration",
     items: [
