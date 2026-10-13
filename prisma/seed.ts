@@ -57,12 +57,12 @@ async function main() {
   const super95 = await prisma.fuel.upsert({
     where: { code: "SP95" },
     update: {},
-    create: { code: "SP95", name: "Super Sans Plomb", unit: "L", currentPrice: 820 },
+    create: { code: "SP95", name: "Super Sans Plomb", unit: "litre", salePrice: 820, purchasePrice: 800, margin: 20 },
   });
   const gasoil = await prisma.fuel.upsert({
     where: { code: "GO" },
     update: {},
-    create: { code: "GO", name: "Gasoil", unit: "L", currentPrice: 675 },
+    create: { code: "GO", name: "Gasoil", unit: "litre", salePrice: 675, purchasePrice: 655, margin: 20 },
   });
 
   // ── Stations ───────────────────────────────────────────────────────────────
