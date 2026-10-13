@@ -64,14 +64,21 @@ const navGroups: NavGroup[] = [
       { label: "Propositions d'achat", href: "/dashboard/commercial/propositions", icon: FileText, roles: [DC, DG, "ADMIN"] },
       { label: "Bons de commande SIR", href: "/dashboard/commercial/sir-orders", icon: ShoppingCart, roles: [DC, DF, DG, "ADMIN"] },
       { label: "Stock GESTOCI", href: "/dashboard/commercial/gestoci", icon: Warehouse, roles: [DC, DF, DG, "ADMIN"] },
-      { label: "Comptes par station", href: "/dashboard/commercial/stations", icon: BookOpen, roles: [DC, DF, DG, "ADMIN"] },
-      { label: "Clients crédit", href: "/dashboard/commercial/clients-credit", icon: Users, roles: [DC, DF, DG, "ADMIN"] },
-      { label: "Suivi ADV", href: "/dashboard/commercial/adv", icon: LineChart, roles: [DC, DF, DG, "ADMIN"] },
       { label: "Mises à disposition", href: "/dashboard/approvisionnement/mises-a-disposition", icon: Truck, roles: ["ADMIN", "RESPONSABLE_SERVICE", DC, DF, DG, "GERANT"] },
     ],
   },
 
-  // ── 4. ACHATS INTERNES (DA gérant/RS → DC → DF → DG → BC fournisseur) ────
+  // ── 4. SUIVI FINANCIER (DF uniquement) ───────────────────────────────────────
+  {
+    label: "Suivi financier",
+    items: [
+      { label: "Comptes par station", href: "/dashboard/commercial/stations", icon: BookOpen, roles: [DF, DG, "ADMIN"] },
+      { label: "Clients crédit", href: "/dashboard/commercial/clients-credit", icon: Users, roles: [DF, DG, "ADMIN"] },
+      { label: "Suivi ADV", href: "/dashboard/commercial/adv", icon: LineChart, roles: [DF, DG, "ADMIN"] },
+    ],
+  },
+
+  // ── 5. ACHATS INTERNES (DA gérant/RS → DC → DF → DG → BC fournisseur) ──── (DA gérant/RS → DC → DF → DG → BC fournisseur) ────
   {
     label: "Achats internes",
     items: [

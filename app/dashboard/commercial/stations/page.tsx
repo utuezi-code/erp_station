@@ -10,7 +10,7 @@ export default async function StationsComptePage({
 }: {
   searchParams: Promise<{ mois?: string; stationId?: string }>;
 }) {
-  await requireRole(["DIRECTION_COMMERCIALE", "DIRECTION_GENERALE", "DIRECTION_FINANCIERE", "ADMIN"]);
+  await requireRole(["DIRECTION_FINANCIERE", "DIRECTION_GENERALE", "ADMIN"]);
   const sp = await searchParams;
 
   const now = new Date();

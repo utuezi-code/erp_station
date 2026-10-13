@@ -9,7 +9,7 @@ import { MouvementCompteType } from "@prisma/client";
 
 const ALLOWED_ROLES = [
   "ADMIN" as const,
-  "DIRECTION_COMMERCIALE" as const,
+  
   "DIRECTION_FINANCIERE" as const,
   "DIRECTION_GENERALE" as const,
 ];

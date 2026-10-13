@@ -23,7 +23,7 @@ export async function saveCompteStationSoldeInitial(
   try {
     const session = await requireRole([
       "ADMIN",
-      "DIRECTION_COMMERCIALE",
+      
       "DIRECTION_FINANCIERE",
       "DIRECTION_GENERALE",
     ]);
@@ -88,7 +88,7 @@ export async function addMouvementCompteStation(
   try {
     const session = await requireRole([
       "ADMIN",
-      "DIRECTION_COMMERCIALE",
+      
       "DIRECTION_FINANCIERE",
       "DIRECTION_GENERALE",
     ]);

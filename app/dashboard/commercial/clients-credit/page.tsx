@@ -6,12 +6,7 @@ import { serialize } from "@/lib/serialize";
 import { ClientsCreditClient } from "./client";
 
 export default async function ClientsCreditPage() {
-  await requireRole([
-    "ADMIN",
-    "DIRECTION_COMMERCIALE",
-    "DIRECTION_FINANCIERE",
-    "DIRECTION_GENERALE",
-  ]);
+  await requireRole(["ADMIN", "DIRECTION_FINANCIERE", "DIRECTION_GENERALE"]);
 
   const annee = new Date().getFullYear();
 
