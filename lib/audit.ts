@@ -9,6 +9,8 @@ export type AuditAction =
   | "SEND"
   | "RECORD_OFFER"
   | "RECORD_PAYMENT"
+  | "UPDATE_PAYMENT"
+  | "DELETE_PAYMENT"
   | "RECORD_DELIVERY"
   | "RECORD_READING"
   | "IMPORT";

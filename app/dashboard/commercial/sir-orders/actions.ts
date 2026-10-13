@@ -155,6 +155,49 @@ export async function recordSIRPayment(data: {
   return { success: true };
 }
 
+export async function updateSIRPayment(id: string, data: {
+  beneficiary: string;
+  checkNumber: string;
+  bankName?: string;
+  amount: number;
+  paidAt: string;
+  note?: string;
+}) {
+  const session = await requireRole(["DIRECTION_FINANCIERE", "ADMIN"]);
+  const user = session.user as any;
+
+  const payment = await db.sIRPayment.update({
+    where: { id },
+    data: {
+      beneficiary: data.beneficiary,
+      checkNumber: data.checkNumber,
+      bankName: data.bankName || null,
+      amount: data.amount,
+      paidAt: new Date(data.paidAt),
+      note: data.note || null,
+    },
+  });
+
+  await writeAuditLog({ userId: user.id, entity: "SIRPayment", entityId: id, action: "UPDATE_PAYMENT", meta: { amount: data.amount, checkNumber: data.checkNumber } });
+
+  revalidatePath("/dashboard/commercial/sir-orders");
+  revalidatePath(`/dashboard/commercial/sir-orders/${payment.sirOrderId}`);
+  return { success: true };
+}
+
+export async function deleteSIRPayment(id: string) {
+  const session = await requireRole(["DIRECTION_FINANCIERE", "ADMIN"]);
+  const user = session.user as any;
+
+  const payment = await db.sIRPayment.delete({ where: { id } });
+
+  await writeAuditLog({ userId: user.id, entity: "SIRPayment", entityId: id, action: "DELETE_PAYMENT", meta: { checkNumber: payment.checkNumber, amount: payment.amount } });
+
+  revalidatePath("/dashboard/commercial/sir-orders");
+  revalidatePath(`/dashboard/commercial/sir-orders/${payment.sirOrderId}`);
+  return { success: true };
+}
+
 export async function recordDeliveryOrder(data: {
   sirOrderId: string;
   reference?: string;

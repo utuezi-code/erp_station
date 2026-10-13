@@ -9,9 +9,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle, FileText, CreditCard, Truck, Send, Download, Upload, ExternalLink, FilePlus2 } from "lucide-react";
+import { CheckCircle, FileText, CreditCard, Truck, Send, Download, Upload, ExternalLink, FilePlus2, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { sendSIROrder, recordSIROffer, recordSIRPayment, recordDeliveryOrder, uploadCorrectionFile } from "../actions";
+import { sendSIROrder, recordSIROffer, recordSIRPayment, updateSIRPayment, deleteSIRPayment, recordDeliveryOrder, uploadCorrectionFile } from "../actions";
 import { useRouter } from "next/navigation";
 
 function fmt(n: any) { return Number(n || 0).toLocaleString("fr-CI", { maximumFractionDigits: 0 }); }
@@ -81,13 +81,60 @@ export function SIROrderDetailClient({ order, role }: { order: SIROrder; role: s
   const [offerPdfUrl, setOfferPdfUrl] = useState("");
   const [offerNote, setOfferNote] = useState("");
 
-  // Payment form
+  // Payment form (create)
   const [payBenef, setPayBenef] = useState("SIR");
   const [payCheck, setPayCheck] = useState("");
   const [payBank, setPayBank] = useState("");
   const [payAmount, setPayAmount] = useState("");
   const [payDate, setPayDate] = useState(new Date().toISOString().slice(0, 10));
   const [payNote, setPayNote] = useState("");
+
+  // Payment edit
+  const [editingPayment, setEditingPayment] = useState<typeof order.payments[0] | null>(null);
+  const [editPayBenef, setEditPayBenef] = useState("");
+  const [editPayCheck, setEditPayCheck] = useState("");
+  const [editPayBank, setEditPayBank] = useState("");
+  const [editPayAmount, setEditPayAmount] = useState("");
+  const [editPayDate, setEditPayDate] = useState("");
+  const [editPayNote, setEditPayNote] = useState("");
+
+  function openEditPayment(p: typeof order.payments[0]) {
+    setEditingPayment(p);
+    setEditPayBenef(p.beneficiary);
+    setEditPayCheck(p.checkNumber);
+    setEditPayBank(p.bankName || "");
+    setEditPayAmount(String(p.amount));
+    setEditPayDate(p.paidAt.slice(0, 10));
+    setEditPayNote(p.note || "");
+  }
+
+  async function doUpdatePayment() {
+    if (!editingPayment || !editPayCheck || !editPayAmount) { toast.error("Champs requis manquants."); return; }
+    setLoading(true);
+    try {
+      await updateSIRPayment(editingPayment.id, {
+        beneficiary: editPayBenef,
+        checkNumber: editPayCheck,
+        bankName: editPayBank || undefined,
+        amount: Number(editPayAmount),
+        paidAt: editPayDate,
+        note: editPayNote || undefined,
+      });
+      toast.success("Chèque modifié.");
+      setEditingPayment(null);
+      router.refresh();
+    } catch (e: any) { toast.error(e.message); }
+    finally { setLoading(false); }
+  }
+
+  async function doDeletePayment(id: string, checkNumber: string) {
+    if (!confirm(`Supprimer le chèque N° ${checkNumber} ?`)) return;
+    try {
+      await deleteSIRPayment(id);
+      toast.success("Chèque supprimé.");
+      router.refresh();
+    } catch (e: any) { toast.error(e.message); }
+  }
 
   // Delivery form
   const [dlPdfUrl, setDlPdfUrl] = useState("");
@@ -337,6 +384,7 @@ export function SIROrderDetailClient({ order, role }: { order: SIROrder; role: s
                       <TableHead className="text-right">Montant</TableHead>
                       <TableHead>Date</TableHead>
                       <TableHead>Par</TableHead>
+                      {(isDF || isAdmin) && <TableHead></TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -348,6 +396,18 @@ export function SIROrderDetailClient({ order, role }: { order: SIROrder; role: s
                         <TableCell className="text-right">{fmt(p.amount)} FCFA</TableCell>
                         <TableCell className="text-sm text-gray-400">{new Date(p.paidAt).toLocaleDateString("fr-CI")}</TableCell>
                         <TableCell className="text-sm text-gray-400">{p.user.name}</TableCell>
+                        {(isDF || isAdmin) && (
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-gray-400 hover:text-blue-600" onClick={() => openEditPayment(p)}>
+                                <Pencil className="w-3.5 h-3.5" />
+                              </Button>
+                              <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-gray-300 hover:text-red-500" onClick={() => doDeletePayment(p.id, p.checkNumber)}>
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        )}
                       </TableRow>
                     ))}
                   </TableBody>
@@ -577,6 +637,47 @@ export function SIROrderDetailClient({ order, role }: { order: SIROrder; role: s
             <Button variant="outline" onClick={() => setShowPayment(false)}>Annuler</Button>
             <Button className="bg-yellow-600 hover:bg-yellow-700" disabled={loading} onClick={doPayment}>
               <CreditCard className="w-4 h-4 mr-2" /> Enregistrer le chèque
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Modifier chèque */}
+      <Dialog open={!!editingPayment} onOpenChange={(v) => { if (!v) setEditingPayment(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Pencil className="w-4 h-4" /> Modifier le chèque</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label>Bénéficiaire *</Label>
+                <Input value={editPayBenef} onChange={(e) => setEditPayBenef(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label>N° Chèque *</Label>
+                <Input value={editPayCheck} onChange={(e) => setEditPayCheck(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label>Banque</Label>
+                <Input value={editPayBank} onChange={(e) => setEditPayBank(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label>Montant (FCFA) *</Label>
+                <Input type="number" value={editPayAmount} onChange={(e) => setEditPayAmount(e.target.value)} />
+              </div>
+              <div className="space-y-1 col-span-2">
+                <Label>Date *</Label>
+                <Input type="date" value={editPayDate} onChange={(e) => setEditPayDate(e.target.value)} />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label>Note</Label>
+              <Textarea rows={2} value={editPayNote} onChange={(e) => setEditPayNote(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setEditingPayment(null)}>Annuler</Button>
+            <Button className="bg-blue-600 hover:bg-blue-700" disabled={loading} onClick={doUpdatePayment}>
+              <CheckCircle className="w-4 h-4 mr-2" /> Enregistrer les modifications
             </Button>
           </DialogFooter>
         </DialogContent>
