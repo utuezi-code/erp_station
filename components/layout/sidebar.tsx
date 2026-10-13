@@ -65,6 +65,7 @@ const navGroups: NavGroup[] = [
       { label: "Bons de commande SIR", href: "/dashboard/commercial/sir-orders", icon: ShoppingCart, roles: [DC, DF, DG, "ADMIN"] },
       { label: "Stock GESTOCI", href: "/dashboard/commercial/gestoci", icon: Warehouse, roles: [DC, DF, DG, "ADMIN"] },
       { label: "Comptes par station", href: "/dashboard/commercial/stations", icon: BookOpen, roles: [DC, DF, DG, "ADMIN"] },
+      { label: "Clients crédit", href: "/dashboard/commercial/clients-credit", icon: Users, roles: [DC, DF, DG, "ADMIN"] },
       { label: "Suivi ADV", href: "/dashboard/commercial/adv", icon: LineChart, roles: [DC, DF, DG, "ADMIN"] },
       { label: "Mises à disposition", href: "/dashboard/approvisionnement/mises-a-disposition", icon: Truck, roles: ["ADMIN", "RESPONSABLE_SERVICE", DC, DF, DG, "GERANT"] },
     ],
