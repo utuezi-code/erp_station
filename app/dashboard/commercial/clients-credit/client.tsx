@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
+import { ExternalLink } from "lucide-react";
 import {
   createClientCredit,
   saveClientCreditSoldeInitial,
@@ -642,7 +644,7 @@ export function ClientsCreditClient({ clients: initialClients, fuels, annee }: P
                   {client.code && <p className="text-xs text-gray-500">{client.code}</p>}
                   {client.telephone && <p className="text-xs text-gray-500">{client.telephone}</p>}
                 </div>
-                <div className="text-right">
+                <div className="text-right flex flex-col items-end gap-0.5">
                   <p className={`font-bold text-base ${client.soldeCourant > 0 ? "text-red-600" : "text-green-600"}`}>
                     {formatMontant(client.soldeCourant)} FCFA
                   </p>
@@ -650,8 +652,15 @@ export function ClientsCreditClient({ clients: initialClients, fuels, annee }: P
                     {client.soldeCourant > 0 ? "Doit payer" : "À jour"}
                   </p>
                   {!client.active && (
-                    <span className="inline-block mt-1 text-xs bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded px-1.5 py-0.5">Inactif</span>
+                    <span className="inline-block text-xs bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded px-1.5 py-0.5">Inactif</span>
                   )}
+                  <Link
+                    href={`/dashboard/commercial/clients-credit/${client.id}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 hover:underline mt-0.5"
+                  >
+                    <ExternalLink className="w-3 h-3" /> Détail & PDF
+                  </Link>
                 </div>
               </div>
             </div>
