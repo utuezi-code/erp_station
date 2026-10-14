@@ -60,9 +60,9 @@ const navGroups: NavGroup[] = [
     label: "Trésorerie",
     items: [
       { label: "Versements stations", href: "/dashboard/direction-financiere/versements", icon: ArrowUpCircle, roles: [DF, DG, "ADMIN"] },
-      { label: "Comptes par station", href: "/dashboard/commercial/stations", icon: BookOpen, roles: [DF, DG, "ADMIN"] },
-      { label: "Clients crédit", href: "/dashboard/commercial/clients-credit", icon: Users, roles: [DF, DG, "ADMIN"] },
-      { label: "Suivi ADV", href: "/dashboard/commercial/adv", icon: LineChart, roles: [DF, DG, "ADMIN"] },
+      { label: "Comptes par station", href: "/dashboard/direction-financiere/stations", icon: BookOpen, roles: [DF, DG, "ADMIN"] },
+      { label: "Clients crédit", href: "/dashboard/direction-financiere/clients-credit", icon: Users, roles: [DF, DG, "ADMIN"] },
+      { label: "Suivi ADV", href: "/dashboard/direction-financiere/adv", icon: LineChart, roles: [DF, DG, "ADMIN"] },
       { label: "Tableau financier", href: "/dashboard/direction-financiere", icon: BarChart3, roles: [DF, DG, "ADMIN"] },
     ],
   },
