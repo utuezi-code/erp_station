@@ -223,7 +223,156 @@ function AddLivraisonModal({
   );
 }
 
-// ─── Add Mouvement Modal ───────────────────────────────────────────────────────
+// ─── Add Versement Modal ───────────────────────────────────────────────────────
+
+const BANQUES = ["AFG", "BACI", "BOA", "ECOBANK", "SGBCI", "SIB", "UBA", "NSIA", "Autre"];
+
+function AddVersementModal({
+  clientId,
+  clientNom,
+  soldeCourant,
+  onClose,
+  onDone,
+}: {
+  clientId: string;
+  clientNom: string;
+  soldeCourant: number;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [montant, setMontant] = useState("");
+  const [modePaiement, setModePaiement] = useState<"especes" | "cheque" | "virement">("cheque");
+
+  const resteApres = soldeCourant - Number(montant || 0);
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    fd.set("clientId", clientId);
+    fd.set("type", "NOTE_CREDIT");
+    const banque = fd.get("banque") as string;
+    const reference = fd.get("reference") as string;
+    const mode = modePaiement === "especes" ? "Espèces" : modePaiement === "cheque" ? "Chèque" : "Virement";
+    fd.set("libelle", `Versement ${mode}${banque ? ` - ${banque}` : ""}`);
+    startTransition(async () => {
+      const res = await addMouvementClientCredit(fd);
+      if (res.success) { onDone(); onClose(); }
+      else setError(res.error ?? "Erreur");
+    });
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-md p-6">
+        <div className="flex items-center justify-between mb-1">
+          <h2 className="text-lg font-semibold">Enregistrer un versement</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
+        </div>
+        <p className="text-sm text-gray-500 mb-4">
+          {clientNom} — solde actuel : <span className="font-medium text-red-600">{formatMontant(soldeCourant)} FCFA</span>
+        </p>
+
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div>
+            <label className="block text-sm font-medium mb-1">Date *</label>
+            <input name="date" type="date" required defaultValue={new Date().toISOString().slice(0, 10)}
+              className="w-full border rounded-lg px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-700" />
+          </div>
+
+          {/* Mode de paiement */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Mode de paiement *</label>
+            <div className="flex gap-2">
+              {(["cheque", "virement", "especes"] as const).map((m) => (
+                <button key={m} type="button"
+                  onClick={() => setModePaiement(m)}
+                  className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                    modePaiement === m
+                      ? "bg-blue-600 text-white border-blue-600"
+                      : "border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
+                  }`}>
+                  {m === "cheque" ? "Chèque" : m === "virement" ? "Virement" : "Espèces"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Montant (FCFA) *</label>
+            <input name="montant" type="number" step="1" min="1" required value={montant}
+              onChange={(e) => setMontant(e.target.value)}
+              className="w-full border rounded-lg px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-700 text-right" />
+          </div>
+
+          {modePaiement !== "especes" && (
+            <>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  {modePaiement === "cheque" ? "N° Chèque" : "N° Ordre de virement"}
+                </label>
+                <input name="reference" placeholder={modePaiement === "cheque" ? "Ex: 0012345" : "Ex: OV-2026-001"}
+                  className="w-full border rounded-lg px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-700" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Banque *</label>
+                <select name="banque" required className="w-full border rounded-lg px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-700">
+                  <option value="">Choisir une banque...</option>
+                  {BANQUES.map((b) => <option key={b} value={b}>{b}</option>)}
+                </select>
+              </div>
+            </>
+          )}
+
+          {modePaiement === "especes" && (
+            <div>
+              <label className="block text-sm font-medium mb-1">Bordereau / Référence</label>
+              <input name="reference" className="w-full border rounded-lg px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-700" />
+              <input type="hidden" name="banque" value="" />
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Note</label>
+            <input name="note" placeholder="Observation éventuelle"
+              className="w-full border rounded-lg px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-700" />
+          </div>
+
+          {/* Récapitulatif */}
+          {Number(montant) > 0 && (
+            <div className={`rounded-lg p-3 text-sm ${resteApres <= 0 ? "bg-green-50 dark:bg-green-900/20" : "bg-orange-50 dark:bg-orange-900/20"}`}>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Solde actuel</span>
+                <span className="font-medium text-red-600">{formatMontant(soldeCourant)} FCFA</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Versement</span>
+                <span className="font-medium text-green-600">− {formatMontant(Number(montant))} FCFA</span>
+              </div>
+              <div className="flex justify-between font-semibold border-t mt-1 pt-1">
+                <span>Reste dû</span>
+                <span className={resteApres <= 0 ? "text-green-700" : "text-orange-700"}>
+                  {formatMontant(Math.max(0, resteApres))} FCFA
+                </span>
+              </div>
+            </div>
+          )}
+
+          {error && <p className="text-red-600 text-sm">{error}</p>}
+          <div className="flex gap-2 justify-end pt-2">
+            <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg border text-sm hover:bg-gray-50 dark:hover:bg-gray-800">Annuler</button>
+            <button type="submit" disabled={pending || !montant} className="px-4 py-2 rounded-lg bg-green-600 text-white text-sm hover:bg-green-700 disabled:opacity-50">
+              {pending ? "Enregistrement..." : "Enregistrer le versement"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ─── Add Mouvement Modal (autres types) ───────────────────────────────────────
 
 function AddMouvementModal({
   clientId,
@@ -251,7 +400,7 @@ function AddMouvementModal({
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-md p-6">
-        <h2 className="text-lg font-semibold mb-4">Ajouter un mouvement</h2>
+        <h2 className="text-lg font-semibold mb-4">Autre mouvement (remise, note de débit…)</h2>
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
             <label className="block text-sm font-medium mb-1">Date *</label>
@@ -260,7 +409,7 @@ function AddMouvementModal({
           <div>
             <label className="block text-sm font-medium mb-1">Type *</label>
             <select name="type" required className="w-full border rounded-lg px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-700">
-              {Object.entries(TYPE_LABELS).map(([k, v]) => (
+              {Object.entries(TYPE_LABELS).filter(([k]) => k !== "NOTE_CREDIT").map(([k, v]) => (
                 <option key={k} value={k}>{v}</option>
               ))}
             </select>
@@ -359,10 +508,10 @@ function ClientDetailPanel({
   annee: number;
   onRefresh: () => void;
 }) {
+  const [showVersement, setShowVersement] = useState(false);
   const [showLivraison, setShowLivraison] = useState(false);
   const [showMouvement, setShowMouvement] = useState(false);
   const [showSoldeInit, setShowSoldeInit] = useState(false);
-  const [activeTab, setActiveTab] = useState<"livraisons" | "mouvements">("livraisons");
 
   return (
     <div className="space-y-4">
@@ -390,17 +539,33 @@ function ClientDetailPanel({
 
       {/* Actions */}
       <div className="flex flex-wrap gap-2">
+        {/* Versement — action principale */}
+        <button
+          onClick={() => setShowVersement(true)}
+          className="flex items-center gap-1.5 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 shadow-sm"
+        >
+          <span className="text-base leading-none">↓</span> Versement client
+        </button>
         <button onClick={() => setShowLivraison(true)} className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">
           + Livraison
         </button>
-        <button onClick={() => setShowMouvement(true)} className="px-3 py-1.5 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700">
-          + Mouvement
+        <button onClick={() => setShowMouvement(true)} className="px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-800">
+          Autre mouvement
         </button>
-        <button onClick={() => setShowSoldeInit(true)} className="px-3 py-1.5 bg-gray-600 text-white rounded-lg text-sm hover:bg-gray-700">
+        <button onClick={() => setShowSoldeInit(true)} className="px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-800">
           Solde initial {annee}
         </button>
       </div>
 
+      {showVersement && (
+        <AddVersementModal
+          clientId={client.id}
+          clientNom={client.nom}
+          soldeCourant={client.soldeCourant}
+          onClose={() => setShowVersement(false)}
+          onDone={onRefresh}
+        />
+      )}
       {showLivraison && (
         <AddLivraisonModal clientId={client.id} fuels={fuels} onClose={() => setShowLivraison(false)} onDone={onRefresh} />
       )}
@@ -411,7 +576,7 @@ function ClientDetailPanel({
         <SoldeInitialModal client={client} annee={annee} currentSolde={client.soldeInitial} onClose={() => setShowSoldeInit(false)} onDone={onRefresh} />
       )}
 
-      <p className="text-xs text-gray-400">Les détails de livraisons/mouvements se rechargent depuis le serveur. Rechargez la page pour voir l&apos;historique complet.</p>
+      <p className="text-xs text-gray-400">Rechargez la page pour voir l&apos;historique complet après enregistrement.</p>
     </div>
   );
 }
