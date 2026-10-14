@@ -15,7 +15,7 @@ interface ClientRow {
   active: boolean;
 }
 
-interface SoldeInitialRow {
+type SoldeInitialRow = {
   solde: number;
   annee: number;
 } | null;
