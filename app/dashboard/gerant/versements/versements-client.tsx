@@ -31,11 +31,8 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 const FRAIS_LABELS: Record<string, string> = {
-  CARBURANT_INTERNE: "Carburant interne",
-  FRAIS_ROUTE: "Frais de route",
   CONTRE_PLEIN: "Contre-plein",
-  AVANCE_POMPISTE: "Avance pompiste",
-  AUTRE: "Autre",
+  AUTRE: "Autre charge",
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -78,14 +75,14 @@ interface Props {
   stationId: string;
   versements: Versement[];
   bankAccounts: { id: string; bankName: string; accountNumber: string }[];
-  frais: Frais[];
-  caMap: Record<string, number>;
+  frais?: Frais[];
+  caMap?: Record<string, number>;
   userRole: string;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function VersementsClientPage({ stationId, versements, bankAccounts, frais, caMap, userRole }: Props) {
+export function VersementsClientPage({ stationId, versements, bankAccounts, frais = [], caMap = {}, userRole }: Props) {
   const router = useRouter();
   const [openVersement, setOpenVersement] = useState(false);
   const [openFrais, setOpenFrais] = useState(false);

@@ -124,7 +124,7 @@ export async function validateVersement(id: string, approved: boolean): Promise<
 const fraisSchema = z.object({
   stationId: z.string(),
   date: z.string(),
-  type: z.enum(["CARBURANT_INTERNE", "FRAIS_ROUTE", "CONTRE_PLEIN", "AVANCE_POMPISTE", "AUTRE"]),
+  type: z.enum(["CONTRE_PLEIN", "AUTRE"]),
   libelle: z.string().min(1),
   montant: z.coerce.number().positive(),
 });

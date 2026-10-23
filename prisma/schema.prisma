@@ -94,10 +94,7 @@ enum MouvementCompteType {
 }
 
 enum FraisType {
-  CARBURANT_INTERNE
-  FRAIS_ROUTE
   CONTRE_PLEIN
-  AVANCE_POMPISTE
   AUTRE
 }
 
