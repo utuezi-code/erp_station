@@ -258,6 +258,7 @@ model Fuel {
   gestociWithdrawalItems GESTOCIWithdrawalItem[] @relation("GESTOCIWithdrawalItemFuel")
   gestociStockReadings   GESTOCIStockReading[]   @relation("GESTOCIStockReadingFuel")
   clientLivraisons       ClientCreditLivraison[]
+  clientConditions       ClientConditionCarburant[]
   priceProposals         FuelPriceProposal[]
 }
 
@@ -1093,19 +1094,38 @@ model MouvementCompteStation {
 // ─── CLIENTS CRÉDIT CARBURANT ─────────────────────────────────────────────────
 
 model ClientCreditCompte {
-  id        String   @id @default(cuid())
-  nom       String
-  code      String?  @unique
-  telephone String?
-  adresse   String?
-  active    Boolean  @default(true)
-  note      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String   @id @default(cuid())
+  nom             String
+  code            String?  @unique
+  telephone       String?
+  adresse         String?
+  active          Boolean  @default(true)
+  note            String?
+  delaiReglement  String?  // ex: "LUNDI/JEUDI", "CHQ LUNDI", "CASH"
+  typeContrat     String?  // ex: "GL" (gérance libre), "LOCATION", "DIRECT"
+  creditStation   Decimal? @db.Decimal(14, 2)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  soldeInitiaux ClientCreditSoldeInitial[]
-  mouvements    MouvementClientCredit[]
-  livraisons    ClientCreditLivraison[]
+  soldeInitiaux     ClientCreditSoldeInitial[]
+  mouvements        MouvementClientCredit[]
+  livraisons        ClientCreditLivraison[]
+  conditionsCarb    ClientConditionCarburant[]
+}
+
+model ClientConditionCarburant {
+  id          String             @id @default(cuid())
+  clientId    String
+  client      ClientCreditCompte @relation(fields: [clientId], references: [id])
+  fuelId      String
+  fuel        Fuel               @relation(fields: [fuelId], references: [id])
+  remise      Decimal            @default(0) @db.Decimal(10, 2)
+  stockActuel Decimal            @default(0) @db.Decimal(12, 3)
+  puPompe     Decimal            @default(0) @db.Decimal(10, 2)
+  updatedAt   DateTime           @updatedAt
+
+  @@unique([clientId, fuelId])
+  @@index([clientId])
 }
 
 model ClientCreditSoldeInitial {
