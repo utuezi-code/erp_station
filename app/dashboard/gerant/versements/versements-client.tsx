@@ -85,8 +85,6 @@ interface Props {
 export function VersementsClientPage({ stationId, versements, bankAccounts, frais = [], caMap = {}, userRole }: Props) {
   const router = useRouter();
   const [openVersement, setOpenVersement] = useState(false);
-  const [openFrais, setOpenFrais] = useState(false);
-  const [fraisDate, setFraisDate] = useState(todayStr());
   const [recetteDate, setRecetteDate] = useState(todayStr());
   const [loading, setLoading] = useState(false);
   const [expandedDates, setExpandedDates] = useState<Record<string, boolean>>({});
@@ -121,27 +119,25 @@ export function VersementsClientPage({ stationId, versements, bankAccounts, frai
     e.preventDefault();
     setLoading(true);
     const fd = new FormData(e.currentTarget);
+
+    // Sauvegarder les frais inline d'abord
+    for (const ligne of fraisLignes) {
+      if (!ligne.libelle || !ligne.montant) continue;
+      const ff = new FormData();
+      ff.append("stationId", stationId);
+      ff.append("date", recetteDate);
+      ff.append("type", ligne.type);
+      ff.append("libelle", ligne.libelle);
+      ff.append("montant", ligne.montant);
+      await saveFrais(ff);
+    }
+
     const result = await createVersement(fd);
     setLoading(false);
     if (result.success) {
       toast.success("Versement déclaré.");
       setOpenVersement(false);
-      router.refresh();
-    } else {
-      toast.error(result.error || "Une erreur est survenue.");
-    }
-  }
-
-  // ── Frais form submit ──────────────────────────────────────────────────────
-  async function handleFraisSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setLoading(true);
-    const fd = new FormData(e.currentTarget);
-    const result = await saveFrais(fd);
-    setLoading(false);
-    if (result.success) {
-      toast.success("Frais enregistré.");
-      setOpenFrais(false);
+      setFraisLignes([]);
       router.refresh();
     } else {
       toast.error(result.error || "Une erreur est survenue.");
@@ -170,15 +166,32 @@ export function VersementsClientPage({ stationId, versements, bankAccounts, frai
 
   const ravForRecette = getRavData(recetteDate);
 
+  // ── Frais inline dans le formulaire de versement ───────────────────────────
+  const [fraisLignes, setFraisLignes] = useState<{ type: string; libelle: string; montant: string }[]>([]);
+
+  function addFraisLigne() {
+    setFraisLignes((p) => [...p, { type: "CONTRE_PLEIN", libelle: "", montant: "" }]);
+  }
+
+  function removeFraisLigne(i: number) {
+    setFraisLignes((p) => p.filter((_, idx) => idx !== i));
+  }
+
+  function updateFraisLigne(i: number, field: string, value: string) {
+    setFraisLignes((p) => p.map((l, idx) => idx === i ? { ...l, [field]: value } : l));
+  }
+
+  const fraisLignesMontant = fraisLignes.reduce((s, l) => s + (parseFloat(l.montant) || 0), 0);
+  const fraisExistants = frais.filter((f) => f.date.split("T")[0] === recetteDate);
+  const totalFraisJour = ravForRecette.totalFrais + fraisLignesMontant;
+  const ravApresNouveauxFrais = ravForRecette.ca - totalFraisJour;
+
   return (
     <div className="space-y-6">
 
       {/* ── Actions rapides ─────────────────────────────────────────────────── */}
       <div className="flex flex-wrap gap-3">
-        <Button onClick={() => { setFraisDate(todayStr()); setOpenFrais(true); }} variant="outline" className="border-orange-200 text-orange-700 hover:bg-orange-50">
-          <Plus className="w-4 h-4 mr-2" /> Ajouter un frais
-        </Button>
-        <Button onClick={() => { setRecetteDate(todayStr()); setOpenVersement(true); }} className="bg-[#0369A1] hover:bg-blue-700">
+        <Button onClick={() => { setRecetteDate(todayStr()); setFraisLignes([]); setOpenVersement(true); }} className="bg-[#0369A1] hover:bg-blue-700">
           <Plus className="w-4 h-4 mr-2" /> Déclarer un versement
         </Button>
       </div>
@@ -247,7 +260,7 @@ export function VersementsClientPage({ stationId, versements, bankAccounts, frai
                             size="sm"
                             variant="ghost"
                             className="text-xs text-blue-600 hover:bg-blue-50 h-7 px-2"
-                            onClick={(e) => { e.stopPropagation(); setRecetteDate(dateStr); setOpenVersement(true); }}
+                            onClick={(e) => { e.stopPropagation(); setRecetteDate(dateStr); setFraisLignes([]); setOpenVersement(true); }}
                           >
                             + Versement
                           </Button>
@@ -384,52 +397,6 @@ export function VersementsClientPage({ stationId, versements, bankAccounts, frai
         </div>
       </div>
 
-      {/* ── Dialog : Ajouter frais ──────────────────────────────────────────── */}
-      <Dialog open={openFrais} onOpenChange={setOpenFrais}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>Ajouter un frais journalier</DialogTitle></DialogHeader>
-          <form onSubmit={handleFraisSubmit} className="space-y-4">
-            <input type="hidden" name="stationId" value={stationId} />
-            <div className="space-y-2">
-              <Label>Date</Label>
-              <Input
-                name="date"
-                type="date"
-                value={fraisDate}
-                max={todayStr()}
-                onChange={(e) => setFraisDate(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Catégorie</Label>
-              <Select name="type" required>
-                <SelectTrigger><SelectValue placeholder="Choisir..." /></SelectTrigger>
-                <SelectContent>
-                  {Object.entries(FRAIS_LABELS).map(([k, v]) => (
-                    <SelectItem key={k} value={k}>{v}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Libellé</Label>
-              <Input name="libelle" placeholder="Ex : Carburant tricycle livraison Sirihio" required />
-            </div>
-            <div className="space-y-2">
-              <Label>Montant (FCFA)</Label>
-              <Input name="montant" type="number" step="1" min="1" required />
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setOpenFrais(false)}>Annuler</Button>
-              <Button type="submit" disabled={loading} className="bg-orange-600 hover:bg-orange-700">
-                {loading ? "..." : "Enregistrer"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
       {/* ── Dialog : Déclarer versement ─────────────────────────────────────── */}
       <Dialog open={openVersement} onOpenChange={setOpenVersement}>
         <DialogContent className="max-w-md">
@@ -451,6 +418,72 @@ export function VersementsClientPage({ stationId, versements, bankAccounts, frai
               <p className="text-[11px] text-slate-400">Peut être n'importe quelle date passée (J+1, J+5, J+30…)</p>
             </div>
 
+            {/* ── Frais du jour ──────────────────────────────────────────── */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold text-slate-700">Charges du jour</Label>
+                <button
+                  type="button"
+                  onClick={addFraisLigne}
+                  className="text-xs text-orange-600 hover:text-orange-700 flex items-center gap-1 font-medium"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Ajouter
+                </button>
+              </div>
+
+              {/* Frais déjà enregistrés pour cette date */}
+              {fraisExistants.length > 0 && (
+                <div className="space-y-1">
+                  {fraisExistants.map((f) => (
+                    <div key={f.id} className="flex items-center justify-between bg-orange-50 rounded-lg px-3 py-1.5 text-xs">
+                      <span className="text-orange-600 font-medium">{FRAIS_LABELS[f.type] ?? f.type}</span>
+                      <span className="text-slate-500 flex-1 mx-2 truncate">{f.libelle}</span>
+                      <span className="tabular-nums font-semibold text-orange-700">− {fmt(Number(f.montant))} FCFA</span>
+                      <button type="button" onClick={() => handleDeleteFrais(f.id)} className="ml-2 text-slate-300 hover:text-red-500">
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Nouvelles lignes de frais inline */}
+              {fraisLignes.map((ligne, i) => (
+                <div key={i} className="grid grid-cols-[120px_1fr_90px_auto] gap-2 items-center">
+                  <select
+                    value={ligne.type}
+                    onChange={(e) => updateFraisLigne(i, "type", e.target.value)}
+                    className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700 focus:outline-none focus:ring-1 focus:ring-orange-300"
+                  >
+                    {Object.entries(FRAIS_LABELS).map(([k, v]) => (
+                      <option key={k} value={k}>{v}</option>
+                    ))}
+                  </select>
+                  <input
+                    value={ligne.libelle}
+                    onChange={(e) => updateFraisLigne(i, "libelle", e.target.value)}
+                    placeholder="Libellé"
+                    className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700 focus:outline-none focus:ring-1 focus:ring-orange-300"
+                  />
+                  <input
+                    value={ligne.montant}
+                    onChange={(e) => updateFraisLigne(i, "montant", e.target.value)}
+                    type="number"
+                    min="1"
+                    placeholder="Montant"
+                    className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700 focus:outline-none focus:ring-1 focus:ring-orange-300"
+                  />
+                  <button type="button" onClick={() => removeFraisLigne(i)} className="text-slate-300 hover:text-red-500">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+
+              {fraisExistants.length === 0 && fraisLignes.length === 0 && (
+                <p className="text-xs text-slate-400 italic">Aucune charge pour ce jour — cliquez sur Ajouter si nécessaire.</p>
+              )}
+            </div>
+
             {/* RAV recap */}
             {recetteDate && (
               <div className="bg-slate-50 rounded-xl p-3 space-y-1 text-sm">
@@ -458,15 +491,15 @@ export function VersementsClientPage({ stationId, versements, bankAccounts, frai
                   <span>CA du jour</span>
                   <span className="tabular-nums font-medium text-slate-700">{fmt(ravForRecette.ca)} FCFA</span>
                 </div>
-                {ravForRecette.totalFrais > 0 && (
+                {totalFraisJour > 0 && (
                   <div className="flex justify-between text-orange-600">
-                    <span>Frais à déduire</span>
-                    <span className="tabular-nums">− {fmt(ravForRecette.totalFrais)} FCFA</span>
+                    <span>Charges à déduire</span>
+                    <span className="tabular-nums">− {fmt(totalFraisJour)} FCFA</span>
                   </div>
                 )}
                 <div className="flex justify-between font-bold text-slate-900 border-t border-slate-200 pt-1 mt-1">
                   <span>RAV (Reste À Verser)</span>
-                  <span className="tabular-nums">{fmt(ravForRecette.rav)} FCFA</span>
+                  <span className="tabular-nums">{fmt(ravApresNouveauxFrais)} FCFA</span>
                 </div>
                 {ravForRecette.verseTotalForDate > 0 && (
                   <div className="flex justify-between text-emerald-600">
@@ -496,7 +529,7 @@ export function VersementsClientPage({ stationId, versements, bankAccounts, frai
                   type="number"
                   step="1"
                   min="1"
-                  placeholder={ravForRecette.rav > 0 ? String(Math.max(0, ravForRecette.rav - ravForRecette.verseTotalForDate)) : ""}
+                  placeholder={ravApresNouveauxFrais > 0 ? String(Math.max(0, ravApresNouveauxFrais - ravForRecette.verseTotalForDate)) : ""}
                   required
                 />
               </div>
