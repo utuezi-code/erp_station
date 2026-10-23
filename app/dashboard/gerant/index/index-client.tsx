@@ -38,9 +38,9 @@ export function IndexClientPage({ stationId, selectedDate, pumps, indexMap, user
     const fd = new FormData(e.currentTarget);
     const start = parseFloat(fd.get("indexStart") as string);
     const end = parseFloat(fd.get("indexEnd") as string);
-    if (!isNaN(end) && end <= start) {
+    if (!isNaN(end) && end < start) {
       setEndErrors((e) => ({ ...e, [nozzleId]: true }));
-      toast.error("L'index de fin doit être supérieur à l'index de début.");
+      toast.error("L'index de fin ne peut pas être inférieur à l'index de début.");
       return;
     }
     setEndErrors((e) => ({ ...e, [nozzleId]: false }));
