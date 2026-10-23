@@ -36,7 +36,6 @@ export default async function ConsoliderGlobalPage() {
       dailyIndexes: {
         where: { date: { gte: yearStart }, validated: true },
         include: { nozzle: { select: { fuelId: true } } },
-        select: { volumeSold: true, revenue: true, date: true },
       },
     },
   });
