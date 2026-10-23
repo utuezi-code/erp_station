@@ -11,9 +11,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Truck, Plus, Trash2, BarChart2, ClipboardList, AlertTriangle, ArrowDownCircle, ArrowUpCircle, Upload } from "lucide-react";
+import { Truck, Plus, Trash2, BarChart2, ClipboardList, AlertTriangle, ArrowDownCircle, ArrowUpCircle, Upload, CheckCircle, PackageCheck } from "lucide-react";
 import { toast } from "sonner";
-import { createWithdrawal, recordStockReading } from "./actions";
+import { createWithdrawal, recordStockReading, confirmerBL, marquerLivre } from "./actions";
 import { useRouter } from "next/navigation";
 
 function fmt(n: any, dec = 0) { return Number(n || 0).toLocaleString("fr-CI", { maximumFractionDigits: dec, minimumFractionDigits: dec }); }
@@ -109,6 +109,7 @@ export function GESTOCIStockClient({
   const [showNewBL, setShowNewBL] = useState(false);
   const [showReading, setShowReading] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   // BL form state
   const [blDate, setBlDate] = useState(new Date().toISOString().slice(0, 10));
@@ -429,6 +430,35 @@ export function GESTOCIStockClient({
                           <TableCell className="text-xs">
                             <div className="font-mono text-gray-700">{w.blNumber ? `N° ${w.blNumber}` : w.number}</div>
                             {w.bepNumber && <div className="text-gray-400">BEP {w.bepNumber}</div>}
+                            <div className="mt-1 flex items-center gap-1 flex-wrap">
+                              {w.status === "EN_COURS" && (
+                                <Badge className="bg-orange-100 text-orange-700 text-[10px] border-0">En cours</Badge>
+                              )}
+                              {w.status === "LIVRE" && (
+                                <Badge className="bg-blue-100 text-blue-700 text-[10px] border-0">Livré</Badge>
+                              )}
+                              {w.status === "CONFIRME" && (
+                                <Badge className="bg-green-100 text-green-700 text-[10px] border-0"><CheckCircle className="w-2.5 h-2.5 mr-0.5" />Confirmé</Badge>
+                              )}
+                              {isDC && w.status === "EN_COURS" && (
+                                <button
+                                  className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 disabled:opacity-50"
+                                  disabled={actionLoading === w.id}
+                                  onClick={async (e) => { e.stopPropagation(); setActionLoading(w.id); try { await marquerLivre(w.id); toast.success("BL marqué livré."); router.refresh(); } catch(err: any) { toast.error(err.message); } finally { setActionLoading(null); } }}
+                                >
+                                  Marquer livré
+                                </button>
+                              )}
+                              {isDC && (w.status === "EN_COURS" || w.status === "LIVRE") && (
+                                <button
+                                  className="text-[10px] px-1.5 py-0.5 rounded bg-green-50 text-green-700 hover:bg-green-100 font-semibold disabled:opacity-50"
+                                  disabled={actionLoading === w.id}
+                                  onClick={async (e) => { e.stopPropagation(); if (!confirm(`Confirmer la livraison BL ${w.blNumber ?? w.number} ? Un dépôtage sera créé pour chaque station.`)) return; setActionLoading(w.id); try { await confirmerBL(w.id); toast.success("BL confirmé — dépotages créés."); router.refresh(); } catch(err: any) { toast.error(err.message); } finally { setActionLoading(null); } }}
+                                >
+                                  <PackageCheck className="w-2.5 h-2.5 inline mr-0.5" />Confirmer livraison
+                                </button>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell className="text-xs">
                             {w.items.map((item, idx) => (

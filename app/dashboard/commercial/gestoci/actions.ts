@@ -62,6 +62,85 @@ export async function createWithdrawal(data: {
   return { success: true };
 }
 
+export async function confirmerBL(withdrawalId: string) {
+  const session = await requireRole(["DIRECTION_COMMERCIALE", "ADMIN"]);
+  const user = session.user as any;
+
+  const withdrawal = await db.gESTOCIWithdrawal.findUnique({
+    where: { id: withdrawalId },
+    include: { items: { include: { fuel: true } } },
+  });
+  if (!withdrawal) throw new Error("BL introuvable.");
+  if (withdrawal.status === "CONFIRME") throw new Error("Ce BL est déjà confirmé.");
+
+  const deliveryDate = withdrawal.loadingDate ?? withdrawal.date;
+
+  await db.$transaction(async (tx) => {
+    // 1. Mettre à jour le statut du BL
+    await tx.gESTOCIWithdrawal.update({
+      where: { id: withdrawalId },
+      data: { status: "CONFIRME" },
+    });
+
+    // 2. Créer un FuelDelivery par item (par station + carburant)
+    for (const item of withdrawal.items) {
+      if (!item.stationId) continue;
+
+      // Vérifier qu'un dépotage n'existe pas déjà pour ce BL + station + fuel
+      const existing = await tx.fuelDelivery.findFirst({
+        where: {
+          stationId: item.stationId,
+          fuelId: item.fuelId,
+          blNumber: withdrawal.blNumber ?? withdrawal.number,
+          date: deliveryDate,
+        },
+      });
+      if (existing) continue;
+
+      await tx.fuelDelivery.create({
+        data: {
+          stationId: item.stationId,
+          fuelId: item.fuelId,
+          date: deliveryDate,
+          quantity: item.quantityReel,
+          blNumber: withdrawal.blNumber ?? withdrawal.number,
+          truckNumber: withdrawal.truckRef ?? null,
+          note: `BL GESTOCI ${withdrawal.number}${withdrawal.bepNumber ? ` · BEP ${withdrawal.bepNumber}` : ""}`,
+        },
+      });
+    }
+  });
+
+  await writeAuditLog({
+    userId: user.id,
+    entity: "GESTOCIWithdrawal",
+    entityId: withdrawalId,
+    action: "UPDATE",
+    meta: { number: withdrawal.number },
+  });
+
+  revalidatePath("/dashboard/commercial/gestoci");
+  revalidatePath("/dashboard/gerant/livraisons");
+  revalidatePath("/dashboard/gerant/stocks");
+  return { success: true };
+}
+
+export async function marquerLivre(withdrawalId: string) {
+  await requireRole(["DIRECTION_COMMERCIALE", "ADMIN"]);
+
+  const withdrawal = await db.gESTOCIWithdrawal.findUnique({ where: { id: withdrawalId } });
+  if (!withdrawal) throw new Error("BL introuvable.");
+  if (withdrawal.status === "CONFIRME") throw new Error("Ce BL est déjà confirmé.");
+
+  await db.gESTOCIWithdrawal.update({
+    where: { id: withdrawalId },
+    data: { status: "LIVRE" },
+  });
+
+  revalidatePath("/dashboard/commercial/gestoci");
+  return { success: true };
+}
+
 export async function recordStockReading(data: {
   date: string;
   readings: { fuelId: string; stockM15: number }[];
