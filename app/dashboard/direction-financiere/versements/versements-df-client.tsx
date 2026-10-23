@@ -144,7 +144,7 @@ export function VersementsDFClient({
             <SelectItem value="REJETE">Rejetés</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={filterRetard} onValueChange={setFilterRetard}>
+        <Select value={filterRetard} onValueChange={(v) => setFilterRetard(v ?? "ALL")}>
           <SelectTrigger className="w-44 h-9 text-sm">
             <SelectValue />
           </SelectTrigger>
