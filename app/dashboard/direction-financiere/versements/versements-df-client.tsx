@@ -133,7 +133,7 @@ export function VersementsDFClient({
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
+        <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v ?? "ALL")}>
           <SelectTrigger className="w-40 h-9 text-sm">
             <SelectValue />
           </SelectTrigger>
