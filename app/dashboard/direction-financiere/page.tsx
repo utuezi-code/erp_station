@@ -66,7 +66,7 @@ export default async function DirectionFinancierePage() {
 
   // Per-station summary
   const stationIds = stations.map((s) => s.id);
-  const [stationCA, stationVersements] = await Promise.all([
+  const [stationCA, stationVersements, stationIndexDetail] = await Promise.all([
     db.dailyIndex.groupBy({
       by: ["stationId"],
       where: { date: { gte: startOfMonth, lte: endOfMonth } },
@@ -77,10 +77,39 @@ export default async function DirectionFinancierePage() {
       where: { date: { gte: startOfMonth, lte: endOfMonth }, status: "VALIDE" },
       _sum: { amount: true },
     }),
+    db.dailyIndex.findMany({
+      where: { date: { gte: startOfMonth, lte: endOfMonth }, validated: true },
+      select: {
+        stationId: true,
+        volumeSold: true,
+        revenue: true,
+        nozzle: { select: { fuel: { select: { name: true, code: true } } } },
+      },
+    }),
   ]);
 
   const caByStation = Object.fromEntries(stationCA.map((r) => [r.stationId, Number(r._sum.revenue || 0)]));
   const versementsByStation = Object.fromEntries(stationVersements.map((r) => [r.stationId, Number(r._sum.amount || 0)]));
+
+  // Per-station per-fuel volumes + CA
+  type FuelAgg = { name: string; code: string; volume: number; ca: number };
+  const stationFuelMap: Record<string, Record<string, FuelAgg>> = {};
+  for (const row of stationIndexDetail) {
+    const sid = row.stationId;
+    const fuel = row.nozzle?.fuel;
+    if (!fuel) continue;
+    if (!stationFuelMap[sid]) stationFuelMap[sid] = {};
+    if (!stationFuelMap[sid][fuel.code]) stationFuelMap[sid][fuel.code] = { name: fuel.name, code: fuel.code, volume: 0, ca: 0 };
+    stationFuelMap[sid][fuel.code].volume += Number(row.volumeSold || 0);
+    stationFuelMap[sid][fuel.code].ca += Number(row.revenue || 0);
+  }
+  // Collect all fuel codes for column headers
+  const allFuelCodes = Array.from(new Set(stationIndexDetail.map((r) => r.nozzle?.fuel?.code).filter(Boolean))) as string[];
+  const fuelMeta: Record<string, string> = {};
+  for (const row of stationIndexDetail) {
+    const f = row.nozzle?.fuel;
+    if (f) fuelMeta[f.code] = f.name;
+  }
 
   const totalCA = Number(dailyMonth._sum.revenue || 0);
   const totalVersements = Number(versementsMonth._sum.amount || 0);
@@ -179,6 +208,86 @@ export default async function DirectionFinancierePage() {
           </div>
           <p className={`text-2xl font-bold tabular-nums ${resultatNet >= 0 ? "text-blue-700" : "text-red-600"}`}>{fmt(resultatNet)}</p>
           <p className="text-xs text-gray-400 mt-1">FCFA</p>
+        </div>
+      </div>
+
+      {/* Volumes vendus & CA par station */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm mb-6 overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-50 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-gray-900">Volumes vendus &amp; CA par station</h2>
+          <span className="text-xs text-gray-400">{now.toLocaleDateString("fr-CI", { month: "long", year: "numeric" })}</span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="bg-gray-50 text-gray-500 uppercase tracking-wide text-[10px]">
+                <th className="px-4 py-2.5 text-left font-semibold">Station</th>
+                {allFuelCodes.map((code) => (
+                  <th key={code} colSpan={2} className="px-4 py-2.5 text-center font-semibold border-l border-gray-100">{fuelMeta[code]}</th>
+                ))}
+                <th className="px-4 py-2.5 text-right font-semibold border-l border-gray-100">Vol. total (L)</th>
+                <th className="px-4 py-2.5 text-right font-semibold">CA total (FCFA)</th>
+              </tr>
+              <tr className="bg-gray-50/50 text-[10px] text-gray-400">
+                <th className="px-4 pb-2"></th>
+                {allFuelCodes.map((code) => (
+                  <>
+                    <th key={`${code}-vol`} className="px-4 pb-2 text-center border-l border-gray-100 font-normal">Volume (L)</th>
+                    <th key={`${code}-ca`} className="px-4 pb-2 text-center font-normal">CA (FCFA)</th>
+                  </>
+                ))}
+                <th className="px-4 pb-2 border-l border-gray-100"></th>
+                <th className="px-4 pb-2"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {stations.map((station, i) => {
+                const fuels = stationFuelMap[station.id] || {};
+                const totalVol = Object.values(fuels).reduce((s, f) => s + f.volume, 0);
+                const totalCa = Object.values(fuels).reduce((s, f) => s + f.ca, 0);
+                return (
+                  <tr key={station.id} className={i % 2 === 0 ? "bg-white" : "bg-gray-50/30"}>
+                    <td className="px-4 py-2.5 font-medium text-gray-800 whitespace-nowrap">{station.name}</td>
+                    {allFuelCodes.map((code) => {
+                      const f = fuels[code];
+                      return (
+                        <>
+                          <td key={`${code}-vol`} className="px-4 py-2.5 text-right tabular-nums text-gray-700 border-l border-gray-100">{f ? fmt(f.volume) : "—"}</td>
+                          <td key={`${code}-ca`} className="px-4 py-2.5 text-right tabular-nums text-blue-700 font-medium">{f ? fmt(f.ca) : "—"}</td>
+                        </>
+                      );
+                    })}
+                    <td className="px-4 py-2.5 text-right tabular-nums font-bold text-gray-900 border-l border-gray-100">{fmt(totalVol)}</td>
+                    <td className="px-4 py-2.5 text-right tabular-nums font-bold text-blue-700">{fmt(totalCa)}</td>
+                  </tr>
+                );
+              })}
+              {stations.length > 0 && (() => {
+                const grandVol = stations.reduce((s, st) => {
+                  const fuels = stationFuelMap[st.id] || {};
+                  return s + Object.values(fuels).reduce((x, f) => x + f.volume, 0);
+                }, 0);
+                const grandCa = Number(dailyMonth._sum.revenue || 0);
+                return (
+                  <tr className="bg-slate-700 text-white font-bold text-[11px]">
+                    <td className="px-4 py-3">TOTAL</td>
+                    {allFuelCodes.map((code) => {
+                      const vol = stations.reduce((s, st) => s + (stationFuelMap[st.id]?.[code]?.volume || 0), 0);
+                      const ca = stations.reduce((s, st) => s + (stationFuelMap[st.id]?.[code]?.ca || 0), 0);
+                      return (
+                        <>
+                          <td key={`${code}-vol`} className="px-4 py-3 text-right tabular-nums border-l border-slate-600">{fmt(vol)}</td>
+                          <td key={`${code}-ca`} className="px-4 py-3 text-right tabular-nums text-blue-200">{fmt(ca)}</td>
+                        </>
+                      );
+                    })}
+                    <td className="px-4 py-3 text-right tabular-nums border-l border-slate-600">{fmt(grandVol)}</td>
+                    <td className="px-4 py-3 text-right tabular-nums text-blue-200">{fmt(grandCa)}</td>
+                  </tr>
+                );
+              })()}
+            </tbody>
+          </table>
         </div>
       </div>
 
