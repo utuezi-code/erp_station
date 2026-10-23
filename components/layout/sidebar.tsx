@@ -49,6 +49,8 @@ const navGroups: NavGroup[] = [
       { label: "Index pompes", href: "/dashboard/gerant/index", icon: Gauge, roles: ["GERANT"] },
       { label: "Stocks cuves", href: "/dashboard/gerant/stocks", icon: Droplets, roles: ["GERANT"] },
       { label: "Encaissements", href: "/dashboard/gerant/encaissements", icon: Wallet, roles: ["GERANT"] },
+      { label: "Frais journaliers", href: "/dashboard/gerant/frais", icon: FileText, roles: ["GERANT"] },
+      { label: "Crédits pompistes", href: "/dashboard/gerant/credits-pompiste", icon: CreditCard, roles: ["GERANT"] },
       { label: "Versements", href: "/dashboard/gerant/versements", icon: ArrowUpCircle, roles: ["GERANT"] },
       { label: "Livraisons", href: "/dashboard/gerant/livraisons", icon: Package, roles: ["GERANT"] },
       { label: "Pompistes", href: "/dashboard/pompistes", icon: HardHat, roles: ["GERANT"] },
