@@ -240,74 +240,64 @@ export function StationsCompteClient({
             </CardContent>
           </Card>
 
-          {/* Détail par pistolet pour la/les stations affichées */}
+          {/* Détail journalier par pompe/pistolet pour la/les stations affichées */}
           {displayStations.map((s) => {
             const details = dailyIndexesDetail.filter((d) => d.stationId === s.id);
             if (details.length === 0) return null;
-            // Grouper par carburant
-            const byFuel: Record<string, DailyIndexDetail[]> = {};
-            for (const d of details) {
-              const key = d.nozzle.fuel.name;
-              if (!byFuel[key]) byFuel[key] = [];
-              byFuel[key].push(d);
-            }
+            // Sorted by date asc, then pump name, then nozzle number
+            const sorted = [...details].sort((a, b) => {
+              const dc = a.date.localeCompare(b.date);
+              if (dc !== 0) return dc;
+              const pc = a.nozzle.pump.name.localeCompare(b.nozzle.pump.name);
+              if (pc !== 0) return pc;
+              return a.nozzle.number - b.nozzle.number;
+            });
+            const totalVol = sorted.reduce((acc, r) => acc + Number(r.volumeSold || 0), 0);
+            const totalRev = sorted.reduce((acc, r) => acc + Number(r.revenue || 0), 0);
             return (
               <Card key={s.id}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">
-                    {s.name} — Index par pistolet — {moisLabel}
-                  </CardTitle>
+                <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                  <CardTitle className="text-sm">{s.name} — Détail journalier par pompe — {moisLabel}</CardTitle>
+                  <span className="text-xs text-slate-500 tabular-nums">
+                    {fmt(totalVol)} L &nbsp;·&nbsp; <span className="text-blue-700 font-semibold">{fmt(totalRev)} FCFA</span>
+                  </span>
                 </CardHeader>
-                <CardContent className="p-0">
-                  {Object.entries(byFuel).map(([fuelName, rows]) => {
-                    // Grouper par pistolet (pompe + numéro)
-                    const byNozzle: Record<string, DailyIndexDetail[]> = {};
-                    for (const r of rows) {
-                      const key = `${r.nozzle.pump.name} — Pistolet #${r.nozzle.number}`;
-                      if (!byNozzle[key]) byNozzle[key] = [];
-                      byNozzle[key].push(r);
-                    }
-                    const fuelVol = rows.reduce((s, r) => s + Number(r.volumeSold || 0), 0);
-                    const fuelRev = rows.reduce((s, r) => s + Number(r.revenue || 0), 0);
-                    return (
-                      <div key={fuelName}>
-                        <div className="px-4 py-2 bg-slate-50 border-y border-slate-100 flex items-center justify-between">
-                          <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">{fuelName}</span>
-                          <span className="text-xs text-slate-500 tabular-nums">
-                            {fmt(fuelVol)} L · <span className="text-blue-700 font-semibold">{fmt(fuelRev)} FCFA</span>
-                          </span>
-                        </div>
-                        <Table>
-                          <TableHeader>
-                            <TableRow className="bg-slate-50/50">
-                              <TableHead className="text-xs">Pistolet</TableHead>
-                              <TableHead className="text-xs text-right">Index début</TableHead>
-                              <TableHead className="text-xs text-right">Index fin</TableHead>
-                              <TableHead className="text-xs text-right">Volume (L)</TableHead>
-                              <TableHead className="text-xs text-right">CA (FCFA)</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {Object.entries(byNozzle).map(([nozzleLabel, nRows]) => {
-                              const indexMin = Math.min(...nRows.map((r) => Number(r.indexStart)));
-                              const indexMax = Math.max(...nRows.map((r) => Number(r.indexEnd ?? r.indexStart)));
-                              const vol = nRows.reduce((s, r) => s + Number(r.volumeSold || 0), 0);
-                              const rev = nRows.reduce((s, r) => s + Number(r.revenue || 0), 0);
-                              return (
-                                <TableRow key={nozzleLabel}>
-                                  <TableCell className="text-xs font-medium">{nozzleLabel}</TableCell>
-                                  <TableCell className="text-xs text-right tabular-nums text-slate-500">{fmt(indexMin)}</TableCell>
-                                  <TableCell className="text-xs text-right tabular-nums text-slate-500">{fmt(indexMax)}</TableCell>
-                                  <TableCell className="text-xs text-right tabular-nums font-semibold">{fmt(vol)}</TableCell>
-                                  <TableCell className="text-xs text-right tabular-nums text-blue-700 font-semibold">{fmt(rev)}</TableCell>
-                                </TableRow>
-                              );
-                            })}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    );
-                  })}
+                <CardContent className="p-0 overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-slate-50 text-[11px] uppercase tracking-wide">
+                        <TableHead className="text-xs">Date</TableHead>
+                        <TableHead className="text-xs">Pompe</TableHead>
+                        <TableHead className="text-xs">Pistolet</TableHead>
+                        <TableHead className="text-xs">Carburant</TableHead>
+                        <TableHead className="text-xs text-right">Index début</TableHead>
+                        <TableHead className="text-xs text-right">Index fin</TableHead>
+                        <TableHead className="text-xs text-right">Volume (L)</TableHead>
+                        <TableHead className="text-xs text-right">CA (FCFA)</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {sorted.map((row) => (
+                        <TableRow key={row.id} className="hover:bg-slate-50/60">
+                          <TableCell className="text-xs tabular-nums text-slate-600">{fmtDate(row.date)}</TableCell>
+                          <TableCell className="text-xs font-medium text-slate-700">{row.nozzle.pump.name}</TableCell>
+                          <TableCell className="text-xs text-slate-500">#{row.nozzle.number}</TableCell>
+                          <TableCell className="text-xs">
+                            <Badge variant="outline" className="text-[10px] py-0">{row.nozzle.fuel.name}</Badge>
+                          </TableCell>
+                          <TableCell className="text-xs text-right tabular-nums text-slate-500">{fmt(row.indexStart, 2)}</TableCell>
+                          <TableCell className="text-xs text-right tabular-nums text-slate-500">{row.indexEnd != null ? fmt(row.indexEnd, 2) : <span className="text-gray-300">—</span>}</TableCell>
+                          <TableCell className="text-xs text-right tabular-nums font-semibold text-slate-800">{row.volumeSold != null ? fmt(row.volumeSold) : <span className="text-gray-300">—</span>}</TableCell>
+                          <TableCell className="text-xs text-right tabular-nums font-semibold text-blue-700">{row.revenue != null ? fmt(row.revenue) : <span className="text-gray-300">—</span>}</TableCell>
+                        </TableRow>
+                      ))}
+                      <TableRow className="bg-slate-700 text-white font-bold text-xs">
+                        <TableCell colSpan={6} className="font-bold">TOTAL</TableCell>
+                        <TableCell className="text-right tabular-nums">{fmt(totalVol)}</TableCell>
+                        <TableCell className="text-right tabular-nums text-blue-200">{fmt(totalRev)}</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
                 </CardContent>
               </Card>
             );
