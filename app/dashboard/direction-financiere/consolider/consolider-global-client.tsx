@@ -26,6 +26,8 @@ interface ConsoRow {
   debit: number;
   credit: number;
   solde: number;
+  totalEncaisse: number;
+  nonEncaisse: number;
   volByFuel: Record<string, number>;
   stockByFuel: Record<string, number>;
   puByFuel: Record<string, number>;
@@ -114,6 +116,8 @@ export function ConsoliderGlobalClient({ rows, fuels, annee }: Props) {
       return {
         soldeInitial: acc.soldeInitial + row.soldeInitial,
         debit: acc.debit + row.debit,
+        totalEncaisse: acc.totalEncaisse + (row.totalEncaisse ?? 0),
+        nonEncaisse: acc.nonEncaisse + (row.nonEncaisse ?? 0),
         credit: acc.credit + row.credit,
         solde: acc.solde + row.solde,
         volSP: acc.volSP + c.volSP,
@@ -129,7 +133,7 @@ export function ConsoliderGlobalClient({ rows, fuels, annee }: Props) {
       };
     },
     {
-      soldeInitial: 0, debit: 0, credit: 0, solde: 0,
+      soldeInitial: 0, debit: 0, totalEncaisse: 0, nonEncaisse: 0, credit: 0, solde: 0,
       volSP: 0, volGO: 0, cumul: 0, stockSP: 0, stockGO: 0,
       mtSP: 0, mtGO: 0, valeurStock: 0, creditStation: 0, especeTheo: 0,
     }
@@ -191,7 +195,7 @@ export function ConsoliderGlobalClient({ rows, fuels, annee }: Props) {
             <tr className="bg-blue-800">
               <th className={stickyNumTh} rowSpan={2}>N°</th>
               <th className={stickyNomTh} rowSpan={2}>NOM</th>
-              <th className={thCls} colSpan={4} style={{ borderLeft: "1px solid rgba(255,255,255,0.2)" }}>SOLDES</th>
+              <th className={thCls} colSpan={6} style={{ borderLeft: "1px solid rgba(255,255,255,0.2)" }}>SOLDES</th>
               <th className={thCls} colSpan={3} style={{ borderLeft: "1px solid rgba(255,255,255,0.2)" }}>VOLUMES</th>
               <th className={thCls} colSpan={4} style={{ borderLeft: "1px solid rgba(255,255,255,0.2)" }}>CONDITIONS</th>
               <th className={thCls} colSpan={2} style={{ borderLeft: "1px solid rgba(255,255,255,0.2)" }}>STOCKS</th>
@@ -205,8 +209,10 @@ export function ConsoliderGlobalClient({ rows, fuels, annee }: Props) {
             {/* Row 2: subheaders */}
             <tr className="bg-blue-700">
               <th className={thCls}>SOLDE INIT</th>
-              <th className={thCls}>DÉBIT</th>
-              <th className={thCls}>CRÉDIT</th>
+              <th className={thCls}>DÉBIT (CA)</th>
+              <th className={thCls}>ENCAISSÉ</th>
+              <th className={thCls}>NON-ENC.</th>
+              <th className={thCls}>VERSÉ</th>
               <th className={thCls}>SOLDE</th>
               <th className={thCls}>SP (L)</th>
               <th className={thCls}>GO (L)</th>
@@ -228,6 +234,8 @@ export function ConsoliderGlobalClient({ rows, fuels, annee }: Props) {
               <td className="sticky left-8 z-10 bg-blue-50 px-1.5 py-2 text-[10px] font-bold text-left text-blue-700 min-w-[140px]">TOTAUX</td>
               <td className={`${tdCls} font-bold text-blue-800`}>{fmtSigned(totals.soldeInitial)}</td>
               <td className={`${tdCls} font-bold text-blue-800`}>{fmtSigned(totals.debit)}</td>
+              <td className={`${tdCls} font-bold text-blue-800`}>{fmtSigned(totals.totalEncaisse ?? 0)}</td>
+              <td className={`${tdCls} font-bold text-orange-700`}>{fmtSigned(totals.nonEncaisse ?? 0)}</td>
               <td className={`${tdCls} font-bold text-blue-800`}>{fmtSigned(totals.credit)}</td>
               <td className={`${tdCls} font-bold ${totals.solde < 0 ? "text-red-600" : "text-blue-900"}`}>{fmtSigned(totals.solde)}</td>
               <td className={`${tdCls} font-bold text-blue-800`}>{fmt(totals.volSP)}</td>
@@ -274,6 +282,10 @@ export function ConsoliderGlobalClient({ rows, fuels, annee }: Props) {
                   </td>
                   <td className={tdCls}>{fmtSigned(row.soldeInitial)}</td>
                   <td className={tdCls}>{fmtSigned(row.debit)}</td>
+                  <td className={tdCls}>{row.type === "SS" ? fmtSigned(row.totalEncaisse ?? 0) : "—"}</td>
+                  <td className={`${tdCls} ${(row.nonEncaisse ?? 0) > 0 ? "text-orange-600 font-semibold" : ""}`}>
+                    {row.type === "SS" ? fmtSigned(row.nonEncaisse ?? 0) : "—"}
+                  </td>
                   <td className={tdCls}>{fmtSigned(row.credit)}</td>
                   <td className={`${tdCls} font-semibold ${row.solde < 0 ? "text-red-600" : "text-slate-900"}`}>
                     {fmtSigned(row.solde)}

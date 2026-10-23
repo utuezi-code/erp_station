@@ -30,17 +30,27 @@ export default async function ConsoliderGlobalPage() {
         select: { type: true, montant: true },
       },
       versements: {
-        where: { date: { gte: yearStart }, status: "VALIDE" },
-        select: { amount: true },
+        where: { date: { gte: yearStart } },
+        select: { amount: true, status: true },
       },
       dailyIndexes: {
-        where: { date: { gte: yearStart }, validated: true },
+        where: { date: { gte: yearStart } },
         include: { nozzle: { select: { fuelId: true } } },
       },
     },
   });
 
   const stationIds = rawStations.map((s) => s.id);
+
+  // Encaissements par station pour calculer le non-encaissé
+  const cashCollectionsAgg = await db.cashCollection.groupBy({
+    by: ["stationId"],
+    where: { stationId: { in: stationIds }, date: { gte: yearStart } },
+    _sum: { amount: true },
+  });
+  const encaisseByStation: Record<string, number> = Object.fromEntries(
+    cashCollectionsAgg.map((r) => [r.stationId, Number(r._sum.amount ?? 0)])
+  );
 
   // Latest physicalStock per stationId+fuelId
   const tankMovements = await db.tankMovement.findMany({
@@ -61,13 +71,17 @@ export default async function ConsoliderGlobalPage() {
   const stationRows = rawStations.map((s, i) => {
     const soldeInitial = Number(s.soldesInitiaux[0]?.solde ?? 0);
     const debit = (s.dailyIndexes as any[]).reduce((sum: number, di: any) => sum + Number(di.revenue ?? 0), 0);
-    const creditVersements = s.versements.reduce((sum, v) => sum + Number(v.amount), 0);
+    // Versements validés seulement comptent comme crédit réel
+    const creditVersements = s.versements.filter((v: any) => v.status === "VALIDE").reduce((sum, v) => sum + Number(v.amount), 0);
     const creditMouvements = s.mouvementsCompte.reduce((sum, m) => {
       const amt = Number(m.montant);
       return CREDIT_TYPES.has(m.type) ? sum + amt : sum - amt;
     }, 0);
     const credit = creditVersements + creditMouvements;
     const solde = soldeInitial + debit - credit;
+    // Encaissé vs CA (pour afficher le delta non-encaissé)
+    const totalEncaisse = encaisseByStation[s.id] ?? 0;
+    const nonEncaisse = debit - totalEncaisse;
 
     const volByFuel: Record<string, number> = {};
     let derniereLivraison: string | null = null;
@@ -101,6 +115,8 @@ export default async function ConsoliderGlobalPage() {
       debit,
       credit,
       solde,
+      totalEncaisse,
+      nonEncaisse,
       volByFuel,
       stockByFuel,
       puByFuel,
