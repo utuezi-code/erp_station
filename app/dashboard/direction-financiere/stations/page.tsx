@@ -27,7 +27,7 @@ export default async function StationsComptePage({
 
   const stationIds = sp.stationId ? [sp.stationId] : stations.map((s) => s.id);
 
-  // ── Index (volumes vendus par station) ───────────────────────────────────────
+  // ── Index agrégé (totaux par station) ────────────────────────────────────────
   const dailyIndexes = await db.dailyIndex.groupBy({
     by: ["stationId"],
     where: {
@@ -36,6 +36,32 @@ export default async function StationsComptePage({
       validated: true,
     },
     _sum: { volumeSold: true, revenue: true },
+  });
+
+  // ── Index détaillé par pistolet (pour la vue Index & Ventes) ─────────────────
+  const dailyIndexesDetail = await db.dailyIndex.findMany({
+    where: {
+      stationId: { in: stationIds },
+      date: { gte: dateFrom, lte: dateTo },
+      validated: true,
+    },
+    select: {
+      id: true,
+      stationId: true,
+      date: true,
+      indexStart: true,
+      indexEnd: true,
+      volumeSold: true,
+      revenue: true,
+      nozzle: {
+        select: {
+          number: true,
+          fuel: { select: { name: true, code: true } },
+          pump: { select: { name: true } },
+        },
+      },
+    },
+    orderBy: [{ date: "asc" }, { nozzleId: "asc" }],
   });
 
   // ── Jauges / stocks cuves ────────────────────────────────────────────────────
@@ -118,6 +144,7 @@ export default async function StationsComptePage({
       mois={mois}
       stationId={sp.stationId || ""}
       dailyIndexes={serialize(dailyIndexes)}
+      dailyIndexesDetail={serialize(dailyIndexesDetail)}
       tankMovements={serialize(tankMovements)}
       encaissements={serialize(encaissements)}
       versements={serialize(versements)}

@@ -22,6 +22,11 @@ function fmtDate(d: string | null | undefined) {
 
 interface Station { id: string; name: string; code: string; city: string | null }
 interface DailyIndexGroup { stationId: string; _sum: { volumeSold: number | null; revenue: number | null } }
+interface DailyIndexDetail {
+  id: string; stationId: string; date: string;
+  indexStart: number; indexEnd: number | null; volumeSold: number | null; revenue: number | null;
+  nozzle: { number: number; fuel: { name: string; code: string }; pump: { name: string } };
+}
 interface TankMovement {
   id: string; stationId: string; date: string;
   openingStock: number; delivery: number; theoreticalStock: number; physicalStock: number | null; gap: number | null;
@@ -58,12 +63,13 @@ const ENCAISSEMENT_LABELS: Record<string, string> = {
 
 export function StationsCompteClient({
   stations, mois, stationId,
-  dailyIndexes, tankMovements, encaissements, versements, exploitation, credits, depotages, misesADispo,
+  dailyIndexes, dailyIndexesDetail, tankMovements, encaissements, versements, exploitation, credits, depotages, misesADispo,
 }: {
   stations: Station[];
   mois: string;
   stationId: string;
   dailyIndexes: DailyIndexGroup[];
+  dailyIndexesDetail: DailyIndexDetail[];
   tankMovements: TankMovement[];
   encaissements: EncaissementGroup[];
   versements: VersementGroup[];
@@ -189,7 +195,8 @@ export function StationsCompteClient({
         </TabsList>
 
         {/* ── INDEX ── */}
-        <TabsContent value="index">
+        <TabsContent value="index" className="space-y-4">
+          {/* Récap agrégé par station */}
           <Card>
             <CardHeader><CardTitle className="text-sm">Volumes vendus & CA par station — {moisLabel}</CardTitle></CardHeader>
             <CardContent className="p-0">
@@ -232,6 +239,79 @@ export function StationsCompteClient({
               </Table>
             </CardContent>
           </Card>
+
+          {/* Détail par pistolet pour la/les stations affichées */}
+          {displayStations.map((s) => {
+            const details = dailyIndexesDetail.filter((d) => d.stationId === s.id);
+            if (details.length === 0) return null;
+            // Grouper par carburant
+            const byFuel: Record<string, DailyIndexDetail[]> = {};
+            for (const d of details) {
+              const key = d.nozzle.fuel.name;
+              if (!byFuel[key]) byFuel[key] = [];
+              byFuel[key].push(d);
+            }
+            return (
+              <Card key={s.id}>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">
+                    {s.name} — Index par pistolet — {moisLabel}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {Object.entries(byFuel).map(([fuelName, rows]) => {
+                    // Grouper par pistolet (pompe + numéro)
+                    const byNozzle: Record<string, DailyIndexDetail[]> = {};
+                    for (const r of rows) {
+                      const key = `${r.nozzle.pump.name} — Pistolet #${r.nozzle.number}`;
+                      if (!byNozzle[key]) byNozzle[key] = [];
+                      byNozzle[key].push(r);
+                    }
+                    const fuelVol = rows.reduce((s, r) => s + Number(r.volumeSold || 0), 0);
+                    const fuelRev = rows.reduce((s, r) => s + Number(r.revenue || 0), 0);
+                    return (
+                      <div key={fuelName}>
+                        <div className="px-4 py-2 bg-slate-50 border-y border-slate-100 flex items-center justify-between">
+                          <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">{fuelName}</span>
+                          <span className="text-xs text-slate-500 tabular-nums">
+                            {fmt(fuelVol)} L · <span className="text-blue-700 font-semibold">{fmt(fuelRev)} FCFA</span>
+                          </span>
+                        </div>
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-slate-50/50">
+                              <TableHead className="text-xs">Pistolet</TableHead>
+                              <TableHead className="text-xs text-right">Index début</TableHead>
+                              <TableHead className="text-xs text-right">Index fin</TableHead>
+                              <TableHead className="text-xs text-right">Volume (L)</TableHead>
+                              <TableHead className="text-xs text-right">CA (FCFA)</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {Object.entries(byNozzle).map(([nozzleLabel, nRows]) => {
+                              const indexMin = Math.min(...nRows.map((r) => Number(r.indexStart)));
+                              const indexMax = Math.max(...nRows.map((r) => Number(r.indexEnd ?? r.indexStart)));
+                              const vol = nRows.reduce((s, r) => s + Number(r.volumeSold || 0), 0);
+                              const rev = nRows.reduce((s, r) => s + Number(r.revenue || 0), 0);
+                              return (
+                                <TableRow key={nozzleLabel}>
+                                  <TableCell className="text-xs font-medium">{nozzleLabel}</TableCell>
+                                  <TableCell className="text-xs text-right tabular-nums text-slate-500">{fmt(indexMin)}</TableCell>
+                                  <TableCell className="text-xs text-right tabular-nums text-slate-500">{fmt(indexMax)}</TableCell>
+                                  <TableCell className="text-xs text-right tabular-nums font-semibold">{fmt(vol)}</TableCell>
+                                  <TableCell className="text-xs text-right tabular-nums text-blue-700 font-semibold">{fmt(rev)}</TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            );
+          })}
         </TabsContent>
 
         {/* ── JAUGES ── */}
