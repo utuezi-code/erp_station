@@ -448,6 +448,7 @@ export function VersementsClientPage({ stationId, versements, bankAccounts, frai
                 onChange={(e) => setRecetteDate(e.target.value)}
                 required
               />
+              <p className="text-[11px] text-slate-400">Peut être n'importe quelle date passée (J+1, J+5, J+30…)</p>
             </div>
 
             {/* RAV recap */}

@@ -47,14 +47,7 @@ export async function createVersement(formData: FormData): Promise<{ success: bo
       if (depositDate > maxFuture) {
         return { success: false, error: "La date de versement ne peut pas être dans le futur." };
       }
-      if (data.dateRecette) {
-        const recetteDate = new Date(data.dateRecette);
-        const sevenDaysAgo = new Date(today);
-        sevenDaysAgo.setDate(today.getDate() - 7);
-        if (recetteDate < sevenDaysAgo) {
-          return { success: false, error: "La date de recette ne peut pas remonter à plus de 7 jours." };
-        }
-      }
+      // No restriction on how far back dateRecette can go
     }
 
     const date = new Date(data.date);
