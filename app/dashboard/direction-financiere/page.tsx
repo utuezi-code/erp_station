@@ -78,7 +78,7 @@ export default async function DirectionFinancierePage() {
       _sum: { amount: true },
     }),
     db.dailyIndex.findMany({
-      where: { date: { gte: startOfMonth, lte: endOfMonth }, validated: true },
+      where: { date: { gte: startOfMonth, lte: endOfMonth } },
       select: {
         stationId: true,
         volumeSold: true,
@@ -217,7 +217,10 @@ export default async function DirectionFinancierePage() {
           <h2 className="text-sm font-semibold text-gray-900">Volumes vendus &amp; CA par station</h2>
           <span className="text-xs text-gray-400">{now.toLocaleDateString("fr-CI", { month: "long", year: "numeric" })}</span>
         </div>
-        <div className="overflow-x-auto">
+        {allFuelCodes.length === 0 && (
+          <p className="text-sm text-gray-400 text-center py-8">Aucun index saisi pour ce mois.</p>
+        )}
+        {allFuelCodes.length > 0 && <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
               <tr className="bg-gray-50 text-gray-500 uppercase tracking-wide text-[10px]">
@@ -288,7 +291,7 @@ export default async function DirectionFinancierePage() {
               })()}
             </tbody>
           </table>
-        </div>
+        </div>}
       </div>
 
       {/* Recent pending */}
