@@ -92,18 +92,18 @@ export async function validatePurchaseRequest(
       if (!["ADMIN", "DIRECTION_COMMERCIALE"].includes(role)) {
         return { success: false, error: "Seule la Direction Commerciale peut effectuer la 1ère validation." };
       }
-      await db.purchaseRequest.update({ where: { id }, data: { status: "VALIDE_DC" as any } });
+      await db.purchaseRequest.update({ where: { id }, data: { status: "VALIDE_DC" } });
       revalidatePath("/dashboard/achats/demandes");
       revalidatePath(`/dashboard/achats/demandes/${id}`);
       return { success: true };
     }
 
     // Étape 2 : DF valide en deuxième (VALIDE_DC → VALIDE_DF)
-    if ((pr.status as string) === "VALIDE_DC") {
+    if (pr.status === "VALIDE_DC") {
       if (!["ADMIN", "DIRECTION_FINANCIERE"].includes(role)) {
         return { success: false, error: "Seule la Direction Financière peut effectuer la 2ème validation." };
       }
-      await db.purchaseRequest.update({ where: { id }, data: { status: "VALIDE_DF" as any } });
+      await db.purchaseRequest.update({ where: { id }, data: { status: "VALIDE_DF" } });
       revalidatePath("/dashboard/achats/demandes");
       revalidatePath(`/dashboard/achats/demandes/${id}`);
       return { success: true };
