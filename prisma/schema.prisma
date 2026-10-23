@@ -93,6 +93,14 @@ enum MouvementCompteType {
   AUTRE_CREDIT
 }
 
+enum FraisType {
+  CARBURANT_INTERNE
+  FRAIS_ROUTE
+  CONTRE_PLEIN
+  AVANCE_POMPISTE
+  AUTRE
+}
+
 // ─── UTILISATEURS & AUTH ──────────────────────────────────────────────────────
 
 model User {
@@ -126,6 +134,7 @@ model User {
   clientCreditSoldes     ClientCreditSoldeInitial[]
   clientCreditLivraisons ClientCreditLivraison[]
   clientCreditMouvements MouvementClientCredit[]
+  fraisJournaliers       FraisJournalier[]
 
   @@index([email])
   @@index([stationId])
@@ -207,6 +216,7 @@ model Station {
   gestociWithdrawalItems GESTOCIWithdrawalItem[] @relation("GESTOCIWithdrawalItemStation")
   soldesInitiaux         CompteStationSoldeInitial[]
   mouvementsCompte       MouvementCompteStation[]
+  fraisJournaliers       FraisJournalier[]
 
   @@index([regionId])
 }
@@ -367,6 +377,7 @@ model Versement {
   bankAccountId String?
   bankAccount   BankAccount?    @relation(fields: [bankAccountId], references: [id])
   date          DateTime        @db.Date
+  dateRecette   DateTime?       @db.Date
   amount        Decimal         @db.Decimal(14, 2)
   slipNumber    String?
   slipPhotoUrl  String?
@@ -398,6 +409,23 @@ model FuelDelivery {
   miseADispoId String?
   miseADispo   MiseADisposition? @relation(fields: [miseADispoId], references: [id])
   createdAt    DateTime          @default(now())
+
+  @@index([stationId, date])
+}
+
+// ─── FRAIS JOURNALIERS ────────────────────────────────────────────────────────
+
+model FraisJournalier {
+  id        String    @id @default(cuid())
+  stationId String
+  station   Station   @relation(fields: [stationId], references: [id])
+  date      DateTime  @db.Date
+  type      FraisType
+  libelle   String
+  montant   Decimal   @db.Decimal(14, 2)
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  createdAt DateTime  @default(now())
 
   @@index([stationId, date])
 }

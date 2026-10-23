@@ -10,16 +10,37 @@ export default async function VersementsPage() {
 
   if (!stationId) return <p className="text-gray-500">Aucune station assignée.</p>;
 
-  const [station, versements, bankAccounts] = await Promise.all([
+  const today = new Date();
+  const tenDaysAgo = new Date(today);
+  tenDaysAgo.setDate(today.getDate() - 10);
+
+  const [station, versements, bankAccounts, frais, caParJour] = await Promise.all([
     db.station.findUnique({ where: { id: stationId }, select: { id: true, name: true } }),
     db.versement.findMany({
       where: { stationId },
       include: { user: { select: { name: true } } },
       orderBy: { date: "desc" },
-      take: 50,
+      take: 60,
     }),
     db.bankAccount.findMany({ where: { stationId } }),
+    db.fraisJournalier.findMany({
+      where: { stationId, date: { gte: tenDaysAgo } },
+      orderBy: { date: "desc" },
+    }),
+    // CA (revenue) aggregated per day from daily indexes
+    db.dailyIndex.groupBy({
+      by: ["date"],
+      where: { stationId, date: { gte: tenDaysAgo } },
+      _sum: { revenue: true },
+    }),
   ]);
+
+  // Build a map: dateStr -> totalCA
+  const caMap: Record<string, number> = {};
+  for (const row of caParJour) {
+    const key = row.date.toISOString().split("T")[0];
+    caMap[key] = Number(row._sum.revenue ?? 0);
+  }
 
   return (
     <div>
@@ -31,6 +52,8 @@ export default async function VersementsPage() {
         stationId={stationId}
         versements={serialize(versements)}
         bankAccounts={serialize(bankAccounts)}
+        frais={serialize(frais)}
+        caMap={caMap}
         userRole={user.role}
       />
     </div>
