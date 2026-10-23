@@ -119,7 +119,7 @@ const navGroups: NavGroup[] = [
     label: "Direction Générale",
     items: [
       { label: "Vue d'ensemble", href: "/dashboard/direction-generale", icon: LayoutDashboard, roles: ["ADMIN", DG] },
-      { label: "Prix carburants", href: "/dashboard/prix-carburants", icon: Fuel, roles: ["ADMIN", DG] },
+      { label: "Prix carburants", href: "/dashboard/prix-carburants", icon: Fuel, roles: ["ADMIN", DG, DC, DF] },
     ],
   },
 

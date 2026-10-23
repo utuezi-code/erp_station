@@ -132,6 +132,7 @@ model User {
   clientCreditLivraisons ClientCreditLivraison[]
   clientCreditMouvements MouvementClientCredit[]
   fraisJournaliers       FraisJournalier[]
+  fuelPriceProposals     FuelPriceProposal[]     @relation("FuelPriceProposalUser")
 
   @@index([email])
   @@index([stationId])
@@ -257,6 +258,7 @@ model Fuel {
   gestociWithdrawalItems GESTOCIWithdrawalItem[] @relation("GESTOCIWithdrawalItemFuel")
   gestociStockReadings   GESTOCIStockReading[]   @relation("GESTOCIStockReadingFuel")
   clientLivraisons       ClientCreditLivraison[]
+  priceProposals         FuelPriceProposal[]
 }
 
 // ─── POMPES & PISTOLETS ───────────────────────────────────────────────────────
@@ -1031,6 +1033,28 @@ model GESTOCIStockReading {
   createdAt DateTime @default(now())
 
   @@index([fuelId, date])
+}
+
+// ─── PROPOSITIONS DE PRIX CARBURANT ──────────────────────────────────────────
+
+model FuelPriceProposal {
+  id              String    @id @default(cuid())
+  fuelId          String
+  fuel            Fuel      @relation(fields: [fuelId], references: [id])
+  userId          String
+  user            User      @relation("FuelPriceProposalUser", fields: [userId], references: [id])
+  salePrice       Decimal   @db.Decimal(10, 2)
+  purchasePrice   Decimal   @db.Decimal(10, 2)
+  justification   String?
+  status          String    @default("EN_ATTENTE") // EN_ATTENTE | VALIDE | REJETE
+  validatedBy     String?
+  validatedAt     DateTime?
+  rejectionReason String?
+  effectiveDate   DateTime? @db.Date
+  createdAt       DateTime  @default(now())
+
+  @@index([fuelId, status])
+  @@index([userId])
 }
 
 // ─── COMPTES COURANTS STATIONS ────────────────────────────────────────────────
