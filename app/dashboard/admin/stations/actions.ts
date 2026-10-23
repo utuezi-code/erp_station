@@ -42,6 +42,36 @@ export async function createStation(formData: FormData) {
   return { success: true };
 }
 
+export async function resetStationData(stationId: string) {
+  const session = await requireRole(["ADMIN"]);
+
+  const station = await db.station.findUnique({ where: { id: stationId }, select: { name: true } });
+  if (!station) throw new Error("Station introuvable.");
+
+  await db.$transaction([
+    db.fraisJournalier.deleteMany({ where: { stationId } }),
+    db.venteCreditPompiste.deleteMany({ where: { stationId } }),
+    db.cashCollection.deleteMany({ where: { stationId } }),
+    db.versement.deleteMany({ where: { stationId } }),
+    db.dailyIndex.deleteMany({ where: { stationId } }),
+    db.pompisteShift.deleteMany({ where: { stationId } }),
+  ]);
+
+  await writeAuditLog({
+    userId: (session.user as any).id,
+    entity: "Station",
+    entityId: stationId,
+    action: "DELETE",
+    meta: { action: "RESET_DATA", stationName: station.name },
+  });
+
+  revalidatePath("/dashboard/admin/stations");
+  revalidatePath("/dashboard/gerant/index");
+  revalidatePath("/dashboard/gerant/versements");
+  revalidatePath("/dashboard/direction-financiere/stations");
+  return { success: true };
+}
+
 export async function updateStation(id: string, formData: FormData) {
   const session = await requireRole(["ADMIN", "DIRECTION_GENERALE"]);
 

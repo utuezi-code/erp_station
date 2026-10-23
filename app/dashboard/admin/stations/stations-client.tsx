@@ -8,8 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Pencil, Building2 } from "lucide-react";
-import { createStation, updateStation } from "./actions";
+import { Plus, Pencil, Building2, Trash2 } from "lucide-react";
+import { createStation, updateStation, resetStationData } from "./actions";
 import { toast } from "sonner";
 
 interface Station {
@@ -32,6 +32,9 @@ export function StationsClientPage({ stations, regions }: { stations: Station[];
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Station | null>(null);
   const [loading, setLoading] = useState(false);
+  const [resetTarget, setResetTarget] = useState<Station | null>(null);
+  const [resetConfirm, setResetConfirm] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -91,9 +94,12 @@ export function StationsClientPage({ stations, regions }: { stations: Station[];
                     {s.status === "ACTIVE" ? "Active" : "Suspendue"}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right flex items-center justify-end gap-1">
                   <Button size="sm" variant="ghost" onClick={() => { setEditing(s); setOpen(true); }}>
                     <Pencil className="w-4 h-4" />
+                  </Button>
+                  <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-700" onClick={() => { setResetTarget(s); setResetConfirm(""); }}>
+                    <Trash2 className="w-4 h-4" />
                   </Button>
                 </TableCell>
               </TableRow>
@@ -101,6 +107,48 @@ export function StationsClientPage({ stations, regions }: { stations: Station[];
           </TableBody>
         </Table>
       </div>
+
+      {/* Reset confirmation dialog */}
+      <Dialog open={!!resetTarget} onOpenChange={(v) => { if (!v) setResetTarget(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-600">Réinitialiser les données</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-gray-700">
+              Cette action supprimera définitivement <strong>toutes les ventes, index, versements et frais</strong> de la station <strong>{resetTarget?.name}</strong>. Les livraisons (dépotages) seront conservées.
+            </p>
+            <p className="text-sm text-gray-500">Tapez le nom de la station pour confirmer :</p>
+            <Input
+              value={resetConfirm}
+              onChange={(e) => setResetConfirm(e.target.value)}
+              placeholder={resetTarget?.name}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResetTarget(null)}>Annuler</Button>
+            <Button
+              variant="destructive"
+              disabled={resetConfirm !== resetTarget?.name || resetLoading}
+              onClick={async () => {
+                if (!resetTarget) return;
+                setResetLoading(true);
+                try {
+                  await resetStationData(resetTarget.id);
+                  toast.success(`Données de ${resetTarget.name} réinitialisées.`);
+                  setResetTarget(null);
+                } catch (err: any) {
+                  toast.error(err.message || "Erreur.");
+                } finally {
+                  setResetLoading(false);
+                }
+              }}
+            >
+              {resetLoading ? "Suppression..." : "Réinitialiser"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md">
