@@ -33,7 +33,6 @@ export default async function StationsComptePage({
     where: {
       stationId: { in: stationIds },
       date: { gte: dateFrom, lte: dateTo },
-      validated: true,
     },
     _sum: { volumeSold: true, revenue: true },
   });
@@ -43,7 +42,6 @@ export default async function StationsComptePage({
     where: {
       stationId: { in: stationIds },
       date: { gte: dateFrom, lte: dateTo },
-      validated: true,
     },
     select: {
       id: true,
