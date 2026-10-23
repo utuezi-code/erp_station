@@ -144,6 +144,11 @@ export function ConsoliderGlobalClient({ rows, fuels, annee }: Props) {
   const thCls = "px-1.5 py-2 text-[9px] font-bold uppercase tracking-wide text-center text-white whitespace-nowrap";
   const tdCls = "px-1.5 py-1.5 text-[10px] text-right tabular-nums whitespace-nowrap";
   const tdLCls = "px-1.5 py-1.5 text-[10px] text-left whitespace-nowrap";
+  // Sticky columns
+  const stickyNumTh = `${thCls} sticky left-0 z-20 bg-blue-800 w-8`;
+  const stickyNomTh = `${thCls} sticky left-8 z-20 bg-blue-800 text-left min-w-[140px]`;
+  const stickyNumTd = `${tdCls} sticky left-0 z-10 text-center`;
+  const stickyNomTd = `${tdLCls} sticky left-8 z-10 font-medium text-slate-800 min-w-[140px] max-w-[180px] truncate shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]`;
 
   return (
     <div className="space-y-6 p-4 md:p-6 max-w-[1600px] mx-auto">
@@ -184,8 +189,8 @@ export function ConsoliderGlobalClient({ rows, fuels, annee }: Props) {
           <thead>
             {/* Row 1: group labels */}
             <tr className="bg-blue-800">
-              <th className={thCls} rowSpan={2}>N°</th>
-              <th className={`${thCls} text-left min-w-[130px]`} rowSpan={2}>NOM</th>
+              <th className={stickyNumTh} rowSpan={2}>N°</th>
+              <th className={stickyNomTh} rowSpan={2}>NOM</th>
               <th className={thCls} colSpan={4} style={{ borderLeft: "1px solid rgba(255,255,255,0.2)" }}>SOLDES</th>
               <th className={thCls} colSpan={3} style={{ borderLeft: "1px solid rgba(255,255,255,0.2)" }}>VOLUMES</th>
               <th className={thCls} colSpan={4} style={{ borderLeft: "1px solid rgba(255,255,255,0.2)" }}>CONDITIONS</th>
@@ -219,7 +224,8 @@ export function ConsoliderGlobalClient({ rows, fuels, annee }: Props) {
             </tr>
             {/* Row 3: TOTAUX */}
             <tr className="bg-blue-50 border-b-2 border-blue-200">
-              <td className="px-1.5 py-2 text-[10px] font-bold text-center text-blue-700" colSpan={2}>TOTAUX</td>
+              <td className="sticky left-0 z-10 bg-blue-50 px-1.5 py-2 text-[10px] font-bold text-center text-blue-700 w-8" />
+              <td className="sticky left-8 z-10 bg-blue-50 px-1.5 py-2 text-[10px] font-bold text-left text-blue-700 min-w-[140px]">TOTAUX</td>
               <td className={`${tdCls} font-bold text-blue-800`}>{fmtSigned(totals.soldeInitial)}</td>
               <td className={`${tdCls} font-bold text-blue-800`}>{fmtSigned(totals.debit)}</td>
               <td className={`${tdCls} font-bold text-blue-800`}>{fmtSigned(totals.credit)}</td>
@@ -243,6 +249,9 @@ export function ConsoliderGlobalClient({ rows, fuels, annee }: Props) {
             {rows.map((row, idx) => {
               const c = calcRow(row, spFuel?.id, goFuel?.id);
               const isOdd = idx % 2 === 0;
+              const stickyBg = row.type === "SS"
+                ? (isOdd ? "#f8fafc" : "#f1f5f9")
+                : (isOdd ? "#ffffff" : "#f9fafb");
               const baseBg = row.type === "SS"
                 ? (isOdd ? "bg-slate-50" : "bg-slate-100/50")
                 : (isOdd ? "bg-white" : "bg-gray-50/40");
@@ -254,13 +263,13 @@ export function ConsoliderGlobalClient({ rows, fuels, annee }: Props) {
                   className={rowCls}
                   onClick={() => router.push(row.href)}
                 >
-                  <td className={`${tdCls} font-medium text-center`}>
+                  <td className={stickyNumTd} style={{ background: stickyBg }}>
                     {row.num}
                     {row.type === "SS" && (
                       <span className="ml-1 text-[8px] bg-blue-100 text-blue-600 px-1 rounded font-bold">SS</span>
                     )}
                   </td>
-                  <td className={`${tdLCls} font-medium text-slate-800 max-w-[130px] truncate`} title={row.nom}>
+                  <td className={stickyNomTd} title={row.nom} style={{ background: stickyBg }}>
                     {row.nom}
                   </td>
                   <td className={tdCls}>{fmtSigned(row.soldeInitial)}</td>
