@@ -76,17 +76,31 @@ export function IndexClientPage({ stationId, selectedDate, pumps, indexMap, user
     p.nozzles.every((n: any) => indexMap[n.id]?.validated)
   );
 
+  // Cumul par carburant
+  const byFuel: Record<string, { name: string; volume: number; revenue: number; nozzleCount: number; indexMin: number | null; indexMax: number | null }> = {};
   let totalRevenue = 0;
   let totalVolume = 0;
   for (const p of pumps) {
     for (const n of p.nozzles) {
       const idx = indexMap[n.id];
+      const fuelName = n.fuel.name;
+      if (!byFuel[fuelName]) byFuel[fuelName] = { name: fuelName, volume: 0, revenue: 0, nozzleCount: 0, indexMin: null, indexMax: null };
+      byFuel[fuelName].nozzleCount++;
       if (idx) {
-        totalVolume += Number(idx.volumeSold || 0);
-        totalRevenue += Number(idx.revenue || 0);
+        const vol = Number(idx.volumeSold || 0);
+        const rev = Number(idx.revenue || 0);
+        byFuel[fuelName].volume += vol;
+        byFuel[fuelName].revenue += rev;
+        totalVolume += vol;
+        totalRevenue += rev;
+        const start = Number(idx.indexStart);
+        const end = idx.indexEnd ? Number(idx.indexEnd) : null;
+        if (byFuel[fuelName].indexMin === null || start < byFuel[fuelName].indexMin!) byFuel[fuelName].indexMin = start;
+        if (end !== null && (byFuel[fuelName].indexMax === null || end > byFuel[fuelName].indexMax!)) byFuel[fuelName].indexMax = end;
       }
     }
   }
+  const fuelEntries = Object.values(byFuel);
 
   return (
     <div>
@@ -113,20 +127,44 @@ export function IndexClientPage({ stationId, selectedDate, pumps, indexMap, user
         {allValidated && <Badge className="ml-auto bg-green-100 text-green-700">Journée validée</Badge>}
       </div>
 
-      {/* Summary */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <Card>
-          <CardContent className="pt-4">
-            <p className="text-sm text-gray-500">Volume total vendu</p>
-            <p className="text-2xl font-bold">{fmt(totalVolume)} L</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4">
-            <p className="text-sm text-gray-500">Chiffre d'affaires</p>
-            <p className="text-2xl font-bold">{fmt(totalRevenue)} FCFA</p>
-          </CardContent>
-        </Card>
+      {/* Cumul journalier */}
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm mb-6 overflow-hidden">
+        <div className="px-4 py-3 border-b border-slate-50 flex items-center justify-between">
+          <span className="text-sm font-bold text-slate-800">Cumul journalier</span>
+          <div className="flex items-center gap-4 text-xs text-slate-500">
+            <span>Volume total : <strong className="text-slate-800 tabular-nums">{fmt(totalVolume)} L</strong></span>
+            <span>CA total : <strong className="text-blue-700 tabular-nums">{fmt(totalRevenue)} FCFA</strong></span>
+          </div>
+        </div>
+        <div className="divide-y divide-slate-50">
+          {fuelEntries.map((f) => (
+            <div key={f.name} className="grid grid-cols-4 gap-0 px-4 py-3 items-center">
+              <div>
+                <p className="text-[11px] text-slate-400 uppercase tracking-wide font-semibold">{f.name}</p>
+                <p className="text-xs text-slate-500 mt-0.5">{f.nozzleCount} pistolet{f.nozzleCount > 1 ? "s" : ""}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-[10px] text-slate-400 uppercase">Index</p>
+                <p className="text-sm font-semibold tabular-nums text-slate-700">
+                  {f.indexMin !== null ? fmt(f.indexMin) : "—"}
+                  <span className="text-slate-300 mx-1">→</span>
+                  {f.indexMax !== null ? fmt(f.indexMax) : "—"}
+                </p>
+              </div>
+              <div className="text-center">
+                <p className="text-[10px] text-slate-400 uppercase">Volume</p>
+                <p className="text-sm font-bold tabular-nums text-slate-900">{fmt(f.volume)} L</p>
+              </div>
+              <div className="text-right">
+                <p className="text-[10px] text-slate-400 uppercase">CA</p>
+                <p className="text-sm font-bold tabular-nums text-blue-700">{fmt(f.revenue)} FCFA</p>
+              </div>
+            </div>
+          ))}
+          {fuelEntries.length === 0 && (
+            <p className="text-xs text-slate-400 text-center py-4">Aucun index saisi pour le moment.</p>
+          )}
+        </div>
       </div>
 
       {/* Pumps */}
